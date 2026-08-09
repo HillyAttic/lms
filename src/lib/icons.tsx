@@ -10,6 +10,16 @@ export const Logo = ({ className }: { className?: string }) => {
   );
 };
 
+export const LogoWhite = ({ className }: { className?: string }) => {
+  return (
+    <img
+      src="/images/logo.png"
+      alt="Logo"
+      className={className}
+    />
+  );
+};
+
 export const LogoIcon = () => {
   return (
     <svg
