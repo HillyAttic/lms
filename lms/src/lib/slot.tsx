@@ -4,6 +4,8 @@ import { cn } from "@/lib/utils";
 type SlotProps = {
   children: ReactNode;
   ref?: Ref<any>;
+  className?: string;
+  [key: string]: any;
 };
 
 export function Slot({ children, ref, ...props }: SlotProps) {

@@ -27,12 +27,12 @@ const menuList: MenuType[] = [
   },
   {
     id: 3,
-    label: "About",
-    href: "#",
+    label: "Repository",
+    href: "/repository",
   },
   {
     id: 4,
-    label: "Instructors",
+    label: "About",
     href: "#",
   },
   {
@@ -42,13 +42,13 @@ const menuList: MenuType[] = [
     subMenu: [
       { id: 1, label: "Contact", href: "/contact" },
       { id: 2, label: "Blog", href: "#" },
-      // { id: 3, label: "Blog Details", href: "/blog/1" },
-      { id: 4, label: "Sign Up", href: "#" },
-      { id: 5, label: "Login", href: "#" },
-      { id: 6, label: "Reset password", href: "#" },
-      { id: 7, label: "Terms and Conditions", href: "#" },
-      { id: 8, label: "Privacy Policy", href: "#" },
-      { id: 9, label: "404 Error", href: "/not-found" },
+      { id: 4, label: "Admin Login", href: "/admin/login" },
+      { id: 5, label: "Sign Up", href: "/admin/login" },
+      { id: 6, label: "Login", href: "/admin/login" },
+      { id: 7, label: "Reset password", href: "#" },
+      { id: 8, label: "Terms and Conditions", href: "#" },
+      { id: 9, label: "Privacy Policy", href: "#" },
+      { id: 10, label: "404 Error", href: "/not-found" },
     ],
   },
 ];

@@ -3,7 +3,6 @@ import {
   Facebook,
   Instagram,
   LinkedinFill,
-  LogoWhite,
   Twitter,
 } from "@/lib/icons";
 import Input from "../ui/input";
@@ -91,9 +90,6 @@ const Footer = () => {
         {/* logo and link */}
         <div className="flex flex-col justify-between gap-x-12 gap-y-10 lg:flex-row">
           <div className="max-w-[297px] flex-1">
-            <Link href={"/"} className="text-primary">
-              <LogoWhite className="max-sm:w-27" />
-            </Link>
             <p className="mt-4 text-sm leading-5 tracking-sm text-gray-400">
               Empowering learners worldwide to master new skills and advance
               their careers through high-quality online education.

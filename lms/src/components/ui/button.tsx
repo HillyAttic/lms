@@ -1,5 +1,5 @@
 "use client";
-import { Slot } from "@/lib/slot";
+import { Slot } from "@radix-ui/react-slot";
 import { cn } from "@/lib/utils";
 import { cva, VariantProps } from "class-variance-authority";
 import { ButtonHTMLAttributes, RefObject } from "react";
