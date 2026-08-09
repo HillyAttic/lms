@@ -5,6 +5,9 @@ import { siteName, siteUrl } from "@/utils/envExport";
 import { Inter, Inter_Tight, Mulish } from "next/font/google";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
+import { AuthProvider } from "@/lib/auth-context";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
@@ -64,9 +67,22 @@ export default function RootLayout({
       <body
         className={`${interTight.variable} ${mulish.variable} ${inter.variable} antialiased`}
       >
-        <Header/>
-        {children}
-        <Footer/>
+        <AuthProvider>
+          <Header/>
+          {children}
+          <Footer/>
+          <ToastContainer
+            position="top-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss
+            draggable
+            pauseOnHover
+          />
+        </AuthProvider>
       </body>
     </html>
   );
