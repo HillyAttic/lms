@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
@@ -13,8 +13,15 @@ export default function AdminLogin() {
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
   const [loading, setLoading] = useState(false);
-  const { signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
+  const { user, role, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
+
+  // Redirect to dashboard if already logged in as admin
+  useEffect(() => {
+    if (!loading && user && role === "admin") {
+      router.replace("/admin");
+    }
+  }, [user, role, loading, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
