@@ -40,6 +40,16 @@ export default function AdminLogin() {
         ? "Incorrect password"
         : error.code === "auth/email-already-in-use"
         ? "Email already registered"
+        : error.code === "auth/invalid-credential"
+        ? "Invalid email or password"
+        : error.code === "auth/invalid-email"
+        ? "Please enter a valid email address"
+        : error.code === "auth/weak-password"
+        ? "Password must be at least 6 characters"
+        : error.code === "auth/operation-not-allowed"
+        ? "Email/password sign-in is not enabled. Please contact the administrator."
+        : error.code === "auth/too-many-requests"
+        ? "Too many failed attempts. Please try again later."
         : error.message || "Authentication failed";
       toast.error(message);
     } finally {
