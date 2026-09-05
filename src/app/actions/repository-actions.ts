@@ -50,20 +50,28 @@ export async function getRepositoryItemsPaginated(
   interactivityLevel?: number
 ) {
   try {
-    const snapshot = await adminDb
+    // Start with a query
+    let query = adminDb.collection("repository").orderBy("serialNumber", "asc");
+
+    // Get all items for counting (but only IDs and filter fields)
+    const countSnapshot = await adminDb
       .collection("repository")
-      .orderBy("serialNumber", "asc")
+      .select("serialNumber", "name", "description", "features", "interactivityLevel")
       .get();
 
-    let items = snapshot.docs.map((doc) => ({
+    let allItems = countSnapshot.docs.map((doc) => ({
       id: doc.id,
-      ...doc.data(),
+      serialNumber: doc.data().serialNumber,
+      name: doc.data().name,
+      description: doc.data().description,
+      features: doc.data().features,
+      interactivityLevel: doc.data().interactivityLevel,
     }));
 
     // Apply search filter
     if (search) {
       const searchLower = search.toLowerCase();
-      items = items.filter(
+      allItems = allItems.filter(
         (item: any) =>
           item.name?.toLowerCase().includes(searchLower) ||
           item.description?.toLowerCase().includes(searchLower) ||
@@ -73,15 +81,28 @@ export async function getRepositoryItemsPaginated(
 
     // Apply interactivity level filter
     if (interactivityLevel !== undefined && interactivityLevel !== null) {
-      items = items.filter(
+      allItems = allItems.filter(
         (item: any) => item.interactivityLevel === interactivityLevel
       );
     }
 
-    const total = items.length;
+    const total = allItems.length;
     const totalPages = Math.ceil(total / limit);
     const offset = (page - 1) * limit;
-    const data = items.slice(offset, offset + limit);
+    
+    // Get only the IDs we need for this page
+    const pageItemIds = allItems.slice(offset, offset + limit).map(item => item.id);
+
+    // Fetch only the full data for items on this page
+    const pageItemsPromises = pageItemIds.map(id => 
+      adminDb.doc(`repository/${id}`).get()
+    );
+    const pageItemsDocs = await Promise.all(pageItemsPromises);
+
+    const data = pageItemsDocs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    }));
 
     return {
       success: true,
@@ -113,18 +134,26 @@ export async function getRepositoryItemById(itemId: string) {
 
 // Upload SCORM package to repository
 export async function uploadRepositoryScorm(formData: FormData) {
+  console.log("=== Starting SCORM Upload ===");
+  
   try {
     const userId = formData.get("userId") as string;
 
     if (!userId) {
+      console.error("No userId provided");
       return { success: false, error: "User not authenticated" };
     }
+
+    console.log("User ID:", userId);
 
     // Check if user is admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
     if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+      console.error("User is not admin or doesn't exist");
       return { success: false, error: "Admin access required" };
     }
+
+    console.log("User verified as admin");
 
     // Get form data
     const file = formData.get("file") as File;
@@ -134,8 +163,17 @@ export async function uploadRepositoryScorm(formData: FormData) {
     const interactivityLevel = parseFloat(formData.get("interactivityLevel") as string);
     const duration = parseInt(formData.get("duration") as string);
 
+    console.log("Form data:", { name, fileSize: file?.size, fileName: file?.name });
+
     if (!file || !name) {
+      console.error("Missing file or name");
       return { success: false, error: "File and name are required" };
+    }
+
+    // Check file size (200MB limit)
+    if (file.size > 200 * 1024 * 1024) {
+      console.error("File too large:", file.size);
+      return { success: false, error: "File size exceeds 200MB limit" };
     }
 
     // Generate item ID
@@ -144,57 +182,86 @@ export async function uploadRepositoryScorm(formData: FormData) {
     const sourceZipPath = `${storageBase}/source.zip`;
     const extractedPath = `${storageBase}/extracted`;
 
+    console.log("Generated item ID:", itemId);
+
     // Convert file to buffer
+    console.log("Converting file to buffer...");
     const fileBuffer = Buffer.from(await file.arrayBuffer());
+    console.log("Buffer created, size:", fileBuffer.length);
 
     // Upload source zip to Firebase Storage using Admin SDK
+    console.log("Getting Firebase Storage bucket...");
     const bucket = adminStorage.bucket();
+    console.log("Bucket name:", bucket.name);
+    
+    console.log("Uploading source ZIP...");
     await bucket.file(sourceZipPath).save(fileBuffer, {
       contentType: "application/zip",
+      metadata: {
+        cacheControl: "public, max-age=31536000",
+      },
     });
+    console.log("Source ZIP uploaded successfully");
 
     // Extract zip using JSZip
+    console.log("Extracting ZIP contents...");
     const zip = new JSZip();
     const extractedZip = await zip.loadAsync(fileBuffer);
+    console.log("ZIP loaded successfully");
 
-    // Upload extracted files to Firebase Storage
-    const uploadPromises: Promise<void>[] = [];
-    const manifestPromises: Promise<string | null>[] = [];
+    // Process files in smaller batches to avoid memory issues
+    const files: Array<{ path: string; entry: JSZip.JSZipObject }> = [];
+    let manifestContent: string | null = null;
 
     extractedZip.forEach((relativePath, zipEntry) => {
       if (!zipEntry.dir) {
-        // Check if this is the imsmanifest.xml file
-        const isManifest =
-          relativePath.toLowerCase() === "imsmanifest.xml" ||
-          relativePath.toLowerCase().endsWith("/imsmanifest.xml");
-
-        if (isManifest) {
-          manifestPromises.push(
-            zipEntry.async("string").then((content) => content)
-          );
-        }
-
-        uploadPromises.push(
-          zipEntry.async("uint8array").then((content) => {
-            return bucket.file(`${extractedPath}/${relativePath}`).save(Buffer.from(content)).then(() => {});
-          })
-        );
+        files.push({ path: relativePath, entry: zipEntry });
       }
     });
 
-    await Promise.all(uploadPromises);
+    console.log(`Found ${files.length} files in ZIP`);
 
-    // Get manifest content
-    const manifestResults = await Promise.all(manifestPromises);
-    const imsManifestContent = manifestResults.find((c) => c !== null) || null;
+    // Get manifest content first
+    const manifestFile = files.find(f => 
+      f.path.toLowerCase() === "imsmanifest.xml" ||
+      f.path.toLowerCase().endsWith("/imsmanifest.xml")
+    );
+    
+    if (manifestFile) {
+      console.log("Found manifest file:", manifestFile.path);
+      manifestContent = await manifestFile.entry.async("string");
+    } else {
+      console.warn("No manifest file found");
+    }
+
+    // Upload files in batches of 20 to avoid memory issues
+    console.log("Starting file uploads in batches...");
+    const batchSize = 20;
+    for (let i = 0; i < files.length; i += batchSize) {
+      const batch = files.slice(i, i + batchSize);
+      console.log(`Uploading batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(files.length / batchSize)}`);
+      
+      const uploadPromises = batch.map(async ({ path, entry }) => {
+        const content = await entry.async("uint8array");
+        await bucket.file(`${extractedPath}/${path}`).save(Buffer.from(content), {
+          metadata: {
+            cacheControl: "public, max-age=31536000",
+          },
+        });
+      });
+      await Promise.all(uploadPromises);
+    }
+    console.log("All files uploaded successfully");
 
     // Parse imsmanifest.xml using regex
     let scormVersion = "1.2";
     let entryPoint = "story.html";
 
-    if (imsManifestContent) {
+    if (manifestContent) {
+      console.log("Parsing manifest...");
+      
       // Detect SCORM version
-      const schemaMatch = imsManifestContent.match(/<schemaversion>(.*?)<\/schemaversion>/i);
+      const schemaMatch = manifestContent.match(/<schemaversion>(.*?)<\/schemaversion>/i);
       if (schemaMatch) {
         const schemaVersion = schemaMatch[1];
         if (schemaVersion.includes("2004") || schemaVersion.includes("CAM")) {
@@ -208,20 +275,33 @@ export async function uploadRepositoryScorm(formData: FormData) {
       const resourceRegex = /<resource[^>]*identifier="([^"]*)"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/resource>/gi;
       let resourceMatch;
 
-      while ((resourceMatch = resourceRegex.exec(imsManifestContent)) !== null) {
+      while ((resourceMatch = resourceRegex.exec(manifestContent)) !== null) {
         const href = resourceMatch[2];
         if (href && href.toLowerCase().includes("story.html")) {
           entryPoint = href;
           break;
         }
       }
+
+      // If story.html not found, try to get the first resource with an href
+      if (entryPoint === "story.html") {
+        const firstResourceMatch = /<resource[^>]*href="([^"]*)"[^>]*>/i.exec(manifestContent);
+        if (firstResourceMatch && firstResourceMatch[1]) {
+          entryPoint = firstResourceMatch[1];
+        }
+      }
+      
+      console.log("Parsed manifest:", { scormVersion, entryPoint });
     }
 
     // Get next serial number
+    console.log("Getting next serial number...");
     const countSnapshot = await adminDb.collection("repository").count().get();
     const nextSerialNumber = countSnapshot.data().count + 1;
+    console.log("Next serial number:", nextSerialNumber);
 
     // Create Firestore document using Admin SDK
+    console.log("Creating Firestore document...");
     await adminDb.collection("repository").doc(itemId).set({
       serialNumber: nextSerialNumber,
       name,
@@ -237,13 +317,20 @@ export async function uploadRepositoryScorm(formData: FormData) {
       updatedAt: FieldValue.serverTimestamp(),
       createdBy: userId,
     });
+    console.log("Firestore document created");
 
+    console.log("Revalidating paths...");
     revalidatePath("/repository");
     revalidatePath("/admin/repository");
 
+    console.log("=== Upload Complete ===");
+    // Return minimal response to avoid body size issues
     return { success: true, itemId };
   } catch (error: any) {
-    console.error("Upload repository SCORM error:", error);
+    console.error("=== Upload Error ===");
+    console.error("Error details:", error);
+    console.error("Error message:", error.message);
+    console.error("Error stack:", error.stack);
     return { success: false, error: error.message || "Upload failed" };
   }
 }

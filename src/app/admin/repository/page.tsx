@@ -92,25 +92,39 @@ export default function AdminRepositoryPage() {
     setUploading(true);
     setFormError("");
 
-    const form = new FormData();
-    form.append("userId", user?.uid || "");
-    form.append("file", selectedFile);
-    form.append("name", formData.name);
-    form.append("description", formData.description);
-    form.append("features", formData.features);
-    form.append("interactivityLevel", formData.interactivityLevel);
-    form.append("duration", formData.duration);
+    try {
+      const form = new FormData();
+      form.append("userId", user?.uid || "");
+      form.append("file", selectedFile);
+      form.append("name", formData.name);
+      form.append("description", formData.description);
+      form.append("features", formData.features);
+      form.append("interactivityLevel", formData.interactivityLevel);
+      form.append("duration", formData.duration);
 
-    const result = await uploadRepositoryScorm(form);
+      console.log("Starting upload...", {
+        fileName: selectedFile.name,
+        fileSize: selectedFile.size,
+        name: formData.name,
+      });
 
-    if (result.success) {
-      setShowUploadModal(false);
-      resetForm();
-      loadItems();
-    } else {
-      setFormError(result.error || "Upload failed");
+      const result = await uploadRepositoryScorm(form);
+
+      console.log("Upload result:", result);
+
+      if (result.success) {
+        setShowUploadModal(false);
+        resetForm();
+        await loadItems();
+      } else {
+        setFormError(result.error || "Upload failed");
+      }
+    } catch (error: any) {
+      console.error("Upload error:", error);
+      setFormError(error.message || "Upload failed. Please try again.");
+    } finally {
+      setUploading(false);
     }
-    setUploading(false);
   };
 
   const handleEdit = async () => {
