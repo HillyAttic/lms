@@ -7,9 +7,10 @@ import { useEffect, ReactNode } from "react";
 interface ProtectedRouteProps {
   children: ReactNode;
   adminOnly?: boolean;
+  instructorOrAbove?: boolean;
 }
 
-export function ProtectedRoute({ children, adminOnly = false }: ProtectedRouteProps) {
+export function ProtectedRoute({ children, adminOnly = false, instructorOrAbove = false }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
 
@@ -19,9 +20,11 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
         router.replace("/admin/login");
       } else if (adminOnly && role !== "admin") {
         router.replace("/");
+      } else if (instructorOrAbove && role !== "admin" && role !== "instructor") {
+        router.replace("/");
       }
     }
-  }, [user, role, loading, router, adminOnly]);
+  }, [user, role, loading, router, adminOnly, instructorOrAbove]);
 
   if (loading) {
     return (
@@ -31,7 +34,7 @@ export function ProtectedRoute({ children, adminOnly = false }: ProtectedRoutePr
     );
   }
 
-  if (!user || (adminOnly && role !== "admin")) {
+  if (!user || (adminOnly && role !== "admin") || (instructorOrAbove && role !== "admin" && role !== "instructor")) {
     return null;
   }
 

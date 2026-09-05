@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 import { Upload, FileArchive, X, Image } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 
-export default function UploadPage() {
+export default function NewCoursePage() {
   const { user } = useAuth();
   const router = useRouter();
   const [title, setTitle] = useState("");
@@ -18,14 +18,14 @@ export default function UploadPage() {
   const [duration, setDuration] = useState<number>(30);
   const [categories, setCategories] = useState("");
   const [tags, setTags] = useState("");
+  const [objectives, setObjectives] = useState("");
+  const [prerequisites, setPrerequisites] = useState("");
+  const [targetAudience, setTargetAudience] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [thumbnail, setThumbnail] = useState<File | null>(null);
   const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
-  const [dragActive, setDragActive] = useState(false);
-
-  const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -34,8 +34,8 @@ export default function UploadPage() {
         toast.error("Please upload a .zip file");
         return;
       }
-      if (selectedFile.size > MAX_FILE_SIZE) {
-        toast.error(`File size (${(selectedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds 200MB limit`);
+      if (selectedFile.size > 200 * 1024 * 1024) {
+        toast.error("File size must be less than 200MB");
         return;
       }
       setFile(selectedFile);
@@ -60,15 +60,14 @@ export default function UploadPage() {
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragActive(false);
     const droppedFile = e.dataTransfer.files[0];
     if (droppedFile) {
       if (!droppedFile.name.endsWith(".zip")) {
         toast.error("Please upload a .zip file");
         return;
       }
-      if (droppedFile.size > MAX_FILE_SIZE) {
-        toast.error(`File size (${(droppedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds 200MB limit`);
+      if (droppedFile.size > 200 * 1024 * 1024) {
+        toast.error("File size must be less than 200MB");
         return;
       }
       setFile(droppedFile);
@@ -77,12 +76,6 @@ export default function UploadPage() {
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
-    setDragActive(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setDragActive(false);
   };
 
   const handleSubmit = async (e: FormEvent) => {
@@ -114,16 +107,16 @@ export default function UploadPage() {
         formData.append("thumbnail", thumbnail);
       }
 
-      // Simulate progress (server actions don't support real progress tracking)
+      // Simulate progress (server actions don't support real progress)
       const progressInterval = setInterval(() => {
         setUploadProgress((prev) => {
           if (prev >= 90) {
             clearInterval(progressInterval);
             return 90;
           }
-          return prev + 5;
+          return prev + 10;
         });
-      }, 300);
+      }, 500);
 
       const result = await uploadScormPackage(formData);
 
@@ -131,10 +124,8 @@ export default function UploadPage() {
       setUploadProgress(100);
 
       if (result.success) {
-        toast.success("SCORM package uploaded successfully!");
-        setTimeout(() => {
-          router.push("/admin/courses");
-        }, 500);
+        toast.success("Course created successfully!");
+        router.push("/admin/courses");
       } else {
         toast.error(result.error || "Upload failed");
         setUploadProgress(0);
@@ -148,22 +139,16 @@ export default function UploadPage() {
     }
   };
 
-  const formatFileSize = (bytes: number) => {
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
-  };
-
   return (
     <div>
       <PageHeader
-        title="Upload SCORM Package"
-        subtitle="Upload a new SCORM course package to the platform"
+        title="Create Course"
+        subtitle="Upload a new SCORM course package"
       />
 
-      <div className="bg-white rounded-xl shadow-sm p-8 max-w-2xl">
+      <div className="bg-white rounded-xl shadow-sm p-8 max-w-3xl">
         <form onSubmit={handleSubmit} className="space-y-6">
-          {/* File Upload */}
+          {/* SCORM Package Upload */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               SCORM Package (.zip) *
@@ -171,21 +156,16 @@ export default function UploadPage() {
             <div
               onDrop={handleDrop}
               onDragOver={handleDragOver}
-              onDragLeave={handleDragLeave}
-              className={`border-2 border-dashed rounded-lg p-8 text-center transition-colors cursor-pointer ${
-                dragActive
-                  ? "border-purple-500 bg-purple-50"
-                  : file
-                  ? "border-green-500 bg-green-50"
-                  : "border-gray-300 hover:border-purple-500"
-              }`}
+              className="border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-purple-500 transition-colors cursor-pointer"
             >
               {file ? (
                 <div className="flex items-center justify-center gap-3">
-                  <FileArchive className="w-10 h-10 text-green-600" />
+                  <FileArchive className="w-10 h-10 text-purple-600" />
                   <div className="text-left">
                     <p className="font-medium text-gray-900">{file.name}</p>
-                    <p className="text-sm text-gray-500">{formatFileSize(file.size)}</p>
+                    <p className="text-sm text-gray-500">
+                      {(file.size / 1024 / 1024).toFixed(2)} MB
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -210,9 +190,7 @@ export default function UploadPage() {
                       />
                     </label>
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">
-                    Maximum file size: 200MB • Only .zip files accepted
-                  </p>
+                  <p className="text-xs text-gray-500 mt-2">Maximum file size: 200MB</p>
                 </div>
               )}
             </div>
@@ -369,28 +347,63 @@ export default function UploadPage() {
             </div>
           </div>
 
+          {/* Objectives, Prerequisites, Target Audience */}
+          <div>
+            <label htmlFor="objectives" className="block text-sm font-medium text-gray-700 mb-2">
+              Learning Objectives
+            </label>
+            <textarea
+              id="objectives"
+              value={objectives}
+              onChange={(e) => setObjectives(e.target.value)}
+              rows={2}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              placeholder="What learners will achieve"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label htmlFor="prerequisites" className="block text-sm font-medium text-gray-700 mb-2">
+                Prerequisites
+              </label>
+              <input
+                id="prerequisites"
+                type="text"
+                value={prerequisites}
+                onChange={(e) => setPrerequisites(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                placeholder="Required knowledge"
+              />
+            </div>
+            <div>
+              <label htmlFor="targetAudience" className="block text-sm font-medium text-gray-700 mb-2">
+                Target Audience
+              </label>
+              <input
+                id="targetAudience"
+                type="text"
+                value={targetAudience}
+                onChange={(e) => setTargetAudience(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                placeholder="Who this course is for"
+              />
+            </div>
+          </div>
+
           {/* Upload Progress */}
           {uploading && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Uploading and processing SCORM package...</span>
-                <span className="text-purple-600 font-medium">{uploadProgress}%</span>
+                <span className="text-gray-600">Uploading...</span>
+                <span className="text-purple-600">{uploadProgress}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
+              <div className="w-full bg-gray-200 rounded-full h-2">
                 <div
-                  className="bg-purple-600 h-2.5 rounded-full transition-all duration-300"
+                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500">
-                {uploadProgress < 30
-                  ? "Uploading file..."
-                  : uploadProgress < 60
-                  ? "Extracting SCORM package..."
-                  : uploadProgress < 90
-                  ? "Processing course content..."
-                  : "Finalizing..."}
-              </p>
             </div>
           )}
 
@@ -398,7 +411,7 @@ export default function UploadPage() {
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={() => router.push("/admin")}
+              onClick={() => router.push("/admin/courses")}
               disabled={uploading}
               className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >
@@ -417,7 +430,7 @@ export default function UploadPage() {
               ) : (
                 <>
                   <Upload className="w-4 h-4" />
-                  Upload SCORM
+                  Create Course
                 </>
               )}
             </button>

@@ -1,135 +1,161 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import Link from "next/link";
+import { getDashboardStats } from "@/app/actions/stats-actions";
 import { toast } from "react-toastify";
-import UploadScormModal from "./upload-scorm-modal";
-import { Upload, Trash2, Edit, Play } from "@/lib/icons";
+import { BookOpen, Users, Upload, ArrowRight, BarChart, TrendingUp } from "@/lib/icons";
+import StatCard from "@/components/admin/stat-card";
+import Badge from "@/components/admin/badge";
+import LoadingSpinner from "@/components/admin/loading-spinner";
+import PageHeader from "@/components/admin/page-header";
 
-interface Course {
-  id: string;
-  title: string;
-  description: string;
-  features: string;
-  interactivityLevel: number;
-  duration: number;
-  status: "active" | "draft";
-  scormVersion: string;
-  createdAt: any;
+interface DashboardData {
+  totalCourses: number;
+  activeCourses: number;
+  draftCourses: number;
+  totalUsers: number;
+  adminCount: number;
+  instructorCount: number;
+  learnerCount: number;
+  recentUploads: Array<{
+    id: string;
+    title: string;
+    status: string;
+    createdAt: any;
+    scormVersion: string;
+  }>;
 }
 
 export default function AdminDashboard() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const [stats, setStats] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [showUploadModal, setShowUploadModal] = useState(false);
 
   useEffect(() => {
-    loadCourses();
+    loadStats();
   }, []);
 
-  const loadCourses = async () => {
+  const loadStats = async () => {
     try {
-      const snapshot = await getDocs(collection(db, "courses"));
-      const coursesData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Course[];
-      setCourses(coursesData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds));
+      const result = await getDashboardStats();
+      if (result.success) {
+        setStats(result.data as DashboardData);
+      } else {
+        toast.error("Failed to load dashboard stats");
+      }
     } catch (error) {
-      toast.error("Failed to load courses");
+      toast.error("Failed to load dashboard stats");
       console.error(error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDelete = async (courseId: string) => {
-    if (!confirm("Are you sure you want to delete this course?")) return;
-
-    try {
-      await deleteDoc(doc(db, "courses", courseId));
-      toast.success("Course deleted successfully");
-      loadCourses();
-    } catch (error) {
-      toast.error("Failed to delete course");
-      console.error(error);
-    }
-  };
-
-  const handleUploadSuccess = () => {
-    setShowUploadModal(false);
-    loadCourses();
-  };
-
-  const getStatusBadge = (status: string) => {
-    return status === "active" ? (
-      <span className="px-2 py-1 text-xs font-medium bg-green-100 text-green-800 rounded-full">
-        Active
-      </span>
-    ) : (
-      <span className="px-2 py-1 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-full">
-        Draft
-      </span>
-    );
-  };
-
-  const getInteractivityBadge = (level: number) => {
-    const colors: Record<number, string> = {
-      1: "bg-gray-100 text-gray-800",
-      2: "bg-blue-100 text-blue-800",
-      2.5: "bg-purple-100 text-purple-800",
-      3: "bg-green-100 text-green-800",
-    };
-    return (
-      <span
-        className={`px-2 py-1 text-xs font-medium rounded-full ${colors[level] || colors[1]}`}
-      >
-        Level {level}
-      </span>
-    );
+  const formatDate = (timestamp: any) => {
+    if (!timestamp?.seconds) return "N/A";
+    return new Date(timestamp.seconds * 1000).toLocaleDateString("en-GB", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+    });
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center h-64">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-      </div>
-    );
+    return <LoadingSpinner />;
   }
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Course Dashboard</h1>
-          <p className="text-gray-600 mt-1">Manage your SCORM courses</p>
-        </div>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          <Upload className="w-5 h-5" />
-          Upload SCORM
-        </button>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Welcome to the admin panel"
+        actions={
+          <Link
+            href="/admin/upload"
+            className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
+          >
+            <Upload className="w-5 h-5" />
+            Upload SCORM
+          </Link>
+        }
+      />
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <StatCard
+          title="Total Courses"
+          value={stats?.totalCourses || 0}
+          icon={<BookOpen className="w-6 h-6" />}
+          color="purple"
+        />
+        <StatCard
+          title="Active Courses"
+          value={stats?.activeCourses || 0}
+          icon={<TrendingUp className="w-6 h-6" />}
+          color="green"
+        />
+        <StatCard
+          title="Total Users"
+          value={stats?.totalUsers || 0}
+          icon={<Users className="w-6 h-6" />}
+          color="blue"
+        />
+        <StatCard
+          title="Admins"
+          value={stats?.adminCount || 0}
+          icon={<BarChart className="w-6 h-6" />}
+          color="yellow"
+        />
       </div>
 
-      {courses.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 text-center">
-          <BookOpen className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No courses yet</h3>
-          <p className="text-gray-600 mb-6">Get started by uploading your first SCORM package</p>
-          <button
-            onClick={() => setShowUploadModal(true)}
-            className="bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            Upload SCORM
-          </button>
+      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <Link
+          href="/admin/upload"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Upload className="w-5 h-5 text-purple-600" />
+            </div>
+            <span className="font-medium text-gray-900">Upload SCORM</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
+          href="/admin/courses"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <BookOpen className="w-5 h-5 text-blue-600" />
+            </div>
+            <span className="font-medium text-gray-900">Manage Courses</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
+          href="/admin/users"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-green-100 rounded-lg">
+              <Users className="w-5 h-5 text-green-600" />
+            </div>
+            <span className="font-medium text-gray-900">Manage Users</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+      </div>
+
+      {/* Recent Uploads */}
+      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        <div className="px-6 py-4 border-b">
+          <h2 className="text-lg font-semibold text-gray-900">Recent Uploads</h2>
         </div>
-      ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+        {stats?.recentUploads && stats.recentUploads.length > 0 ? (
           <table className="w-full">
-            <thead className="bg-gray-50 border-b">
+            <thead className="bg-gray-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   Course Name
@@ -138,86 +164,65 @@ export default function AdminDashboard() {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Interactivity
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Duration
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
                   SCORM Version
                 </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Actions
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
+                  Uploaded
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {courses.map((course) => (
+              {stats.recentUploads.map((course) => (
                 <tr key={course.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4">
-                    <div>
-                      <div className="font-medium text-gray-900">{course.title}</div>
-                      <div className="text-sm text-gray-500 truncate max-w-xs">
-                        {course.description}
-                      </div>
-                    </div>
+                    <Link
+                      href={`/admin/courses/${course.id}`}
+                      className="font-medium text-gray-900 hover:text-purple-600"
+                    >
+                      {course.title}
+                    </Link>
                   </td>
-                  <td className="px-6 py-4">{getStatusBadge(course.status)}</td>
                   <td className="px-6 py-4">
-                    {getInteractivityBadge(course.interactivityLevel)}
+                    <Badge
+                      label={course.status === "active" ? "Active" : "Draft"}
+                      variant={course.status === "active" ? "success" : "warning"}
+                    />
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
-                    {course.duration} min
+                    {course.scormVersion}
                   </td>
-                  <td className="px-6 py-4">
-                    <span className="text-sm text-gray-600">{course.scormVersion}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      <button className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors">
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button
-                        onClick={() => handleDelete(course.id)}
-                        className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    {formatDate(course.createdAt)}
                   </td>
                 </tr>
               ))}
             </tbody>
           </table>
+        ) : (
+          <div className="p-8 text-center text-gray-500">
+            No courses uploaded yet
+          </div>
+        )}
+      </div>
+
+      {/* User Role Breakdown */}
+      <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-4">User Roles</h2>
+        <div className="grid grid-cols-3 gap-4">
+          <div className="text-center p-4 bg-purple-50 rounded-lg">
+            <p className="text-2xl font-bold text-purple-600">{stats?.adminCount || 0}</p>
+            <p className="text-sm text-gray-600">Admins</p>
+          </div>
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <p className="text-2xl font-bold text-blue-600">{stats?.instructorCount || 0}</p>
+            <p className="text-sm text-gray-600">Instructors</p>
+          </div>
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <p className="text-2xl font-bold text-green-600">{stats?.learnerCount || 0}</p>
+            <p className="text-sm text-gray-600">Learners</p>
+          </div>
         </div>
-      )}
-
-      {showUploadModal && (
-        <UploadScormModal
-          onClose={() => setShowUploadModal(false)}
-          onSuccess={handleUploadSuccess}
-        />
-      )}
+      </div>
     </div>
-  );
-}
-
-function BookOpen(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
   );
 }

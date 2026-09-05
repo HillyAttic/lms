@@ -9,6 +9,7 @@ import {
   Upload,
   BookOpen,
   Users,
+  Settings,
   ArrowLeft,
   LogOut,
 } from "@/lib/icons";
@@ -18,6 +19,7 @@ const navItems = [
   { label: "Upload SCORM", href: "/admin/upload", icon: Upload },
   { label: "Courses", href: "/admin/courses", icon: BookOpen },
   { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
 
 export default function AdminSidebar() {

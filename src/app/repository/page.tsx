@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, where } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import { getActiveCourses } from "@/app/actions/course-actions";
 import { Search, Filter, Play } from "@/lib/icons";
 import ScormPlayer from "@/components/repository/scorm-player";
 
@@ -34,13 +33,8 @@ export default function RepositoryPage() {
 
   const loadCourses = async () => {
     try {
-      const q = query(collection(db, "courses"), where("status", "==", "active"));
-      const snapshot = await getDocs(q);
-      const coursesData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as Course[];
-      setCourses(coursesData);
+      const coursesData = await getActiveCourses();
+      setCourses(coursesData as Course[]);
     } catch (error) {
       console.error("Failed to load courses:", error);
     } finally {

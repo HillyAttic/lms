@@ -8,6 +8,7 @@ import Footer from "@/components/footer";
 import { AuthProvider } from "@/lib/auth-context";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import AdminLayoutGuard from "@/components/admin-layout-guard";
 
 const interTight = Inter_Tight({
   variable: "--font-inter-tight",
@@ -68,9 +69,9 @@ export default function RootLayout({
         className={`${interTight.variable} ${mulish.variable} ${inter.variable} antialiased`}
       >
         <AuthProvider>
-          <Header/>
-          {children}
-          <Footer/>
+          <AdminLayoutGuard>
+            {children}
+          </AdminLayoutGuard>
           <ToastContainer
             position="top-right"
             autoClose={3000}

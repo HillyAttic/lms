@@ -14,7 +14,7 @@ import {
 import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
 import { auth, db } from "@/lib/firebase";
 
-type Role = "admin" | "learner" | null;
+type Role = "admin" | "instructor" | "learner" | null;
 
 interface AuthContextType {
   user: User | null;

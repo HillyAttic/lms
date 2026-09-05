@@ -1,16 +1,6 @@
 "use server";
 
-import { db, storage } from "@/lib/firebase";
-import { ref, uploadBytes, deleteObject, listAll } from "firebase/storage";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  getDoc,
-  doc,
-  updateDoc,
-  deleteDoc,
-} from "firebase/firestore";
+import { adminDb, adminStorage, FieldValue } from "@/lib/firebase-admin";
 import JSZip from "jszip";
 import { revalidatePath } from "next/cache";
 
@@ -40,8 +30,8 @@ export async function uploadScormPackage(formData: FormData) {
     }
 
     // Check if user is admin
-    const userDoc = await getDoc(doc(db, "users", userId));
-    if (!userDoc.exists() || userDoc.data().role !== "admin") {
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
       return { success: false, error: "Admin access required" };
     }
 
@@ -52,6 +42,7 @@ export async function uploadScormPackage(formData: FormData) {
     const features = formData.get("features") as string;
     const interactivityLevel = parseFloat(formData.get("interactivityLevel") as string);
     const duration = parseInt(formData.get("duration") as string);
+    const thumbnailFile = formData.get("thumbnail") as File | null;
 
     if (!file || !title) {
       return { success: false, error: "File and title are required" };
@@ -59,16 +50,18 @@ export async function uploadScormPackage(formData: FormData) {
 
     // Generate course ID
     const courseId = `course_${Date.now()}`;
-    const storagePath = `scorm/${courseId}`;
-    const sourceZipPath = `${storagePath}/source.zip`;
-    const extractedPath = `${storagePath}/extracted`;
+    const storageBase = `scorm/${courseId}`;
+    const sourceZipPath = `${storageBase}/source.zip`;
+    const extractedPath = `${storageBase}/extracted`;
 
     // Convert file to buffer
     const fileBuffer = Buffer.from(await file.arrayBuffer());
 
-    // Upload source zip to Firebase Storage
-    const zipRef = ref(storage, sourceZipPath);
-    await uploadBytes(zipRef, fileBuffer);
+    // Upload source zip to Firebase Storage using Admin SDK
+    const bucket = adminStorage.bucket();
+    await bucket.file(sourceZipPath).save(fileBuffer, {
+      contentType: "application/zip",
+    });
 
     // Extract zip using JSZip
     const zip = new JSZip();
@@ -93,8 +86,7 @@ export async function uploadScormPackage(formData: FormData) {
 
         uploadPromises.push(
           zipEntry.async("uint8array").then((content) => {
-            const fileRef = ref(storage, `${extractedPath}/${relativePath}`);
-            return uploadBytes(fileRef, content).then(() => {});
+            return bucket.file(`${extractedPath}/${relativePath}`).save(Buffer.from(content)).then(() => {});
           })
         );
       }
@@ -192,8 +184,25 @@ export async function uploadScormPackage(formData: FormData) {
       };
     }
 
-    // Create Firestore document
-    await addDoc(collection(db, "courses"), {
+    // Handle thumbnail upload
+    let thumbnailUrl: string | null = null;
+    if (thumbnailFile) {
+      const thumbBuffer = Buffer.from(await thumbnailFile.arrayBuffer());
+      const ext = thumbnailFile.name.split(".").pop() || "jpg";
+      const thumbPath = `thumbnails/${courseId}/thumbnail.${ext}`;
+      await bucket.file(thumbPath).save(thumbBuffer, {
+        contentType: thumbnailFile.type,
+      });
+      // Get public URL
+      const [url] = await bucket.file(thumbPath).getSignedUrl({
+        action: "read",
+        expires: "2037-12-31",
+      });
+      thumbnailUrl = url;
+    }
+
+    // Create Firestore document using Admin SDK
+    await adminDb.collection("courses").add({
       title,
       description,
       features,
@@ -201,9 +210,14 @@ export async function uploadScormPackage(formData: FormData) {
       duration,
       status: "active",
       scormVersion,
-      thumbnailUrl: null,
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      thumbnailUrl,
+      categories: [],
+      tags: [],
+      objectives: "",
+      prerequisites: "",
+      targetAudience: "",
+      createdAt: FieldValue.serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
       createdBy: userId,
       scormStructure,
     });
@@ -228,6 +242,11 @@ export async function updateCourse(
     interactivityLevel?: number;
     duration?: number;
     status?: "active" | "draft";
+    categories?: string[];
+    tags?: string[];
+    objectives?: string;
+    prerequisites?: string;
+    targetAudience?: string;
   }
 ) {
   try {
@@ -235,15 +254,14 @@ export async function updateCourse(
       return { success: false, error: "User not authenticated" };
     }
 
-    const userDoc = await getDoc(doc(db, "users", userId));
-    if (!userDoc.exists() || userDoc.data().role !== "admin") {
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
       return { success: false, error: "Admin access required" };
     }
 
-    const courseRef = doc(db, "courses", courseId);
-    await updateDoc(courseRef, {
+    await adminDb.doc(`courses/${courseId}`).update({
       ...data,
-      updatedAt: serverTimestamp(),
+      updatedAt: FieldValue.serverTimestamp(),
     });
 
     revalidatePath("/repository");
@@ -262,21 +280,26 @@ export async function deleteCourse(courseId: string, userId: string) {
       return { success: false, error: "User not authenticated" };
     }
 
-    const userDoc = await getDoc(doc(db, "users", userId));
-    if (!userDoc.exists() || userDoc.data().role !== "admin") {
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
       return { success: false, error: "Admin access required" };
     }
 
     // Delete course document
-    await deleteDoc(doc(db, "courses", courseId));
+    await adminDb.doc(`courses/${courseId}`).delete();
 
-    // Delete Storage files
-    const storagePath = `scorm/${courseId}`;
-    const listRef = ref(storage, storagePath);
-    const { items } = await listAll(listRef);
+    // Delete Storage files using Admin SDK
+    const bucket = adminStorage.bucket();
+    const scormPrefix = `scorm/${courseId}`;
+    const [scormFiles] = await bucket.getFiles({ prefix: scormPrefix });
+    const deleteScormPromises = scormFiles.map((file) => file.delete());
 
-    const deletePromises = items.map((itemRef) => deleteObject(itemRef));
-    await Promise.all(deletePromises);
+    // Delete thumbnail files
+    const thumbPrefix = `thumbnails/${courseId}`;
+    const [thumbFiles] = await bucket.getFiles({ prefix: thumbPrefix });
+    const deleteThumbPromises = thumbFiles.map((file) => file.delete());
+
+    await Promise.all([...deleteScormPromises, ...deleteThumbPromises]);
 
     revalidatePath("/repository");
     revalidatePath("/admin");
@@ -285,5 +308,52 @@ export async function deleteCourse(courseId: string, userId: string) {
   } catch (error: any) {
     console.error("Delete error:", error);
     return { success: false, error: error.message || "Delete failed" };
+  }
+}
+
+export async function uploadThumbnail(courseId: string, file: File, userId: string) {
+  try {
+    if (!userId) {
+      return { success: false, error: "User not authenticated" };
+    }
+
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    const bucket = adminStorage.bucket();
+
+    // Delete old thumbnail if exists
+    const oldThumbPrefix = `thumbnails/${courseId}`;
+    const [oldFiles] = await bucket.getFiles({ prefix: oldThumbPrefix });
+    await Promise.all(oldFiles.map((f) => f.delete()));
+
+    // Upload new thumbnail
+    const fileBuffer = Buffer.from(await file.arrayBuffer());
+    const ext = file.name.split(".").pop() || "jpg";
+    const thumbPath = `thumbnails/${courseId}/thumbnail.${ext}`;
+    await bucket.file(thumbPath).save(fileBuffer, {
+      contentType: file.type,
+    });
+
+    const [url] = await bucket.file(thumbPath).getSignedUrl({
+      action: "read",
+      expires: "2037-12-31",
+    });
+
+    // Update course document
+    await adminDb.doc(`courses/${courseId}`).update({
+      thumbnailUrl: url,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    revalidatePath("/repository");
+    revalidatePath("/admin");
+
+    return { success: true, thumbnailUrl: url };
+  } catch (error: any) {
+    console.error("Thumbnail upload error:", error);
+    return { success: false, error: error.message || "Thumbnail upload failed" };
   }
 }

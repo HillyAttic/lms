@@ -1,18 +1,30 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { collection, getDocs, doc, updateDoc, deleteDoc, serverTimestamp } from "firebase/firestore";
-import { db } from "@/lib/firebase";
+import Link from "next/link";
+import {
+  getUsersPaginated,
+  batchUpdateUserRole,
+  batchDeleteUsers,
+} from "@/app/actions/user-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
-import { Search, Trash2 } from "@/lib/icons";
+import { Trash2, Eye, UserPlus, CheckSquare } from "@/lib/icons";
+import PageHeader from "@/components/admin/page-header";
+import SearchFilterBar from "@/components/admin/search-filter-bar";
+import Pagination from "@/components/admin/pagination";
+import Badge from "@/components/admin/badge";
+import ConfirmDialog from "@/components/admin/confirm-dialog";
+import LoadingSpinner from "@/components/admin/loading-spinner";
+import EmptyState from "@/components/admin/empty-state";
+import CreateUserModal from "@/components/admin/create-user-modal";
 
 interface UserData {
   id: string;
   uid: string;
   email: string;
   displayName: string;
-  role: "admin" | "learner";
+  role: "admin" | "instructor" | "learner";
   createdAt: any;
 }
 
@@ -21,20 +33,39 @@ export default function UsersPage() {
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
-  const [filterRole, setFilterRole] = useState<"all" | "admin" | "learner">("all");
+  const [filterRole, setFilterRole] = useState("all");
+  const [page, setPage] = useState(1);
+  const [limit, setLimit] = useState(10);
+  const [total, setTotal] = useState(0);
+  const [totalPages, setTotalPages] = useState(0);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showRoleConfirm, setShowRoleConfirm] = useState(false);
+  const [bulkRole, setBulkRole] = useState<"admin" | "instructor" | "learner">("learner");
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [sortBy, setSortBy] = useState("createdAt");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [page, limit, searchQuery, filterRole, sortBy, sortOrder]);
 
   const loadUsers = async () => {
+    setLoading(true);
     try {
-      const snapshot = await getDocs(collection(db, "users"));
-      const usersData = snapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      })) as UserData[];
-      setUsers(usersData.sort((a, b) => b.createdAt?.seconds - a.createdAt?.seconds));
+      const result = await getUsersPaginated(
+        page,
+        limit,
+        searchQuery || undefined,
+        filterRole || undefined
+      );
+      if (result.success) {
+        setUsers(result.data as UserData[]);
+        setTotal(result.total || 0);
+        setTotalPages(result.totalPages || 0);
+      } else {
+        toast.error("Failed to load users");
+      }
     } catch (error) {
       toast.error("Failed to load users");
       console.error(error);
@@ -43,54 +74,65 @@ export default function UsersPage() {
     }
   };
 
-  const handleRoleChange = async (userId: string, newRole: "admin" | "learner") => {
+  const handleBulkRoleChange = async () => {
+    if (!user || selectedIds.length === 0) return;
+
     try {
-      const userRef = doc(db, "users", userId);
-      await updateDoc(userRef, {
-        role: newRole,
-        updatedAt: serverTimestamp(),
-      });
-      toast.success(`User role updated to ${newRole}`);
-      loadUsers();
+      const result = await batchUpdateUserRole(selectedIds, bulkRole, user.uid);
+      if (result.success) {
+        toast.success(`${selectedIds.length} user(s) role updated to ${bulkRole}`);
+        setSelectedIds([]);
+        setShowRoleConfirm(false);
+        loadUsers();
+      } else {
+        toast.error(result.error || "Failed to update roles");
+      }
     } catch (error) {
-      toast.error("Failed to update user role");
+      toast.error("Failed to update roles");
       console.error(error);
     }
   };
 
-  const handleDelete = async (userId: string, userEmail: string) => {
-    if (!confirm(`Are you sure you want to delete user ${userEmail}? This cannot be undone.`)) return;
+  const handleBulkDelete = async () => {
+    if (!user || selectedIds.length === 0) return;
 
     try {
-      await deleteDoc(doc(db, "users", userId));
-      toast.success("User deleted successfully");
-      loadUsers();
+      const result = await batchDeleteUsers(selectedIds, user.uid);
+      if (result.success) {
+        toast.success(`${selectedIds.length} user(s) deleted successfully`);
+        setSelectedIds([]);
+        setShowDeleteConfirm(false);
+        loadUsers();
+      } else {
+        toast.error(result.error || "Failed to delete users");
+      }
     } catch (error) {
-      toast.error("Failed to delete user");
+      toast.error("Failed to delete users");
       console.error(error);
     }
   };
 
-  const filteredUsers = users.filter((userItem) => {
-    const matchesSearch =
-      userItem.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      userItem.displayName?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesRole = filterRole === "all" || userItem.role === filterRole;
-    return matchesSearch && matchesRole;
-  });
+  const toggleSelectAll = () => {
+    if (selectedIds.length === users.length) {
+      setSelectedIds([]);
+    } else {
+      setSelectedIds(users.map((u) => u.id));
+    }
+  };
 
-  const getRoleBadge = (role: string) => {
-    return role === "admin" ? (
-      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-purple-100 text-purple-800 rounded-full">
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L3 7v5c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V7l-9-5zm-1 15l-4-4 1.41-1.41L11 14.17l6.59-6.59L19 9l-8 8z"/></svg>
-        Admin
-      </span>
-    ) : (
-      <span className="inline-flex items-center gap-1 px-2 py-1 text-xs font-medium bg-blue-100 text-blue-800 rounded-full">
-        <svg className="w-3 h-3" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
-        Learner
-      </span>
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
     );
+  };
+
+  const handleSort = (field: string) => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortBy(field);
+      setSortOrder("desc");
+    }
   };
 
   const formatDate = (timestamp: any) => {
@@ -102,137 +144,287 @@ export default function UsersPage() {
     });
   };
 
-  if (loading) {
+  const getRoleBadge = (role: string) => {
+    const variants: Record<string, "purple" | "blue" | "green"> = {
+      admin: "purple",
+      instructor: "blue",
+      learner: "green",
+    };
     return (
-      <div className="flex items-center justify-center h-64">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
-      </div>
+      <Badge
+        label={role.charAt(0).toUpperCase() + role.slice(1)}
+        variant={variants[role] || "gray"}
+      />
     );
-  }
+  };
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Users</h1>
-          <p className="text-gray-600 mt-1">Manage platform users and their roles</p>
-        </div>
-        <div className="text-sm text-gray-500">
-          {users.length} total user{users.length !== 1 ? "s" : ""}
-        </div>
-      </div>
+      <PageHeader
+        title="Users"
+        subtitle="Manage platform users and their roles"
+        actions={
+          <div className="flex items-center gap-3">
+            {selectedIds.length > 0 && (
+              <>
+                <button
+                  onClick={() => setShowRoleConfirm(true)}
+                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Change Role ({selectedIds.length})
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 transition-colors"
+                >
+                  <Trash2 className="w-5 h-5" />
+                  Delete ({selectedIds.length})
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <UserPlus className="w-5 h-5" />
+              Create User
+            </button>
+          </div>
+        }
+      />
 
-      {/* Search and Filter */}
-      <div className="flex items-center gap-4 mb-6">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            placeholder="Search users by name or email..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-gray-300 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-          />
-        </div>
-        <select
-          value={filterRole}
-          onChange={(e) => setFilterRole(e.target.value as "all" | "admin" | "learner")}
-          className="rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-        >
-          <option value="all">All Roles</option>
-          <option value="admin">Admin</option>
-          <option value="learner">Learner</option>
-        </select>
-      </div>
+      <SearchFilterBar
+        searchPlaceholder="Search users by name or email..."
+        searchValue={searchQuery}
+        onSearchChange={(value) => {
+          setSearchQuery(value);
+          setPage(1);
+        }}
+        filters={[
+          {
+            label: "Role",
+            value: filterRole,
+            options: [
+              { label: "All Roles", value: "all" },
+              { label: "Admin", value: "admin" },
+              { label: "Instructor", value: "instructor" },
+              { label: "Learner", value: "learner" },
+            ],
+            onChange: (value) => {
+              setFilterRole(value);
+              setPage(1);
+            },
+          },
+        ]}
+      />
 
-      {filteredUsers.length === 0 ? (
-        <div className="bg-white rounded-xl p-12 text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">
-            {users.length === 0 ? "No users yet" : "No users match your search"}
-          </h3>
-          <p className="text-gray-600">
-            {users.length === 0
-              ? "Users will appear here after they register"
-              : "Try adjusting your search or filter criteria"}
-          </p>
-        </div>
+      {loading ? (
+        <LoadingSpinner />
+      ) : users.length === 0 ? (
+        <EmptyState
+          icon={<UsersIcon className="w-16 h-16" />}
+          title="No users yet"
+          description="Users will appear here after they register or are created"
+          action={
+            <button
+              onClick={() => setShowCreateModal(true)}
+              className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <UserPlus className="w-5 h-5" />
+              Create User
+            </button>
+          }
+        />
       ) : (
-        <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-          <table className="w-full">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  User
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Role
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Joined
-                </th>
-                <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                  Actions
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {filteredUsers.map((userItem) => (
-                <tr key={userItem.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                        <span className="text-sm font-medium text-purple-600">
-                          {(userItem.displayName || userItem.email || "?")[0].toUpperCase()}
-                        </span>
-                      </div>
-                      <div>
-                        <div className="font-medium text-gray-900">
-                          {userItem.displayName || "No name"}
-                        </div>
-                        <div className="text-sm text-gray-500">{userItem.email}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">{getRoleBadge(userItem.role)}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {formatDate(userItem.createdAt)}
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center justify-end gap-2">
-                      {userItem.uid !== user?.uid && (
-                        <>
-                          <select
-                            value={userItem.role}
-                            onChange={(e) =>
-                              handleRoleChange(
-                                userItem.id,
-                                e.target.value as "admin" | "learner"
-                              )
-                            }
-                            className="text-sm rounded-lg border border-gray-300 px-3 py-1.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                          >
-                            <option value="admin">Admin</option>
-                            <option value="learner">Learner</option>
-                          </select>
-                          <button
-                            onClick={() => handleDelete(userItem.id, userItem.email)}
-                            className="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
-                        </>
-                      )}
-                      {userItem.uid === user?.uid && (
-                        <span className="text-xs text-gray-400 italic">You</span>
-                      )}
-                    </div>
-                  </td>
+        <>
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+            <table className="w-full">
+              <thead className="bg-gray-50 border-b">
+                <tr>
+                  <th className="px-6 py-3 text-left">
+                    <button
+                      onClick={toggleSelectAll}
+                      className="p-1 hover:bg-gray-200 rounded"
+                    >
+                      <CheckSquare
+                        className={`w-5 h-5 ${
+                          selectedIds.length === users.length
+                            ? "text-purple-600"
+                            : "text-gray-400"
+                        }`}
+                      />
+                    </button>
+                  </th>
+                  <th
+                    onClick={() => handleSort("displayName")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
+                  >
+                    User {sortBy === "displayName" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    onClick={() => handleSort("role")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
+                  >
+                    Role {sortBy === "role" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th
+                    onClick={() => handleSort("createdAt")}
+                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
+                  >
+                    Joined {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
+                    Actions
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {users.map((userItem) => (
+                  <tr key={userItem.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <button
+                        onClick={() => toggleSelect(userItem.id)}
+                        disabled={userItem.uid === user?.uid}
+                        className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                      >
+                        <CheckSquare
+                          className={`w-5 h-5 ${
+                            selectedIds.includes(userItem.id)
+                              ? "text-purple-600"
+                              : "text-gray-400"
+                          }`}
+                        />
+                      </button>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
+                          <span className="text-sm font-medium text-purple-600">
+                            {(userItem.displayName || userItem.email || "?")[0].toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <div className="font-medium text-gray-900">
+                            {userItem.displayName || "No name"}
+                          </div>
+                          <div className="text-sm text-gray-500">{userItem.email}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">{getRoleBadge(userItem.role)}</td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatDate(userItem.createdAt)}
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center justify-end gap-2">
+                        <Link
+                          href={`/admin/users/${userItem.id}`}
+                          className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Link>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <Pagination
+            page={page}
+            totalPages={totalPages}
+            total={total}
+            limit={limit}
+            onPageChange={setPage}
+            onLimitChange={(newLimit) => {
+              setLimit(newLimit);
+              setPage(1);
+            }}
+          />
+        </>
+      )}
+
+      {showCreateModal && (
+        <CreateUserModal
+          onClose={() => setShowCreateModal(false)}
+          onSuccess={() => {
+            setShowCreateModal(false);
+            loadUsers();
+          }}
+        />
+      )}
+
+      {showDeleteConfirm && (
+        <ConfirmDialog
+          title="Delete Users"
+          message={`Are you sure you want to delete ${selectedIds.length} user(s)? This action cannot be undone.`}
+          onConfirm={handleBulkDelete}
+          onCancel={() => setShowDeleteConfirm(false)}
+          confirmText="Delete"
+          variant="danger"
+        />
+      )}
+
+      {showRoleConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl max-w-md w-full">
+            <div className="p-6 border-b">
+              <h2 className="text-xl font-bold text-gray-900">Change User Role</h2>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-gray-600">
+                Change role for {selectedIds.length} user(s) to:
+              </p>
+              <select
+                value={bulkRole}
+                onChange={(e) => setBulkRole(e.target.value as "admin" | "instructor" | "learner")}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="learner">Learner</option>
+                <option value="instructor">Instructor</option>
+                <option value="admin">Admin</option>
+              </select>
+            </div>
+            <div className="flex justify-end gap-3 p-6 border-t">
+              <button
+                onClick={() => setShowRoleConfirm(false)}
+                className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkRoleChange}
+                className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                Update Role
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
+  );
+}
+
+function UsersIcon(props: any) {
+  return (
+    <svg
+      {...props}
+      xmlns="http://www.w3.org/2000/svg"
+      width="24"
+      height="24"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    >
+      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+      <circle cx="9" cy="7" r="4" />
+      <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+      <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+    </svg>
   );
 }

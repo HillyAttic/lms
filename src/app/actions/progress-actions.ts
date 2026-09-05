@@ -1,7 +1,6 @@
 "use server";
 
-import { db } from "@/lib/firebase";
-import { doc, getDoc, setDoc, serverTimestamp } from "firebase/firestore";
+import { adminDb, FieldValue } from "@/lib/firebase-admin";
 
 export interface ProgressData {
   courseId: string;
@@ -23,13 +22,12 @@ export async function saveProgress(data: ProgressData) {
     const { courseId, userId, ...rest } = data;
     const progressId = `${userId}_${courseId}`;
 
-    await setDoc(
-      doc(db, "progress", progressId),
+    await adminDb.doc(`progress/${progressId}`).set(
       {
         ...rest,
         courseId,
         userId,
-        lastUpdated: serverTimestamp(),
+        lastUpdated: FieldValue.serverTimestamp(),
       },
       { merge: true }
     );
@@ -44,9 +42,9 @@ export async function saveProgress(data: ProgressData) {
 export async function getProgress(userId: string, courseId: string) {
   try {
     const progressId = `${userId}_${courseId}`;
-    const progressDoc = await getDoc(doc(db, "progress", progressId));
+    const progressDoc = await adminDb.doc(`progress/${progressId}`).get();
 
-    if (progressDoc.exists()) {
+    if (progressDoc.exists) {
       return { success: true, data: progressDoc.data() };
     }
 
