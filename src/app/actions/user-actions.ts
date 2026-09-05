@@ -196,3 +196,81 @@ export async function getUserProgress(userId: string) {
     return { success: false, error: error.message };
   }
 }
+
+// Toggle repository access for a user
+export async function toggleRepositoryAccess(
+  userId: string,
+  adminUserId: string
+) {
+  try {
+    // Verify admin
+    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
+    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    // Get current user data
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists) {
+      return { success: false, error: "User not found" };
+    }
+
+    const currentAccess = userDoc.data()?.repositoryAccess || false;
+
+    await adminDb.doc(`users/${userId}`).update({
+      repositoryAccess: !currentAccess,
+      updatedAt: FieldValue.serverTimestamp(),
+    });
+
+    return { success: true, repositoryAccess: !currentAccess };
+  } catch (error: any) {
+    console.error("Toggle repository access error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Batch toggle repository access
+export async function batchToggleRepositoryAccess(
+  userIds: string[],
+  enable: boolean,
+  adminUserId: string
+) {
+  try {
+    // Verify admin
+    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
+    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    const batch = adminDb.batch();
+    userIds.forEach((userId) => {
+      const userRef = adminDb.doc(`users/${userId}`);
+      batch.update(userRef, {
+        repositoryAccess: enable,
+        updatedAt: FieldValue.serverTimestamp(),
+      });
+    });
+
+    await batch.commit();
+    return { success: true };
+  } catch (error: any) {
+    console.error("Batch toggle repository access error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+// Check if user has repository access
+export async function checkRepositoryAccess(userId: string) {
+  try {
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists) {
+      return { success: false, error: "User not found", hasAccess: false };
+    }
+
+    const hasAccess = userDoc.data()?.repositoryAccess || false;
+    return { success: true, hasAccess };
+  } catch (error: any) {
+    console.error("Check repository access error:", error);
+    return { success: false, error: error.message, hasAccess: false };
+  }
+}

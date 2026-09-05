@@ -1,51 +1,103 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getActiveCourses } from "@/app/actions/course-actions";
-import { Search, Filter, Play } from "@/lib/icons";
-import ScormPlayer from "@/components/repository/scorm-player";
+import { useAuth } from "@/lib/auth-context";
+import { useRouter } from "next/navigation";
+import {
+  getRepositoryItems,
+  getScormLaunchUrl,
+} from "@/app/actions/repository-actions";
+import { checkRepositoryAccess } from "@/app/actions/user-actions";
+import { Search, Filter, Play, RefreshCw } from "@/lib/icons";
 
-interface Course {
+interface RepositoryItem {
   id: string;
-  title: string;
-  description: string;
-  features: string;
+  serialNumber: number;
+  name: string;
   interactivityLevel: number;
+  features: string;
+  description: string;
   duration: number;
-  status: "active" | "draft";
   scormVersion: string;
-  scormStructure: {
-    entryPoint: string;
-    storagePath: string;
-  };
+  entryPoint: string;
 }
 
 export default function RepositoryPage() {
-  const [courses, setCourses] = useState<Course[]>([]);
+  const { user, loading: authLoading } = useAuth();
+  const router = useRouter();
+  const [items, setItems] = useState<RepositoryItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLevel, setFilterLevel] = useState<number | null>(null);
-  const [selectedCourse, setSelectedCourse] = useState<Course | null>(null);
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
+  const [launchingId, setLaunchingId] = useState<string | null>(null);
 
   useEffect(() => {
-    loadCourses();
-  }, []);
+    if (!authLoading) {
+      if (!user) {
+        // User not logged in, redirect to login
+        router.push("/admin/login");
+      } else {
+        checkAccess();
+      }
+    }
+  }, [user, authLoading]);
 
-  const loadCourses = async () => {
+  const checkAccess = async () => {
+    if (!user) return;
+
+    const result = await checkRepositoryAccess(user.uid);
+    if (result.success) {
+      setHasAccess(result.hasAccess);
+      if (result.hasAccess) {
+        loadItems();
+      } else {
+        setLoading(false);
+      }
+    } else {
+      setHasAccess(false);
+      setLoading(false);
+    }
+  };
+
+  const loadItems = async () => {
     try {
-      const coursesData = await getActiveCourses();
-      setCourses(coursesData as Course[]);
+      const result = await getRepositoryItems();
+      if (result.success) {
+        setItems(result.data as RepositoryItem[]);
+      }
     } catch (error) {
-      console.error("Failed to load courses:", error);
+      console.error("Failed to load repository items:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const filteredCourses = courses.filter((course) => {
-    const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesLevel = filterLevel === null || course.interactivityLevel === filterLevel;
+  const handleLaunch = async (item: RepositoryItem) => {
+    setLaunchingId(item.id);
+    try {
+      const result = await getScormLaunchUrl(item.id);
+      if (result.success && result.url) {
+        // Open SCORM in new tab
+        window.open(result.url, "_blank");
+      } else {
+        alert("Failed to launch SCORM package. Please try again.");
+      }
+    } catch (error) {
+      console.error("Failed to launch SCORM:", error);
+      alert("Failed to launch SCORM package. Please try again.");
+    } finally {
+      setLaunchingId(null);
+    }
+  };
+
+  const filteredItems = items.filter((item) => {
+    const matchesSearch =
+      item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.features?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesLevel =
+      filterLevel === null || item.interactivityLevel === filterLevel;
     return matchesSearch && matchesLevel;
   });
 
@@ -74,10 +126,51 @@ export default function RepositoryPage() {
     return `${mins}m`;
   };
 
-  if (loading) {
+  // Loading state
+  if (authLoading || loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      </div>
+    );
+  }
+
+  // Not logged in state (shouldn't reach here due to redirect, but just in case)
+  if (!user) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Required</h1>
+        <p className="text-gray-600 mb-4">Please log in to access the repository.</p>
+        <button
+          onClick={() => router.push("/admin/login")}
+          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          Log In
+        </button>
+      </div>
+    );
+  }
+
+  // No access state
+  if (hasAccess === false) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen">
+        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        </svg>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
+        <p className="text-gray-600 mb-4">
+          You don't have access to the repository. Please contact an administrator.
+        </p>
+        <button
+          onClick={() => router.push("/")}
+          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          Go Home
+        </button>
       </div>
     );
   }
@@ -125,8 +218,8 @@ export default function RepositoryPage() {
           </div>
         </div>
 
-        {/* Course Table */}
-        {filteredCourses.length === 0 ? (
+        {/* Excel-like Table */}
+        {filteredItems.length === 0 ? (
           <div className="bg-white rounded-xl p-12 text-center">
             <BookOpen className="w-16 h-16 mx-auto text-gray-300 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
@@ -137,65 +230,86 @@ export default function RepositoryPage() {
             </p>
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
+          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
             <div className="overflow-x-auto">
-              <table className="w-full">
-                <thead className="bg-gray-50 border-b">
+              <table className="w-full border-collapse">
+                <thead className="bg-gray-100 border-b-2 border-gray-200">
                   <tr>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[60px]">
+                      S.No
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[200px]">
                       Module Name
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[120px]">
                       Interactivity
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[150px]">
                       Features
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[250px]">
                       Description
                     </th>
-                    <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[100px]">
                       Duration
                     </th>
-                    <th className="px-6 py-4 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[100px]">
                       Action
                     </th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200">
-                  {filteredCourses.map((course) => (
-                    <tr key={course.id} className="hover:bg-gray-50 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="font-medium text-gray-900">{course.title}</div>
+                  {filteredItems.map((item, index) => (
+                    <tr
+                      key={item.id}
+                      className={`hover:bg-gray-50 transition-colors ${
+                        index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
+                      }`}
+                    >
+                      <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r border-gray-200 text-center">
+                        {item.serialNumber}
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <div className="font-semibold text-gray-900">{item.name}</div>
                         <div className="text-xs text-gray-500 mt-0.5">
-                          SCORM {course.scormVersion}
+                          SCORM {item.scormVersion}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        {getInteractivityBadge(course.interactivityLevel)}
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        {getInteractivityBadge(item.interactivityLevel)}
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 max-w-xs truncate" title={course.features}>
-                          {course.features || "—"}
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <div className="text-sm text-gray-600" title={item.features}>
+                          {item.features || "—"}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-600 max-w-md truncate" title={course.description}>
-                          {course.description || "—"}
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <div className="text-sm text-gray-600" title={item.description}>
+                          {item.description || "—"}
                         </div>
                       </td>
-                      <td className="px-6 py-4">
+                      <td className="px-4 py-3 border-r border-gray-200">
                         <span className="text-sm text-gray-600">
-                          {formatDuration(course.duration)}
+                          {formatDuration(item.duration)}
                         </span>
                       </td>
-                      <td className="px-6 py-4 text-right">
+                      <td className="px-4 py-3 text-center">
                         <button
-                          onClick={() => setSelectedCourse(course)}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
+                          onClick={() => handleLaunch(item)}
+                          disabled={launchingId === item.id}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                          <Play className="w-4 h-4" />
-                          Launch
+                          {launchingId === item.id ? (
+                            <>
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                              Loading...
+                            </>
+                          ) : (
+                            <>
+                              <Play className="w-4 h-4" />
+                              Launch
+                            </>
+                          )}
                         </button>
                       </td>
                     </tr>
@@ -208,17 +322,9 @@ export default function RepositoryPage() {
 
         {/* Results count */}
         <div className="mt-4 text-sm text-gray-600">
-          Showing {filteredCourses.length} of {courses.length} courses
+          Showing {filteredItems.length} of {items.length} courses
         </div>
       </div>
-
-      {/* SCORM Player Modal */}
-      {selectedCourse && (
-        <ScormPlayer
-          course={selectedCourse}
-          onClose={() => setSelectedCourse(null)}
-        />
-      )}
     </div>
   );
 }

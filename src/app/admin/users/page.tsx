@@ -6,6 +6,7 @@ import {
   getUsersPaginated,
   batchUpdateUserRole,
   batchDeleteUsers,
+  toggleRepositoryAccess,
 } from "@/app/actions/user-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
@@ -25,6 +26,7 @@ interface UserData {
   email: string;
   displayName: string;
   role: "admin" | "instructor" | "learner";
+  repositoryAccess: boolean;
   createdAt: any;
 }
 
@@ -45,6 +47,7 @@ export default function UsersPage() {
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+  const [togglingAccessId, setTogglingAccessId] = useState<string | null>(null);
 
   useEffect(() => {
     loadUsers();
@@ -132,6 +135,26 @@ export default function UsersPage() {
     } else {
       setSortBy(field);
       setSortOrder("desc");
+    }
+  };
+
+  const handleToggleRepositoryAccess = async (userId: string) => {
+    if (!user) return;
+
+    setTogglingAccessId(userId);
+    try {
+      const result = await toggleRepositoryAccess(userId, user.uid);
+      if (result.success) {
+        toast.success(`Repository access ${result.repositoryAccess ? "enabled" : "disabled"}`);
+        loadUsers();
+      } else {
+        toast.error(result.error || "Failed to toggle repository access");
+      }
+    } catch (error) {
+      toast.error("Failed to toggle repository access");
+      console.error(error);
+    } finally {
+      setTogglingAccessId(null);
     }
   };
 
@@ -273,6 +296,9 @@ export default function UsersPage() {
                   >
                     Joined {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
                   </th>
+                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
+                    Repository
+                  </th>
                   <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
                     Actions
                   </th>
@@ -314,6 +340,22 @@ export default function UsersPage() {
                     <td className="px-6 py-4">{getRoleBadge(userItem.role)}</td>
                     <td className="px-6 py-4 text-sm text-gray-600">
                       {formatDate(userItem.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <button
+                        onClick={() => handleToggleRepositoryAccess(userItem.id)}
+                        disabled={togglingAccessId === userItem.id || userItem.uid === user?.uid}
+                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          userItem.repositoryAccess ? "bg-purple-600" : "bg-gray-200"
+                        }`}
+                        title={userItem.repositoryAccess ? "Repository access enabled" : "Repository access disabled"}
+                      >
+                        <span
+                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                            userItem.repositoryAccess ? "translate-x-5" : "translate-x-0"
+                          }`}
+                        />
+                      </button>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">

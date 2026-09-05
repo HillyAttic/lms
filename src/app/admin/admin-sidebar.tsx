@@ -10,6 +10,7 @@ import {
   BookOpen,
   Users,
   Settings,
+  FileArchive,
   ArrowLeft,
   LogOut,
 } from "@/lib/icons";
@@ -18,6 +19,7 @@ const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Upload SCORM", href: "/admin/upload", icon: Upload },
   { label: "Courses", href: "/admin/courses", icon: BookOpen },
+  { label: "Repository", href: "/admin/repository", icon: FileArchive },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];

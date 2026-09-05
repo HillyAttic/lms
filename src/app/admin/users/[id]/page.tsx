@@ -2,7 +2,7 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getUserById, updateUserRole, getUserProgress } from "@/app/actions/user-actions";
+import { getUserById, updateUserRole, getUserProgress, toggleRepositoryAccess } from "@/app/actions/user-actions";
 import { getCourses } from "@/app/actions/course-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
@@ -21,6 +21,7 @@ interface UserData {
   displayName: string;
   photoURL: string | null;
   role: "admin" | "instructor" | "learner";
+  repositoryAccess: boolean;
   createdAt: any;
 }
 
@@ -54,6 +55,8 @@ export default function UserDetailPage() {
   // Form state
   const [displayName, setDisplayName] = useState("");
   const [role, setRole] = useState<"admin" | "instructor" | "learner">("learner");
+  const [repositoryAccess, setRepositoryAccess] = useState(false);
+  const [togglingAccess, setTogglingAccess] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -68,6 +71,7 @@ export default function UserDetailPage() {
         setUserData(data);
         setDisplayName(data.displayName);
         setRole(data.role);
+        setRepositoryAccess(data.repositoryAccess || false);
       } else {
         toast.error("User not found");
         router.push("/admin/users");
@@ -130,6 +134,26 @@ export default function UserDetailPage() {
     } catch (error) {
       toast.error("Failed to delete user");
       console.error(error);
+    }
+  };
+
+  const handleToggleRepositoryAccess = async () => {
+    if (!user) return;
+
+    setTogglingAccess(true);
+    try {
+      const result = await toggleRepositoryAccess(userId, user.uid);
+      if (result.success) {
+        setRepositoryAccess(result.repositoryAccess || false);
+        toast.success(`Repository access ${result.repositoryAccess ? "enabled" : "disabled"}`);
+      } else {
+        toast.error(result.error || "Failed to toggle repository access");
+      }
+    } catch (error) {
+      toast.error("Failed to toggle repository access");
+      console.error(error);
+    } finally {
+      setTogglingAccess(false);
     }
   };
 
@@ -239,6 +263,29 @@ export default function UserDetailPage() {
                 <span className="text-gray-900">
                   {progress.filter((p) => p.status === "completed" || p.status === "passed").length}
                 </span>
+              </div>
+            </div>
+
+            {/* Repository Access Toggle */}
+            <div className="mt-6 pt-6 border-t">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-gray-900">Repository Access</p>
+                  <p className="text-xs text-gray-500">Allow access to SCORM repository</p>
+                </div>
+                <button
+                  onClick={handleToggleRepositoryAccess}
+                  disabled={togglingAccess}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                    repositoryAccess ? "bg-purple-600" : "bg-gray-200"
+                  }`}
+                >
+                  <span
+                    className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                      repositoryAccess ? "translate-x-5" : "translate-x-0"
+                    }`}
+                  />
+                </button>
               </div>
             </div>
           </div>
