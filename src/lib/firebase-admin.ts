@@ -8,13 +8,12 @@ import { join } from "path";
 const serviceAccountPath = join(process.cwd(), "firebase-service-account.json");
 const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
 
-// Firebase Storage bucket name - remove protocol and domain suffixes
+// Firebase Storage bucket name - remove protocol prefix only
+// Keep .appspot.com or .firebasestorage.app as they are part of the bucket name
 const storageBucket = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "";
 const bucketName = storageBucket
   .replace("https://", "")
-  .replace("http://", "")
-  .replace(".firebasestorage.app", "")
-  .replace(".appspot.com", "");
+  .replace("http://", "");
 
 console.log("Initializing Firebase Admin with storage bucket:", bucketName);
 

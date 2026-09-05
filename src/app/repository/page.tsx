@@ -5,7 +5,6 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import {
   getRepositoryItems,
-  getScormLaunchUrl,
 } from "@/app/actions/repository-actions";
 import { checkRepositoryAccess } from "@/app/actions/user-actions";
 import { Search, Filter, Play, RefreshCw } from "@/lib/icons";
@@ -76,13 +75,8 @@ export default function RepositoryPage() {
   const handleLaunch = async (item: RepositoryItem) => {
     setLaunchingId(item.id);
     try {
-      const result = await getScormLaunchUrl(item.id);
-      if (result.success && result.url) {
-        // Open SCORM in new tab
-        window.open(result.url, "_blank");
-      } else {
-        alert("Failed to launch SCORM package. Please try again.");
-      }
+      // Open via proxy route — hides signed URL, serves all assets cleanly
+      window.open(`/api/repository/launch/${item.id}/story.html`, "_blank");
     } catch (error) {
       console.error("Failed to launch SCORM:", error);
       alert("Failed to launch SCORM package. Please try again.");

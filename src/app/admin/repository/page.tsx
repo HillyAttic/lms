@@ -8,6 +8,9 @@ import {
   updateRepositoryItem,
   deleteRepositoryItem,
   batchDeleteRepositoryItems,
+  getExtractedFiles,
+  updateEntryPoint,
+  getZipFileMetadata,
 } from "@/app/actions/repository-actions";
 import PageHeader from "@/components/admin/page-header";
 import Badge from "@/components/admin/badge";
@@ -29,6 +32,10 @@ interface RepositoryItem {
   scormVersion: string;
   entryPoint: string;
   storagePath: string;
+  sourceZipPath: string;
+  fileSize: number;
+  createdAt: any;
+  updatedAt: any;
 }
 
 export default function AdminRepositoryPage() {
@@ -48,7 +55,18 @@ export default function AdminRepositoryPage() {
   const [showEditModal, setShowEditModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showBatchDeleteConfirm, setShowBatchDeleteConfirm] = useState(false);
+  const [showFilesModal, setShowFilesModal] = useState(false);
   const [editingItem, setEditingItem] = useState<RepositoryItem | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Files viewer state
+  const [extractedFiles, setExtractedFiles] = useState<Array<{ name: string; fullPath: string; isHtml: boolean }>>([]);
+  const [loadingFiles, setLoadingFiles] = useState(false);
+  const [selectedEntryPoint, setSelectedEntryPoint] = useState("");
+
+  // Zip file metadata state
+  const [zipMetadata, setZipMetadata] = useState<{ fileSize: number; updated?: string } | null>(null);
+  const [loadingZipMeta, setLoadingZipMeta] = useState(false);
 
   // Form states
   const [formData, setFormData] = useState({
@@ -154,22 +172,40 @@ export default function AdminRepositoryPage() {
   const handleDelete = async () => {
     if (!editingItem) return;
 
-    const result = await deleteRepositoryItem(editingItem.id, user?.uid || "");
-    if (result.success) {
-      setShowDeleteConfirm(false);
-      setEditingItem(null);
-      loadItems();
+    setDeleteLoading(true);
+    try {
+      const result = await deleteRepositoryItem(editingItem.id, user?.uid || "");
+      if (result.success) {
+        setShowDeleteConfirm(false);
+        setEditingItem(null);
+        await loadItems();
+      } else {
+        alert(result.error || "Delete failed");
+      }
+    } catch (error: any) {
+      alert(error.message || "Delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
   const handleBatchDelete = async () => {
     if (selectedItems.length === 0) return;
 
-    const result = await batchDeleteRepositoryItems(selectedItems, user?.uid || "");
-    if (result.success) {
-      setShowBatchDeleteConfirm(false);
-      setSelectedItems([]);
-      loadItems();
+    setDeleteLoading(true);
+    try {
+      const result = await batchDeleteRepositoryItems(selectedItems, user?.uid || "");
+      if (result.success) {
+        setShowBatchDeleteConfirm(false);
+        setSelectedItems([]);
+        await loadItems();
+      } else {
+        alert(result.error || "Batch delete failed");
+      }
+    } catch (error: any) {
+      alert(error.message || "Batch delete failed");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -185,7 +221,7 @@ export default function AdminRepositoryPage() {
     setFormError("");
   };
 
-  const openEditModal = (item: RepositoryItem) => {
+  const openEditModal = async (item: RepositoryItem) => {
     setEditingItem(item);
     setFormData({
       name: item.name,
@@ -194,7 +230,48 @@ export default function AdminRepositoryPage() {
       interactivityLevel: item.interactivityLevel.toString(),
       duration: item.duration.toString(),
     });
+    setSelectedEntryPoint(item.entryPoint);
     setShowEditModal(true);
+
+    // Fetch zip file metadata
+    setLoadingZipMeta(true);
+    const metaResult = await getZipFileMetadata(item.id);
+    if (metaResult.success) {
+      setZipMetadata({
+        fileSize: metaResult.fileSize,
+        updated: metaResult.updated,
+      });
+    } else {
+      setZipMetadata(null);
+    }
+    setLoadingZipMeta(false);
+  };
+
+  const openFilesModal = async (item: RepositoryItem) => {
+    setEditingItem(item);
+    setLoadingFiles(true);
+    setShowFilesModal(true);
+
+    const result = await getExtractedFiles(item.id);
+    if (result.success) {
+      setExtractedFiles(result.files || []);
+      setSelectedEntryPoint(result.currentEntryPoint || "story.html");
+    }
+    setLoadingFiles(false);
+  };
+
+  const handleUpdateEntryPoint = async () => {
+    if (!editingItem || !selectedEntryPoint) return;
+
+    const result = await updateEntryPoint(editingItem.id, user?.uid || "", selectedEntryPoint);
+    if (result.success) {
+      setShowFilesModal(false);
+      setEditingItem(null);
+      setExtractedFiles([]);
+      loadItems();
+    } else {
+      setFormError(result.error || "Failed to update entry point");
+    }
   };
 
   const openDeleteConfirm = (item: RepositoryItem) => {
@@ -386,6 +463,13 @@ export default function AdminRepositoryPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openFilesModal(item)}
+                          className="p-1.5 text-gray-400 hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+                          title="View Files & Set Entry Point"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => openEditModal(item)}
                           className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
@@ -644,6 +728,71 @@ export default function AdminRepositoryPage() {
                   />
                 </div>
               </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <Eye className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div>
+                    <p className="text-sm font-medium text-blue-900">Entry Point</p>
+                    <p className="text-sm text-blue-700 mt-1">
+                      Current: <span className="font-mono bg-blue-100 px-2 py-0.5 rounded">{selectedEntryPoint}</span>
+                    </p>
+                    <button
+                      onClick={() => {
+                        setShowEditModal(false);
+                        openFilesModal(editingItem);
+                      }}
+                      className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium hover:underline"
+                    >
+                      View extracted files & change entry point →
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Uploaded ZIP File Info */}
+              <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                <div className="flex items-start gap-3">
+                  <svg className="w-5 h-5 text-gray-600 mt-0.5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                  </svg>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-gray-900">Uploaded ZIP File</p>
+                    {loadingZipMeta ? (
+                      <div className="flex items-center gap-2 mt-1">
+                        <div className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                        <p className="text-sm text-gray-500">Loading file info…</p>
+                      </div>
+                    ) : zipMetadata ? (
+                      <div className="mt-1.5 space-y-1">
+                        <p className="text-sm text-gray-700">
+                          <span className="text-gray-500">Size:</span>{" "}
+                          <span className="font-medium">
+                            {zipMetadata.fileSize >= 1024 * 1024
+                              ? `${(zipMetadata.fileSize / (1024 * 1024)).toFixed(2)} MB`
+                              : `${(zipMetadata.fileSize / 1024).toFixed(1)} KB`}
+                          </span>
+                        </p>
+                        {zipMetadata.updated && (
+                          <p className="text-sm text-gray-700">
+                            <span className="text-gray-500">Updated:</span>{" "}
+                            <span className="font-medium">
+                              {new Date(zipMetadata.updated).toLocaleDateString("en-US", {
+                                year: "numeric",
+                                month: "short",
+                                day: "numeric",
+                                hour: "2-digit",
+                                minute: "2-digit",
+                              })}
+                            </span>
+                          </p>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-gray-500 mt-1">ZIP info unavailable</p>
+                    )}
+                  </div>
+                </div>
+              </div>
             </div>
             <div className="flex justify-end gap-3 p-6 border-t">
               <button
@@ -680,6 +829,7 @@ export default function AdminRepositoryPage() {
           }}
           confirmText="Delete"
           variant="danger"
+          loading={deleteLoading}
         />
       )}
 
@@ -692,7 +842,147 @@ export default function AdminRepositoryPage() {
           onCancel={() => setShowBatchDeleteConfirm(false)}
           confirmText="Delete All"
           variant="danger"
+          loading={deleteLoading}
         />
+      )}
+
+      {/* View Files Modal */}
+      {showFilesModal && editingItem && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b">
+              <div>
+                <h2 className="text-xl font-semibold">Extracted Files</h2>
+                <p className="text-sm text-gray-500 mt-1">{editingItem.name}</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowFilesModal(false);
+                  setEditingItem(null);
+                  setExtractedFiles([]);
+                  setFormError("");
+                }}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+              {formError && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm mb-4">
+                  {formError}
+                </div>
+              )}
+
+              {loadingFiles ? (
+                <div className="flex items-center justify-center py-12">
+                  <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-600 border-t-transparent" />
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Entry Point Selector */}
+                  <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Select Entry Point File *
+                    </label>
+                    <select
+                      value={selectedEntryPoint}
+                      onChange={(e) => setSelectedEntryPoint(e.target.value)}
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                    >
+                      <option value="">-- Select HTML file --</option>
+                      {extractedFiles
+                        .filter(file => file.isHtml)
+                        .map(file => (
+                          <option key={file.name} value={file.name}>
+                            {file.name}
+                          </option>
+                        ))}
+                    </select>
+                    <p className="text-xs text-gray-600 mt-2">
+                      Current entry point: <span className="font-medium text-purple-700">{editingItem.entryPoint}</span>
+                    </p>
+                  </div>
+
+                  {/* Files List */}
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-700 mb-2">
+                      All Files ({extractedFiles.length})
+                    </h3>
+                    <div className="bg-gray-50 border border-gray-200 rounded-lg divide-y divide-gray-200 max-h-96 overflow-y-auto">
+                      {extractedFiles.length === 0 ? (
+                        <div className="p-8 text-center text-gray-500">
+                          No files found
+                        </div>
+                      ) : (
+                        extractedFiles.map((file, index) => (
+                          <div
+                            key={index}
+                            className={`px-4 py-3 flex items-center justify-between hover:bg-gray-100 transition-colors ${
+                              file.name === selectedEntryPoint ? 'bg-purple-50' : ''
+                            }`}
+                          >
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                              {file.isHtml ? (
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                                  </svg>
+                                </div>
+                              ) : (
+                                <div className="flex-shrink-0 w-8 h-8 bg-gray-100 text-gray-600 rounded-lg flex items-center justify-center">
+                                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                  </svg>
+                                </div>
+                              )}
+                              <div className="flex-1 min-w-0">
+                                <p className="text-sm text-gray-900 truncate" title={file.name}>
+                                  {file.name}
+                                </p>
+                                {file.isHtml && (
+                                  <p className="text-xs text-gray-500">HTML Entry Point</p>
+                                )}
+                              </div>
+                            </div>
+                            {file.name === selectedEntryPoint && (
+                              <span className="flex-shrink-0 ml-2 px-2 py-1 bg-purple-100 text-purple-700 text-xs rounded-full">
+                                Selected
+                              </span>
+                            )}
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex justify-end gap-3 p-6 border-t">
+              <button
+                onClick={() => {
+                  setShowFilesModal(false);
+                  setEditingItem(null);
+                  setExtractedFiles([]);
+                  setFormError("");
+                }}
+                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleUpdateEntryPoint}
+                disabled={!selectedEntryPoint || selectedEntryPoint === editingItem.entryPoint}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <Save className="w-4 h-4" />
+                Update Entry Point
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

@@ -255,11 +255,12 @@ export async function uploadRepositoryScorm(formData: FormData) {
 
     // Parse imsmanifest.xml using regex
     let scormVersion = "1.2";
+    // Always use story.html as the entry point
     let entryPoint = "story.html";
 
     if (manifestContent) {
       console.log("Parsing manifest...");
-      
+
       // Detect SCORM version
       const schemaMatch = manifestContent.match(/<schemaversion>(.*?)<\/schemaversion>/i);
       if (schemaMatch) {
@@ -271,26 +272,6 @@ export async function uploadRepositoryScorm(formData: FormData) {
         }
       }
 
-      // Parse resources to find entry point
-      const resourceRegex = /<resource[^>]*identifier="([^"]*)"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/resource>/gi;
-      let resourceMatch;
-
-      while ((resourceMatch = resourceRegex.exec(manifestContent)) !== null) {
-        const href = resourceMatch[2];
-        if (href && href.toLowerCase().includes("story.html")) {
-          entryPoint = href;
-          break;
-        }
-      }
-
-      // If story.html not found, try to get the first resource with an href
-      if (entryPoint === "story.html") {
-        const firstResourceMatch = /<resource[^>]*href="([^"]*)"[^>]*>/i.exec(manifestContent);
-        if (firstResourceMatch && firstResourceMatch[1]) {
-          entryPoint = firstResourceMatch[1];
-        }
-      }
-      
       console.log("Parsed manifest:", { scormVersion, entryPoint });
     }
 
@@ -336,6 +317,91 @@ export async function uploadRepositoryScorm(formData: FormData) {
 }
 
 // Update repository item
+/**
+ * Get list of extracted files from a SCORM package
+ */
+export async function getExtractedFiles(itemId: string) {
+  try {
+    const doc = await adminDb.collection("repository").doc(itemId).get();
+    
+    if (!doc.exists) {
+      return { success: false, error: "Repository item not found" };
+    }
+
+    const data = doc.data()!;
+    const storagePath = data.storagePath;
+    const bucket = adminStorage.bucket();
+
+    console.log("Listing files in:", storagePath);
+
+    // List all files in the extracted folder
+    const [files] = await bucket.getFiles({ prefix: storagePath + "/" });
+    
+    const fileList = files
+      .filter(file => !file.name.endsWith("/")) // Filter out directory markers
+      .map(file => {
+        const relativePath = file.name.replace(storagePath + "/", "");
+        return {
+          name: relativePath,
+          fullPath: file.name,
+          isHtml: relativePath.toLowerCase().endsWith(".html"),
+        };
+      })
+      .sort((a, b) => {
+        // Sort HTML files first
+        if (a.isHtml && !b.isHtml) return -1;
+        if (!a.isHtml && b.isHtml) return 1;
+        return a.name.localeCompare(b.name);
+      });
+
+    return { 
+      success: true, 
+      files: fileList,
+      currentEntryPoint: data.entryPoint,
+    };
+  } catch (error: any) {
+    console.error("Get extracted files error:", error);
+    return { success: false, error: error.message || "Failed to get files" };
+  }
+}
+
+/**
+ * Update entry point for a SCORM package
+ */
+export async function updateEntryPoint(itemId: string, userId: string, entryPoint: string) {
+  try {
+    const doc = await adminDb.collection("repository").doc(itemId).get();
+    
+    if (!doc.exists) {
+      return { success: false, error: "Repository item not found" };
+    }
+
+    const data = doc.data()!;
+    const storagePath = data.storagePath;
+    const bucket = adminStorage.bucket();
+
+    // Verify the entry point file exists
+    const filePath = `${storagePath}/${entryPoint}`;
+    const [exists] = await bucket.file(filePath).exists();
+
+    if (!exists) {
+      return { success: false, error: "Entry point file does not exist in storage" };
+    }
+
+    // Update the entry point
+    await adminDb.collection("repository").doc(itemId).update({
+      entryPoint,
+      updatedAt: FieldValue.serverTimestamp(),
+      updatedBy: userId,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Update entry point error:", error);
+    return { success: false, error: error.message || "Failed to update entry point" };
+  }
+}
+
 export async function updateRepositoryItem(
   itemId: string,
   userId: string,
@@ -375,32 +441,55 @@ export async function updateRepositoryItem(
 // Delete repository item
 export async function deleteRepositoryItem(itemId: string, userId: string) {
   try {
+    console.log("=== Starting Delete ===");
+    console.log("Item ID:", itemId);
+    console.log("User ID:", userId);
+
     if (!userId) {
+      console.error("No userId provided");
       return { success: false, error: "User not authenticated" };
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
     if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+      console.error("User is not admin or doesn't exist:", userDoc.exists ? "exists but wrong role" : "not found");
       return { success: false, error: "Admin access required" };
     }
 
+    // Verify document exists
+    const repoDoc = await adminDb.doc(`repository/${itemId}`).get();
+    if (!repoDoc.exists) {
+      console.error("Repository document not found:", itemId);
+      return { success: false, error: "Repository item not found" };
+    }
+    console.log("Repository document found, proceeding with deletion");
+
     // Delete repository document
     await adminDb.doc(`repository/${itemId}`).delete();
+    console.log("Firestore document deleted");
 
     // Delete Storage files using Admin SDK
     const bucket = adminStorage.bucket();
     const repoPrefix = `repository/${itemId}`;
+    console.log("Finding storage files with prefix:", repoPrefix);
     const [repoFiles] = await bucket.getFiles({ prefix: repoPrefix });
-    const deletePromises = repoFiles.map((file) => file.delete().then(() => {}));
+    console.log(`Found ${repoFiles.length} files to delete`);
 
-    await Promise.all(deletePromises);
+    if (repoFiles.length > 0) {
+      const deletePromises = repoFiles.map((file) => file.delete().then(() => {}));
+      await Promise.all(deletePromises);
+      console.log("Storage files deleted");
+    }
 
     revalidatePath("/repository");
     revalidatePath("/admin/repository");
 
+    console.log("=== Delete Complete ===");
     return { success: true };
   } catch (error: any) {
-    console.error("Delete repository item error:", error);
+    console.error("=== Delete Error ===");
+    console.error("Error details:", error);
+    console.error("Error message:", error.message);
     return { success: false, error: error.message || "Delete failed" };
   }
 }
@@ -451,20 +540,83 @@ export async function getScormLaunchUrl(itemId: string) {
     }
 
     const data = doc.data()!;
-    const entryPoint = data.entryPoint || "story.html";
+    // Always use story.html as the entry point for launching
+    const entryPoint = "story.html";
     const storagePath = data.storagePath;
+    const bucket = adminStorage.bucket();
+
+    console.log("Getting launch URL for:", {
+      itemId,
+      entryPoint,
+      storagePath,
+    });
+
+    // Use the stored entry point directly - admin has full control
+    const filePath = `${storagePath}/${entryPoint}`;
+
+    // Verify the file exists
+    const [fileExists] = await bucket.file(filePath).exists();
+
+    if (!fileExists) {
+      console.error("Entry point file not found:", filePath);
+      return {
+        success: false,
+        error: `Entry point file "${entryPoint}" not found. Please update the entry point in admin panel.`
+      };
+    }
+
+    console.log("Generating signed URL for:", filePath);
 
     // Get signed URL for the entry point file
-    const bucket = adminStorage.bucket();
-    const filePath = `${storagePath}/${entryPoint}`;
     const [url] = await bucket.file(filePath).getSignedUrl({
       action: "read",
       expires: "2037-12-31",
     });
 
+    console.log("Generated URL:", url);
+
     return { success: true, url };
   } catch (error: any) {
     console.error("Get SCORM launch URL error:", error);
     return { success: false, error: error.message || "Failed to get launch URL" };
+  }
+}
+
+/**
+ * Get zip file metadata (size) from Firebase Storage
+ */
+export async function getZipFileMetadata(itemId: string) {
+  try {
+    const doc = await adminDb.collection("repository").doc(itemId).get();
+
+    if (!doc.exists) {
+      return { success: false, error: "Repository item not found" };
+    }
+
+    const data = doc.data()!;
+    const sourceZipPath = data.sourceZipPath;
+
+    if (!sourceZipPath) {
+      return { success: false, error: "No source zip path found" };
+    }
+
+    const bucket = adminStorage.bucket();
+    const [fileExists] = await bucket.file(sourceZipPath).exists();
+
+    if (!fileExists) {
+      return { success: false, error: "Source zip file not found in storage" };
+    }
+
+    const [metadata] = await bucket.file(sourceZipPath).getMetadata();
+
+    return {
+      success: true,
+      fileSize: parseInt(metadata.size || "0", 10),
+      contentType: metadata.contentType,
+      updated: metadata.updated,
+    };
+  } catch (error: any) {
+    console.error("Get zip file metadata error:", error);
+    return { success: false, error: error.message || "Failed to get zip metadata" };
   }
 }
