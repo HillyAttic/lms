@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb } from "@/lib/firebase-admin";
+import { adminDb, serializeTimestamps } from "@/lib/firebase-admin";
 
 export async function getDashboardStats() {
   try {
@@ -40,7 +40,7 @@ export async function getDashboardStats() {
 
     return {
       success: true,
-      data: {
+      data: serializeTimestamps({
         totalCourses,
         activeCourses,
         draftCourses,
@@ -49,7 +49,7 @@ export async function getDashboardStats() {
         instructorCount,
         learnerCount,
         recentUploads,
-      },
+      }),
     };
   } catch (error: any) {
     console.error("Get dashboard stats error:", error);
@@ -70,7 +70,7 @@ export async function getRecentActivity(limit: number = 5) {
       ...doc.data(),
     }));
 
-    return { success: true, data: activities };
+    return { success: true, data: serializeTimestamps(activities) };
   } catch (error: any) {
     console.error("Get recent activity error:", error);
     return { success: false, error: error.message };

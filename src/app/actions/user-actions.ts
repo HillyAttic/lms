@@ -1,13 +1,13 @@
 "use server";
 
-import { adminDb, adminAuth, FieldValue } from "@/lib/firebase-admin";
+import { adminDb, adminAuth, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
 
 export async function getUsers() {
   const snapshot = await adminDb.collection("users").get();
-  return snapshot.docs.map((doc) => ({
+  return serializeTimestamps(snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })));
 }
 
 export async function getUserById(userId: string) {
@@ -16,7 +16,7 @@ export async function getUserById(userId: string) {
     if (!doc.exists) {
       return { success: false, error: "User not found" };
     }
-    return { success: true, data: { id: doc.id, ...doc.data() } };
+    return { success: true, data: serializeTimestamps({ id: doc.id, ...doc.data() }) };
   } catch (error: any) {
     console.error("Get user error:", error);
     return { success: false, error: error.message };
@@ -59,7 +59,7 @@ export async function getUsersPaginated(
 
     return {
       success: true,
-      data,
+      data: serializeTimestamps(data),
       total,
       page,
       limit,
@@ -190,7 +190,7 @@ export async function getUserProgress(userId: string) {
       ...doc.data(),
     }));
 
-    return { success: true, data: progress };
+    return { success: true, data: serializeTimestamps(progress) };
   } catch (error: any) {
     console.error("Get user progress error:", error);
     return { success: false, error: error.message };

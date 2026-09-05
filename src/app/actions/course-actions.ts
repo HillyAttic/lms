@@ -1,13 +1,13 @@
 "use server";
 
-import { adminDb, adminStorage, FieldValue } from "@/lib/firebase-admin";
+import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
 
 export async function getCourses() {
   const snapshot = await adminDb.collection("courses").get();
-  return snapshot.docs.map((doc) => ({
+  return serializeTimestamps(snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })));
 }
 
 export async function getActiveCourses() {
@@ -15,10 +15,10 @@ export async function getActiveCourses() {
     .collection("courses")
     .where("status", "==", "active")
     .get();
-  return snapshot.docs.map((doc) => ({
+  return serializeTimestamps(snapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
-  }));
+  })));
 }
 
 export async function getCourseById(courseId: string) {
@@ -27,7 +27,7 @@ export async function getCourseById(courseId: string) {
     if (!doc.exists) {
       return { success: false, error: "Course not found" };
     }
-    return { success: true, data: { id: doc.id, ...doc.data() } };
+    return { success: true, data: serializeTimestamps({ id: doc.id, ...doc.data() }) };
   } catch (error: any) {
     console.error("Get course error:", error);
     return { success: false, error: error.message };
@@ -80,7 +80,7 @@ export async function getCoursesPaginated(
 
     return {
       success: true,
-      data,
+      data: serializeTimestamps(data),
       total,
       page,
       limit,

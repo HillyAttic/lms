@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb, adminStorage, FieldValue } from "@/lib/firebase-admin";
+import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
 
 const SETTINGS_DOC_ID = "platform";
 
@@ -9,7 +9,7 @@ export async function getPlatformSettings() {
     const doc = await adminDb.doc(`settings/${SETTINGS_DOC_ID}`).get();
 
     if (doc.exists) {
-      return { success: true, data: { id: doc.id, ...doc.data() } };
+      return { success: true, data: serializeTimestamps({ id: doc.id, ...doc.data() }) };
     }
 
     // Return default settings if none exist

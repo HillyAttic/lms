@@ -1,6 +1,6 @@
 "use server";
 
-import { adminDb, FieldValue } from "@/lib/firebase-admin";
+import { adminDb, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
 
 export interface ProgressData {
   courseId: string;
@@ -45,7 +45,7 @@ export async function getProgress(userId: string, courseId: string) {
     const progressDoc = await adminDb.doc(`progress/${progressId}`).get();
 
     if (progressDoc.exists) {
-      return { success: true, data: progressDoc.data() };
+      return { success: true, data: serializeTimestamps(progressDoc.data()) };
     }
 
     return { success: true, data: null };
