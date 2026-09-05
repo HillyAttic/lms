@@ -4,6 +4,44 @@ import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/fi
 import JSZip from "jszip";
 import { revalidatePath } from "next/cache";
 
+// Upload progress tracking helper
+async function updateUploadProgress(
+  itemId: string,
+  userId: string,
+  updates: Record<string, any>
+) {
+  await adminDb.doc(`upload_progress/${itemId}_upload`).set(
+    {
+      itemId,
+      userId,
+      updatedAt: FieldValue.serverTimestamp(),
+      ...updates,
+    },
+    { merge: true }
+  );
+}
+
+// Get upload progress for a given item
+export async function getUploadProgress(itemId: string) {
+  try {
+    const doc = await adminDb.doc(`upload_progress/${itemId}_upload`).get();
+    if (!doc.exists) return { success: false, error: "Not found" };
+    return { success: true, data: serializeTimestamps(doc.data()) };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
+// Clean up upload progress document after completion
+export async function cleanupUploadProgress(itemId: string) {
+  try {
+    await adminDb.doc(`upload_progress/${itemId}_upload`).delete();
+    return { success: true };
+  } catch (error: any) {
+    return { success: false, error: error.message };
+  }
+}
+
 interface RepositoryItem {
   id: string;
   serialNumber: number;
@@ -135,9 +173,13 @@ export async function getRepositoryItemById(itemId: string) {
 // Upload SCORM package to repository
 export async function uploadRepositoryScorm(formData: FormData) {
   console.log("=== Starting SCORM Upload ===");
-  
+
+  let itemId = "";
+  let userId = "";
+
   try {
-    const userId = formData.get("userId") as string;
+    userId = formData.get("userId") as string;
+    const clientItemId = formData.get("itemId") as string;
 
     if (!userId) {
       console.error("No userId provided");
@@ -176,13 +218,23 @@ export async function uploadRepositoryScorm(formData: FormData) {
       return { success: false, error: "File size exceeds 200MB limit" };
     }
 
-    // Generate item ID
-    const itemId = `repo_${Date.now()}`;
+    // Generate item ID (use client-provided ID if available)
+    const itemId = clientItemId || `repo_${Date.now()}`;
     const storageBase = `repository/${itemId}`;
     const sourceZipPath = `${storageBase}/source.zip`;
     const extractedPath = `${storageBase}/extracted`;
 
     console.log("Generated item ID:", itemId);
+
+    // Initialize progress tracking
+    await updateUploadProgress(itemId, userId, {
+      status: "preparing",
+      phase: "Preparing upload...",
+      progress: 0,
+      fileName: file.name,
+      fileSize: file.size,
+      startedAt: FieldValue.serverTimestamp(),
+    });
 
     // Convert file to buffer
     console.log("Converting file to buffer...");
@@ -193,8 +245,14 @@ export async function uploadRepositoryScorm(formData: FormData) {
     console.log("Getting Firebase Storage bucket...");
     const bucket = adminStorage.bucket();
     console.log("Bucket name:", bucket.name);
-    
+
     console.log("Uploading source ZIP...");
+    await updateUploadProgress(itemId, userId, {
+      status: "uploading_zip",
+      phase: "Uploading ZIP to storage...",
+      progress: 5,
+    });
+
     await bucket.file(sourceZipPath).save(fileBuffer, {
       contentType: "application/zip",
       metadata: {
@@ -205,6 +263,12 @@ export async function uploadRepositoryScorm(formData: FormData) {
 
     // Extract zip using JSZip
     console.log("Extracting ZIP contents...");
+    await updateUploadProgress(itemId, userId, {
+      status: "extracting",
+      phase: "Extracting ZIP contents...",
+      progress: 10,
+    });
+
     const zip = new JSZip();
     const extractedZip = await zip.loadAsync(fileBuffer);
     console.log("ZIP loaded successfully");
@@ -221,12 +285,20 @@ export async function uploadRepositoryScorm(formData: FormData) {
 
     console.log(`Found ${files.length} files in ZIP`);
 
+    // Update progress with file count
+    await updateUploadProgress(itemId, userId, {
+      status: "extracting",
+      phase: `Found ${files.length} files in ZIP`,
+      progress: 15,
+      totalFiles: files.length,
+    });
+
     // Get manifest content first
-    const manifestFile = files.find(f => 
+    const manifestFile = files.find(f =>
       f.path.toLowerCase() === "imsmanifest.xml" ||
       f.path.toLowerCase().endsWith("/imsmanifest.xml")
     );
-    
+
     if (manifestFile) {
       console.log("Found manifest file:", manifestFile.path);
       manifestContent = await manifestFile.entry.async("string");
@@ -237,10 +309,25 @@ export async function uploadRepositoryScorm(formData: FormData) {
     // Upload files in batches of 20 to avoid memory issues
     console.log("Starting file uploads in batches...");
     const batchSize = 20;
+    const totalBatches = Math.ceil(files.length / batchSize);
+
     for (let i = 0; i < files.length; i += batchSize) {
       const batch = files.slice(i, i + batchSize);
-      console.log(`Uploading batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(files.length / batchSize)}`);
-      
+      const currentBatch = Math.floor(i / batchSize) + 1;
+      console.log(`Uploading batch ${currentBatch}/${totalBatches}`);
+
+      // Update progress before this batch
+      const progressBefore = 20 + Math.round((i / files.length) * 60);
+      await updateUploadProgress(itemId, userId, {
+        status: "uploading_files",
+        phase: `Uploading batch ${currentBatch}/${totalBatches}...`,
+        progress: progressBefore,
+        uploadedFiles: i,
+        totalFiles: files.length,
+        currentBatch,
+        totalBatches,
+      });
+
       const uploadPromises = batch.map(async ({ path, entry }) => {
         const content = await entry.async("uint8array");
         await bucket.file(`${extractedPath}/${path}`).save(Buffer.from(content), {
@@ -250,8 +337,23 @@ export async function uploadRepositoryScorm(formData: FormData) {
         });
       });
       await Promise.all(uploadPromises);
+
+      // Update progress after this batch
+      const uploadedAfter = Math.min(i + batchSize, files.length);
+      const progressAfter = 20 + Math.round((uploadedAfter / files.length) * 60);
+      await updateUploadProgress(itemId, userId, {
+        uploadedFiles: uploadedAfter,
+        progress: progressAfter,
+      });
     }
     console.log("All files uploaded successfully");
+
+    await updateUploadProgress(itemId, userId, {
+      status: "processing",
+      phase: "Processing manifest and creating record...",
+      progress: 85,
+      uploadedFiles: files.length,
+    });
 
     // Parse imsmanifest.xml using regex
     let scormVersion = "1.2";
@@ -300,9 +402,21 @@ export async function uploadRepositoryScorm(formData: FormData) {
     });
     console.log("Firestore document created");
 
+    await updateUploadProgress(itemId, userId, {
+      status: "processing",
+      phase: "Finalizing upload...",
+      progress: 95,
+    });
+
     console.log("Revalidating paths...");
     revalidatePath("/repository");
     revalidatePath("/admin/repository");
+
+    await updateUploadProgress(itemId, userId, {
+      status: "complete",
+      phase: "Upload complete!",
+      progress: 100,
+    });
 
     console.log("=== Upload Complete ===");
     // Return minimal response to avoid body size issues
@@ -312,6 +426,16 @@ export async function uploadRepositoryScorm(formData: FormData) {
     console.error("Error details:", error);
     console.error("Error message:", error.message);
     console.error("Error stack:", error.stack);
+    // Try to update progress with error status (if we had an itemId)
+    try {
+      if (itemId) {
+        await updateUploadProgress(itemId, userId || "", {
+          status: "error",
+          phase: error.message || "Upload failed",
+          progress: 0,
+        });
+      }
+    } catch {}
     return { success: false, error: error.message || "Upload failed" };
   }
 }

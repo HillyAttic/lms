@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import {
   getRepositoryItemsPaginated,
@@ -11,6 +11,8 @@ import {
   getExtractedFiles,
   updateEntryPoint,
   getZipFileMetadata,
+  getUploadProgress,
+  cleanupUploadProgress,
 } from "@/app/actions/repository-actions";
 import PageHeader from "@/components/admin/page-header";
 import Badge from "@/components/admin/badge";
@@ -68,6 +70,18 @@ export default function AdminRepositoryPage() {
   const [zipMetadata, setZipMetadata] = useState<{ fileSize: number; updated?: string } | null>(null);
   const [loadingZipMeta, setLoadingZipMeta] = useState(false);
 
+  // Upload progress tracking state
+  const [uploadProgress, setUploadProgress] = useState<{
+    status: string;
+    phase: string;
+    progress: number;
+    uploadedFiles: number;
+    totalFiles: number;
+    currentBatch: number;
+    totalBatches: number;
+  } | null>(null);
+  const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   // Form states
   const [formData, setFormData] = useState({
     name: "",
@@ -101,17 +115,61 @@ export default function AdminRepositoryPage() {
     setLoading(false);
   };
 
+  // Stop polling on unmount
+  useEffect(() => {
+    return () => {
+      if (pollingRef.current) {
+        clearInterval(pollingRef.current);
+      }
+    };
+  }, []);
+
+  const stopPolling = useCallback(() => {
+    if (pollingRef.current) {
+      clearInterval(pollingRef.current);
+      pollingRef.current = null;
+    }
+  }, []);
+
+  const startPolling = useCallback((itemId: string) => {
+    stopPolling();
+    pollingRef.current = setInterval(async () => {
+      try {
+        const result = await getUploadProgress(itemId);
+        if (result.success && result.data) {
+          setUploadProgress({
+            status: result.data.status || "preparing",
+            phase: result.data.phase || "",
+            progress: result.data.progress ?? 0,
+            uploadedFiles: result.data.uploadedFiles ?? 0,
+            totalFiles: result.data.totalFiles ?? 0,
+            currentBatch: result.data.currentBatch ?? 0,
+            totalBatches: result.data.totalBatches ?? 0,
+          });
+          if (["complete", "error"].includes(result.data.status)) {
+            stopPolling();
+          }
+        }
+      } catch {
+        // Silently retry on next interval
+      }
+    }, 500);
+  }, [stopPolling]);
+
   const handleUpload = async () => {
     if (!formData.name || !selectedFile) {
       setFormError("Name and ZIP file are required");
       return;
     }
 
+    const itemId = `repo_${Date.now()}`;
     setUploading(true);
     setFormError("");
+    setUploadProgress(null);
 
     try {
       const form = new FormData();
+      form.append("itemId", itemId);
       form.append("userId", user?.uid || "");
       form.append("file", selectedFile);
       form.append("name", formData.name);
@@ -124,15 +182,25 @@ export default function AdminRepositoryPage() {
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
         name: formData.name,
+        itemId,
       });
 
+      // Start polling for progress updates
+      startPolling(itemId);
+
       const result = await uploadRepositoryScorm(form);
+
+      // Stop polling once server action completes
+      stopPolling();
 
       console.log("Upload result:", result);
 
       if (result.success) {
+        // Clean up progress doc in background
+        cleanupUploadProgress(itemId).catch(() => {});
         setShowUploadModal(false);
         resetForm();
+        setUploadProgress(null);
         await loadItems();
       } else {
         setFormError(result.error || "Upload failed");
@@ -141,6 +209,7 @@ export default function AdminRepositoryPage() {
       console.error("Upload error:", error);
       setFormError(error.message || "Upload failed. Please try again.");
     } finally {
+      stopPolling();
       setUploading(false);
     }
   };
@@ -219,6 +288,7 @@ export default function AdminRepositoryPage() {
     });
     setSelectedFile(null);
     setFormError("");
+    setUploadProgress(null);
   };
 
   const openEditModal = async (item: RepositoryItem) => {
@@ -525,11 +595,6 @@ export default function AdminRepositoryPage() {
               </button>
             </div>
             <div className="p-6 space-y-4">
-              {formError && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-                  {formError}
-                </div>
-              )}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Module Name *
@@ -611,33 +676,90 @@ export default function AdminRepositoryPage() {
                 </p>
               </div>
             </div>
-            <div className="flex justify-end gap-3 p-6 border-t">
-              <button
-                onClick={() => {
-                  setShowUploadModal(false);
-                  resetForm();
-                }}
-                className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleUpload}
-                disabled={uploading}
-                className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
-              >
-                {uploading ? (
-                  <>
-                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                    Uploading...
-                  </>
-                ) : (
-                  <>
-                    <Upload className="w-4 h-4" />
-                    Upload Package
-                  </>
-                )}
-              </button>
+            <div className="p-6 border-t space-y-4">
+              {/* Real-time upload progress */}
+              {uploading && uploadProgress && uploadProgress.status !== "error" && (
+                <div className="space-y-3 p-4 bg-purple-50 border border-purple-200 rounded-lg">
+                  {/* Phase label + percentage */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-purple-900 truncate mr-2">
+                      {uploadProgress.phase}
+                    </span>
+                    <span className="text-sm font-bold text-purple-600 flex-shrink-0">
+                      {Math.round(uploadProgress.progress)}%
+                    </span>
+                  </div>
+
+                  {/* Animated progress bar */}
+                  <div className="w-full bg-purple-200 rounded-full h-2.5 overflow-hidden">
+                    <div
+                      className="bg-purple-600 h-2.5 rounded-full transition-all duration-500 ease-out"
+                      style={{ width: `${Math.min(uploadProgress.progress, 100)}%` }}
+                    />
+                  </div>
+
+                  {/* File + batch counts */}
+                  {uploadProgress.totalFiles > 0 && (
+                    <div className="flex items-center justify-between text-xs text-purple-700">
+                      <span>
+                        {uploadProgress.uploadedFiles} / {uploadProgress.totalFiles} files
+                      </span>
+                      {uploadProgress.totalBatches > 1 && (
+                        <span>
+                          Batch {uploadProgress.currentBatch} / {uploadProgress.totalBatches}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Error state */}
+              {uploading && uploadProgress?.status === "error" && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  Upload failed: {uploadProgress.phase}
+                </div>
+              )}
+
+              {/* General form error */}
+              {formError && !(uploading && uploadProgress?.status === "error") && (
+                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+                  {formError}
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={() => {
+                    setShowUploadModal(false);
+                    resetForm();
+                    setUploadProgress(null);
+                    stopPolling();
+                  }}
+                  disabled={uploading}
+                  className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={handleUpload}
+                  disabled={uploading}
+                  className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50"
+                >
+                  {uploading ? (
+                    <>
+                      <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Uploading...
+                    </>
+                  ) : (
+                    <>
+                      <Upload className="w-4 h-4" />
+                      Upload Package
+                    </>
+                  )}
+                </button>
+              </div>
             </div>
           </div>
         </div>
