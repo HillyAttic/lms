@@ -2,7 +2,7 @@
 
 import { useEffect, useState, FormEvent } from "react";
 import { useRouter, useParams } from "next/navigation";
-import { getUserById, updateUserRole, getUserProgress, toggleRepositoryAccess } from "@/app/actions/user-actions";
+import { getUserById, updateUserProfile, deleteUser, getUserProgress, toggleRepositoryAccess } from "@/app/actions/user-actions";
 import { getCourses } from "@/app/actions/course-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
@@ -12,8 +12,6 @@ import LoadingSpinner from "@/components/admin/loading-spinner";
 import Badge from "@/components/admin/badge";
 import ConfirmDialog from "@/components/admin/confirm-dialog";
 import ChangePasswordModal from "@/components/admin/change-password-modal";
-import { deleteDoc, doc } from "firebase/firestore";
-import { db } from "@/lib/firebase";
 
 interface UserData {
   id: string;
@@ -113,7 +111,7 @@ export default function UserDetailPage() {
 
     setSaving(true);
     try {
-      const result = await updateUserRole(userId, role, user.uid);
+      const result = await updateUserProfile(userId, { displayName, role }, user.uid);
       if (result.success) {
         toast.success("User updated successfully");
         loadUser();
@@ -129,10 +127,16 @@ export default function UserDetailPage() {
   };
 
   const handleDelete = async () => {
+    if (!user) return;
+
     try {
-      await deleteDoc(doc(db, "users", userId));
-      toast.success("User deleted successfully");
-      router.push("/admin/users");
+      const result = await deleteUser(userId, user.uid);
+      if (result.success) {
+        toast.success("User deleted successfully");
+        router.push("/admin/users");
+      } else {
+        toast.error(result.error || "Failed to delete user");
+      }
     } catch (error) {
       toast.error("Failed to delete user");
       console.error(error);

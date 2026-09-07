@@ -103,9 +103,12 @@ export async function createUser(data: {
   }
 }
 
-export async function updateUserRole(
+export async function updateUserProfile(
   userId: string,
-  newRole: "admin" | "instructor" | "learner",
+  data: {
+    displayName?: string;
+    role?: "admin" | "instructor" | "learner";
+  },
   adminUserId: string
 ) {
   try {
@@ -115,16 +118,33 @@ export async function updateUserRole(
       return { success: false, error: "Admin access required" };
     }
 
-    await adminDb.doc(`users/${userId}`).update({
-      role: newRole,
+    const updateData: any = {
       updatedAt: FieldValue.serverTimestamp(),
-    });
+    };
+
+    if (data.displayName !== undefined) {
+      updateData.displayName = data.displayName;
+    }
+
+    if (data.role !== undefined) {
+      updateData.role = data.role;
+    }
+
+    await adminDb.doc(`users/${userId}`).update(updateData);
 
     return { success: true };
   } catch (error: any) {
-    console.error("Update user role error:", error);
+    console.error("Update user profile error:", error);
     return { success: false, error: error.message };
   }
+}
+
+export async function updateUserRole(
+  userId: string,
+  newRole: "admin" | "instructor" | "learner",
+  adminUserId: string
+) {
+  return updateUserProfile(userId, { role: newRole }, adminUserId);
 }
 
 export async function batchUpdateUserRole(
@@ -174,6 +194,30 @@ export async function batchDeleteUsers(userIds: string[], adminUserId: string) {
     return { success: true };
   } catch (error: any) {
     console.error("Batch delete users error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function deleteUser(userId: string, adminUserId: string) {
+  try {
+    // Verify admin
+    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
+    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    // Check if user exists
+    const userDoc = await adminDb.doc(`users/${userId}`).get();
+    if (!userDoc.exists) {
+      return { success: false, error: "User not found" };
+    }
+
+    // Delete the user document
+    await adminDb.doc(`users/${userId}`).delete();
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Delete user error:", error);
     return { success: false, error: error.message };
   }
 }
