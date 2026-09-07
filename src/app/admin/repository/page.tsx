@@ -155,6 +155,40 @@ export default function AdminRepositoryPage() {
     }, 500);
   }, [stopPolling]);
 
+  const uploadFileDirect = (file: File, uploadUrl: string): Promise<void> => {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl, true);
+      xhr.setRequestHeader("Content-Type", "application/zip");
+      xhr.setRequestHeader("x-upload-content-type", "application/zip");
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const pct = Math.round((event.loaded / event.total) * 100);
+          setUploadProgress((prev) =>
+            prev
+              ? { ...prev, phase: `Uploading ZIP... ${pct}%`, progress: pct }
+              : null
+          );
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed with status ${xhr.status}`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Network error during upload"));
+      xhr.ontimeout = () => reject(new Error("Upload timed out"));
+      xhr.timeout = 600_000; // 10 minutes
+
+      xhr.send(file);
+    });
+  };
+
   const handleUpload = async () => {
     if (!formData.name || !selectedFile) {
       setFormError("Name and ZIP file are required");
@@ -176,37 +210,73 @@ export default function AdminRepositoryPage() {
     });
 
     try {
-      const form = new FormData();
-      form.append("itemId", itemId);
-      form.append("userId", user?.uid || "");
-      form.append("file", selectedFile);
-      form.append("name", formData.name);
-      form.append("description", formData.description);
-      form.append("features", formData.features);
-      form.append("interactivityLevel", formData.interactivityLevel);
-      form.append("duration", formData.duration);
+      // Step 1: Get a signed upload URL from the server
+      console.log("Step 1: Getting signed upload URL...");
+      const urlResponse = await fetch("/api/repository/upload-url", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ itemId, userId: user?.uid || "" }),
+      });
 
-      console.log("Starting upload...", {
+      const urlResult = await urlResponse.json();
+      if (!urlResult.success) {
+        setFormError(urlResult.error || "Failed to get upload URL");
+        setUploading(false);
+        return;
+      }
+
+      const { uploadUrl, sourceZipPath } = urlResult;
+
+      // Step 2: Upload the ZIP directly to Firebase Storage (bypasses Vercel body limit)
+      console.log("Step 2: Uploading file directly to storage...", {
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
-        name: formData.name,
-        itemId,
       });
+      setUploadProgress((prev) =>
+        prev ? { ...prev, phase: "Uploading ZIP... 0%", progress: 0 } : null
+      );
 
-      // Start polling for progress updates
+      try {
+        await uploadFileDirect(selectedFile, uploadUrl);
+        console.log("Direct upload to storage complete");
+      } catch (uploadError: any) {
+        setFormError(
+          `File upload failed: ${uploadError.message}. Please try again.`
+        );
+        setUploading(false);
+        return;
+      }
+
+      // Step 3: Tell the server to process the uploaded ZIP
+      console.log("Step 3: Processing uploaded ZIP...");
+      setUploadProgress((prev) =>
+        prev
+          ? { ...prev, phase: "Processing ZIP on server...", progress: 10 }
+          : null
+      );
+
+      // Start polling for server-side progress updates (extraction, file uploads)
       startPolling(itemId);
 
-      // Use direct API upload to bypass Server Action body size limits
-      const response = await fetch("/api/repository/upload", {
+      const processResponse = await fetch("/api/repository/upload", {
         method: "POST",
-        body: form,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          itemId,
+          userId: user?.uid || "",
+          name: formData.name,
+          description: formData.description,
+          features: formData.features,
+          interactivityLevel: formData.interactivityLevel,
+          duration: formData.duration,
+          sourceZipPath,
+        }),
       });
 
-      // Stop polling once request completes
       stopPolling();
 
-      const result = await response.json();
-      console.log("Upload result:", result);
+      const result = await processResponse.json();
+      console.log("Processing result:", result);
 
       if (result.success) {
         // Clean up progress doc in background
@@ -216,7 +286,7 @@ export default function AdminRepositoryPage() {
         setUploadProgress(null);
         await loadItems();
       } else {
-        setFormError(result.error || "Upload failed");
+        setFormError(result.error || "Upload processing failed");
       }
     } catch (error: any) {
       console.error("Upload error:", error);

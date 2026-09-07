@@ -3,32 +3,26 @@ import { adminDb, adminStorage, FieldValue } from "@/lib/firebase-admin";
 import JSZip from "jszip";
 
 /**
- * Direct upload API route for SCORM packages.
- * Bypasses Server Action body size limits by streaming directly to Firebase Storage.
+ * Process an already-uploaded SCORM package from Firebase Storage.
+ * The ZIP must already be at the `sourceZipPath` (uploaded directly by the client
+ * via a signed URL from /api/repository/upload-url).
  *
  * POST /api/repository/upload
- * Content-Type: multipart/form-data
+ * Content-Type: application/json
  *
- * Fields:
- *   - file: The SCORM ZIP file
- *   - userId: The authenticated user's UID
+ * Body:
  *   - itemId: Client-generated item ID
+ *   - userId: The authenticated user's UID
  *   - name: Module name
  *   - description: Module description
  *   - features: Module features
  *   - interactivityLevel: Interactivity level (1, 2, 2.5, 3)
  *   - duration: Duration in minutes
+ *   - sourceZipPath: Storage path where the ZIP was uploaded (e.g. "repository/repo_123/source.zip")
  */
 
 export const runtime = "nodejs";
-export const maxDuration = 300; // 5 minutes for large uploads
-
-// Increase the body size limit for this route (500MB)
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};
+export const maxDuration = 300; // 5 minutes for large extractions
 
 async function updateUploadProgress(
   itemId: string,
@@ -47,32 +41,27 @@ async function updateUploadProgress(
 }
 
 export async function POST(request: NextRequest) {
-  console.log("=== Direct Upload API Called ===");
+  console.log("=== Process SCORM Upload ===");
 
   try {
-    const formData = await request.formData();
-    const file = formData.get("file") as File;
-    const userId = formData.get("userId") as string;
-    const clientItemId = formData.get("itemId") as string;
-    const name = formData.get("name") as string;
-    const description = formData.get("description") as string;
-    const features = formData.get("features") as string;
-    const interactivityLevel = parseFloat(formData.get("interactivityLevel") as string);
-    const duration = parseInt(formData.get("duration") as string);
+    const body = await request.json();
+    const {
+      itemId,
+      userId,
+      name,
+      description,
+      features,
+      interactivityLevel,
+      duration,
+      sourceZipPath,
+    } = body;
 
-    if (!file || !name || !userId) {
+    if (!name || !userId || !sourceZipPath) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: file, name, and userId are required" },
+        { success: false, error: "Missing required fields: name, userId, and sourceZipPath are required" },
         { status: 400 }
       );
     }
-
-    console.log("Upload details:", {
-      fileName: file.name,
-      fileSize: file.size,
-      name,
-      userId,
-    });
 
     // Verify admin user
     const userDoc = await adminDb.doc(`users/${userId}`).get();
@@ -83,47 +72,47 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const itemId = clientItemId || `repo_${Date.now()}`;
-    const storageBase = `repository/${itemId}`;
-    const sourceZipPath = `${storageBase}/source.zip`;
-    const extractedPath = `${storageBase}/extracted`;
+    const bucket = adminStorage.bucket();
+    const resolvedItemId = itemId || `repo_${Date.now()}`;
+    const extractedPath = `repository/${resolvedItemId}/extracted`;
 
-    // Initialize progress tracking
-    await updateUploadProgress(itemId, userId, {
-      status: "preparing",
-      phase: "Preparing upload...",
-      progress: 0,
-      fileName: file.name,
-      fileSize: file.size,
-      startedAt: FieldValue.serverTimestamp(),
+    console.log("Processing SCORM:", {
+      resolvedItemId,
+      sourceZipPath,
+      name,
+      userId,
     });
 
-    // Convert file to buffer
-    console.log("Converting file to buffer...");
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-    console.log("Buffer created, size:", fileBuffer.length);
+    // Verify the source ZIP exists in Storage
+    const [zipExists] = await bucket.file(sourceZipPath).exists();
+    if (!zipExists) {
+      return NextResponse.json(
+        { success: false, error: "Source ZIP file not found in storage. Please re-upload." },
+        { status: 400 }
+      );
+    }
 
-    const bucket = adminStorage.bucket();
+    // Initialize progress tracking
+    await updateUploadProgress(resolvedItemId, userId, {
+      status: "preparing",
+      phase: "Preparing extraction...",
+      progress: 0,
+    });
 
-    // Upload source zip to Firebase Storage
-    console.log("Uploading source ZIP...");
-    await updateUploadProgress(itemId, userId, {
-      status: "uploading_zip",
-      phase: "Uploading ZIP to storage...",
+    // Download ZIP from Firebase Storage
+    console.log("Downloading ZIP from storage...");
+    await updateUploadProgress(resolvedItemId, userId, {
+      status: "extracting",
+      phase: "Downloading ZIP from storage...",
       progress: 5,
     });
 
-    await bucket.file(sourceZipPath).save(fileBuffer, {
-      contentType: "application/zip",
-      metadata: {
-        cacheControl: "public, max-age=31536000",
-      },
-    });
-    console.log("Source ZIP uploaded successfully");
+    const [fileBuffer] = await bucket.file(sourceZipPath).download();
+    console.log("ZIP downloaded, size:", fileBuffer.length);
 
     // Extract zip using JSZip
     console.log("Extracting ZIP contents...");
-    await updateUploadProgress(itemId, userId, {
+    await updateUploadProgress(resolvedItemId, userId, {
       status: "extracting",
       phase: "Extracting ZIP contents...",
       progress: 10,
@@ -143,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     console.log(`Found ${files.length} files in ZIP`);
 
-    await updateUploadProgress(itemId, userId, {
+    await updateUploadProgress(resolvedItemId, userId, {
       status: "extracting",
       phase: `Found ${files.length} files in ZIP`,
       progress: 15,
@@ -173,7 +162,7 @@ export async function POST(request: NextRequest) {
       const currentBatch = Math.floor(i / batchSize) + 1;
 
       const progressBefore = 20 + Math.round((i / files.length) * 60);
-      await updateUploadProgress(itemId, userId, {
+      await updateUploadProgress(resolvedItemId, userId, {
         status: "uploading_files",
         phase: `Uploading batch ${currentBatch}/${totalBatches}...`,
         progress: progressBefore,
@@ -197,7 +186,7 @@ export async function POST(request: NextRequest) {
 
       const uploadedAfter = Math.min(i + batchSize, files.length);
       const progressAfter = 20 + Math.round((uploadedAfter / files.length) * 60);
-      await updateUploadProgress(itemId, userId, {
+      await updateUploadProgress(resolvedItemId, userId, {
         uploadedFiles: uploadedAfter,
         progress: progressAfter,
       });
@@ -205,7 +194,7 @@ export async function POST(request: NextRequest) {
 
     console.log("All files uploaded successfully");
 
-    await updateUploadProgress(itemId, userId, {
+    await updateUploadProgress(resolvedItemId, userId, {
       status: "processing",
       phase: "Processing manifest and creating record...",
       progress: 85,
@@ -236,13 +225,13 @@ export async function POST(request: NextRequest) {
     const nextSerialNumber = countSnapshot.data().count + 1;
 
     // Create Firestore document
-    await adminDb.collection("repository").doc(itemId).set({
+    await adminDb.collection("repository").doc(resolvedItemId).set({
       serialNumber: nextSerialNumber,
       name,
       description,
       features,
-      interactivityLevel,
-      duration,
+      interactivityLevel: parseFloat(interactivityLevel),
+      duration: parseInt(duration),
       scormVersion,
       entryPoint,
       storagePath: extractedPath,
@@ -254,20 +243,20 @@ export async function POST(request: NextRequest) {
 
     console.log("Firestore document created");
 
-    await updateUploadProgress(itemId, userId, {
+    await updateUploadProgress(resolvedItemId, userId, {
       status: "complete",
       phase: "Upload complete!",
       progress: 100,
     });
 
-    console.log("=== Direct Upload Complete ===");
+    console.log("=== Process SCORM Upload Complete ===");
 
-    return NextResponse.json({ success: true, itemId });
+    return NextResponse.json({ success: true, itemId: resolvedItemId });
   } catch (error: any) {
-    console.error("=== Direct Upload Error ===");
+    console.error("=== Process SCORM Upload Error ===");
     console.error("Error details:", error);
     return NextResponse.json(
-      { success: false, error: error.message || "Upload failed" },
+      { success: false, error: error.message || "Upload processing failed" },
       { status: 500 }
     );
   }
