@@ -52,6 +52,7 @@ const corsConfig = [
       "X-Goog-Upload-Protocol",
       "X-Goog-Upload-Status",
       "X-Goog-Upload-Chunk-Granularity",
+      "X-Upload-Content-Type",
     ],
   },
 ];
