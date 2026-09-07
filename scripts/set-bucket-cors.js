@@ -28,7 +28,7 @@ const serviceAccount = JSON.parse(
 const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "";
 
 if (!bucketName) {
-  console.error("❌ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET not found in .env.local");
+  console.error("❌ NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET not found in .env");
   process.exit(1);
 }
 
@@ -40,9 +40,10 @@ const app = initializeApp({
 const storage = getStorage(app);
 const bucket = storage.bucket();
 
+// Use wildcard origin to handle both storage.googleapis.com and bucket-specific hostnames
 const corsConfig = [
   {
-    origin: ["https://lms.edventurehub.com"],
+    origin: ["*"],
     method: ["GET", "PUT", "POST", "HEAD", "DELETE"],
     maxAgeSeconds: 3600,
     responseHeader: [

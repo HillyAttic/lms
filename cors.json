@@ -1,6 +1,6 @@
 [
   {
-    "origin": ["https://lms.edventurehub.com"],
+    "origin": ["*"],
     "method": ["GET", "PUT", "POST", "HEAD", "DELETE"],
     "maxAgeSeconds": 3600,
     "responseHeader": [
