@@ -31,7 +31,6 @@ export function uploadFileDirect(
     const xhr = new XMLHttpRequest();
     xhr.open("PUT", uploadUrl, true);
     xhr.setRequestHeader("Content-Type", contentType);
-    xhr.setRequestHeader("x-upload-content-type", contentType);
 
     xhr.upload.onprogress = (event) => {
       if (event.lengthComputable && onProgress) {
