@@ -19,7 +19,8 @@ import {
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Upload SCORM", href: "/admin/upload", icon: Upload },
-  { label: "Courses", href: "/admin/courses", icon: BookOpen },
+  { label: "SCORM Courses", href: "/admin/courses", icon: BookOpen },
+  { label: "Public Courses", href: "/admin/public-courses", icon: BookOpen },
   { label: "Repository", href: "/admin/repository", icon: FileArchive },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Settings", href: "/admin/settings", icon: Settings },

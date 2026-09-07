@@ -2,15 +2,27 @@ import PageHeader from "@/components/pageHeader";
 import CoursesDsiplay from "./coursesDsiplay";
 import { siteName } from "@/utils/envExport";
 import { Metadata } from "next";
-import { coursesData } from "@/components/courses/courseData";
+import { getPublicCourses } from "@/app/actions/public-course-actions";
 
 export const metadata: Metadata = {
   title: `Courses | ${siteName}`,
-  description: "EdventureHub  Online Learning Platform",
+  description: "EdventureHub Online Learning Platform",
 };
 
-const Courses = () => {
-  const courses = coursesData;
+const Courses = async () => {
+  let courses = [];
+
+  try {
+    const result = await getPublicCourses();
+    if (Array.isArray(result)) {
+      courses = result;
+    }
+  } catch (error) {
+    console.error("Failed to fetch courses:", error);
+    // Fallback to empty array on error
+    courses = [];
+  }
+
   return (
     <main>
       <PageHeader
