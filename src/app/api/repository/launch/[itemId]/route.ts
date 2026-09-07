@@ -27,7 +27,7 @@ export async function GET(
 
     const [content] = await file.download();
 
-    return new NextResponse(content, {
+    return new NextResponse(new Uint8Array(content), {
       headers: {
         "Content-Type": "text/html; charset=utf-8",
         "Cache-Control": "no-cache",

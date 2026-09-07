@@ -60,7 +60,7 @@ export async function GET(
 
     const contentType = contentTypes[ext] || "application/octet-stream";
 
-    return new NextResponse(content, {
+    return new NextResponse(new Uint8Array(content), {
       headers: {
         "Content-Type": contentType,
         "Cache-Control": "no-cache",

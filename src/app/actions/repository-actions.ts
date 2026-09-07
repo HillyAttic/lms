@@ -735,7 +735,7 @@ export async function getZipFileMetadata(itemId: string) {
 
     return {
       success: true,
-      fileSize: parseInt(metadata.size || "0", 10),
+      fileSize: parseInt(String(metadata.size || "0"), 10),
       contentType: metadata.contentType,
       updated: metadata.updated,
     };

@@ -317,7 +317,7 @@ export default function AdminRepositoryPage() {
     const metaResult = await getZipFileMetadata(item.id);
     if (metaResult.success) {
       setZipMetadata({
-        fileSize: metaResult.fileSize,
+        fileSize: metaResult.fileSize || 0,
         updated: metaResult.updated,
       });
     } else {
