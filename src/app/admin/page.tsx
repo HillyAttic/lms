@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getDashboardStats } from "@/app/actions/stats-actions";
 import { toast } from "react-toastify";
-import { BookOpen, Users, Upload, ArrowRight, BarChart, TrendingUp } from "@/lib/icons";
+import { BookOpen, Users, Upload, ArrowRight, BarChart, TrendingUp, Video, Sparkles, FileArchive } from "@/lib/icons";
 import StatCard from "@/components/admin/stat-card";
 import Badge from "@/components/admin/badge";
 import LoadingSpinner from "@/components/admin/loading-spinner";
@@ -135,6 +135,30 @@ export default function AdminDashboard() {
           <ArrowRight className="w-5 h-5 text-gray-400" />
         </Link>
         <Link
+          href="/admin/video-courses"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-indigo-100 rounded-lg">
+              <Video className="w-5 h-5 text-indigo-600" />
+            </div>
+            <span className="font-medium text-gray-900">Video Courses</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
+          href="/admin/game-courses"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Sparkles className="w-5 h-5 text-amber-600" />
+            </div>
+            <span className="font-medium text-gray-900">Game Courses</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
           href="/admin/users"
           className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
         >
@@ -143,6 +167,18 @@ export default function AdminDashboard() {
               <Users className="w-5 h-5 text-green-600" />
             </div>
             <span className="font-medium text-gray-900">Manage Users</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
+          href="/admin/repository"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-slate-100 rounded-lg">
+              <FileArchive className="w-5 h-5 text-slate-600" />
+            </div>
+            <span className="font-medium text-gray-900">Repository</span>
           </div>
           <ArrowRight className="w-5 h-5 text-gray-400" />
         </Link>

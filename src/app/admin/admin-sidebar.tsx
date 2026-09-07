@@ -14,12 +14,16 @@ import {
   ArrowLeft,
   LogOut,
   CloseIcon,
+  Video,
+  Sparkles,
 } from "@/lib/icons";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
   { label: "Upload SCORM", href: "/admin/upload", icon: Upload },
   { label: "SCORM Courses", href: "/admin/courses", icon: BookOpen },
+  { label: "Video Courses", href: "/admin/video-courses", icon: Video },
+  { label: "Game Courses", href: "/admin/game-courses", icon: Sparkles },
   { label: "Public Courses", href: "/admin/public-courses", icon: BookOpen },
   { label: "Repository", href: "/admin/repository", icon: FileArchive },
   { label: "Users", href: "/admin/users", icon: Users },
