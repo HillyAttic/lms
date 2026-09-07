@@ -1,16 +1,20 @@
 "use client";
 
 import { X } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
 interface ConfirmDialogProps {
   title: string;
   message: string;
   onConfirm: () => void;
-  onCancel: () => void;
+  onCancel?: () => void;
+  onClose?: () => void;
   confirmText?: string;
   cancelText?: string;
   variant?: "danger" | "default";
   loading?: boolean;
+  isOpen?: boolean;
+  className?: string;
 }
 
 export default function ConfirmDialog({
@@ -18,18 +22,28 @@ export default function ConfirmDialog({
   message,
   onConfirm,
   onCancel,
+  onClose,
   confirmText = "Confirm",
   cancelText = "Cancel",
   variant = "default",
   loading = false,
+  isOpen = true,
+  className,
 }: ConfirmDialogProps) {
+  const handleCancel = () => {
+    if (onClose) onClose();
+    else if (onCancel) onCancel();
+  };
+
+  if (!isOpen) return null;
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+    <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4", className)}>
       <div className="w-full max-w-md rounded-xl bg-white">
         <div className="flex items-center justify-between border-b p-4 sm:p-6">
           <h2 className="text-lg font-bold text-gray-900 sm:text-xl">{title}</h2>
           <button
-            onClick={onCancel}
+            onClick={handleCancel}
             className="rounded-lg p-2 transition-colors hover:bg-gray-100"
           >
             <X className="h-5 w-5" />
@@ -40,7 +54,7 @@ export default function ConfirmDialog({
         </div>
         <div className="flex flex-col-reverse gap-3 border-t p-4 sm:flex-row sm:justify-end sm:p-6">
           <button
-            onClick={onCancel}
+            onClick={handleCancel}
             disabled={loading}
             className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
           >
@@ -62,8 +76,4 @@ export default function ConfirmDialog({
       </div>
     </div>
   );
-}
-
-function cn(...classes: (string | undefined | false)[]) {
-  return classes.filter(Boolean).join(" ");
 }

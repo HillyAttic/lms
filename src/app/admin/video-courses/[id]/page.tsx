@@ -49,7 +49,7 @@ export default function VideoCourseDetailPage() {
     try {
       const result = await getVideoCourseById(courseId);
       if (result.success && result.data) {
-        const course = result.data;
+        const course = result.data as Record<string, any>;
         setTitle(course.title || "");
         setDescription(course.description || "");
         setDuration(course.duration?.toString() || "");

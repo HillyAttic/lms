@@ -52,7 +52,7 @@ export default function GameCourseDetailPage() {
     try {
       const result = await getGameCourseById(courseId);
       if (result.success && result.data) {
-        const course = result.data;
+        const course = result.data as Record<string, any>;
         setTitle(course.title || "");
         setDescription(course.description || "");
         setDuration(course.duration?.toString() || "");

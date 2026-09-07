@@ -8,6 +8,7 @@ interface StatCardProps {
   value: number | string;
   icon: ReactNode;
   color?: "purple" | "green" | "blue" | "yellow" | "red";
+  className?: string;
 }
 
 const colorStyles: Record<string, { bg: string; icon: string }> = {
@@ -18,11 +19,11 @@ const colorStyles: Record<string, { bg: string; icon: string }> = {
   red: { bg: "bg-red-50", icon: "text-red-600" },
 };
 
-export default function StatCard({ title, value, icon, color = "purple" }: StatCardProps) {
+export default function StatCard({ title, value, icon, color = "purple", className }: StatCardProps) {
   const styles = colorStyles[color];
 
   return (
-    <div className="bg-white rounded-xl shadow-sm p-6">
+    <div className={cn("bg-white rounded-xl shadow-sm p-6", className)}>
       <div className="flex items-center gap-4">
         <div className={cn("p-3 rounded-lg", styles.bg)}>
           <div className={cn("w-6 h-6", styles.icon)}>{icon}</div>

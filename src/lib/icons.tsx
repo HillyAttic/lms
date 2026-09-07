@@ -201,7 +201,7 @@ export const Briefcase = () => {
     </svg>
   );
 };
-export const Video = () => {
+export const Video = ({ className }: { className?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -209,6 +209,7 @@ export const Video = () => {
       height={28}
       viewBox="0 0 28 28"
       fill="none"
+      className={className}
     >
       <path
         opacity="0.3"
@@ -247,7 +248,7 @@ export const ShieldCheck = () => {
     </svg>
   );
 };
-export const Sparkles = () => {
+export const Sparkles = ({ className }: { className?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -255,6 +256,7 @@ export const Sparkles = () => {
       height={28}
       viewBox="0 0 28 28"
       fill="none"
+      className={className}
     >
       <g opacity="0.3">
         <path
@@ -859,7 +861,7 @@ export const CloseIcon = () => {
   }
 };
 
-export const PlusIcon = () => {
+export const PlusIcon = ({ className }: { className?: string }) => {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -867,6 +869,7 @@ export const PlusIcon = () => {
       height={14}
       viewBox="0 0 14 14"
       fill="none"
+      className={className}
     >
       <path
         fillRule="evenodd"

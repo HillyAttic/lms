@@ -5,6 +5,7 @@ import { cn } from "@/lib/utils";
 interface BadgeProps {
   label: string;
   variant?: "success" | "warning" | "danger" | "info" | "purple" | "blue" | "green" | "gray";
+  className?: string;
 }
 
 const variantStyles: Record<string, string> = {
@@ -18,7 +19,7 @@ const variantStyles: Record<string, string> = {
   gray: "bg-gray-100 text-gray-800",
 };
 
-export default function Badge({ label, variant = "gray" }: BadgeProps) {
+export default function Badge({ label, variant = "gray", className }: BadgeProps) {
   return (
     <span
       className={cn(
