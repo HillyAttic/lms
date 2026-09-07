@@ -89,13 +89,7 @@ const CoursesDsiplay = ({ courses }: { courses: CourseType[] }) => {
         if (selectedCategory === "Game Courses") {
           return course.courseType === "GAMES";
         }
-        // For other categories, match by level or title containing category keywords
-        const categoryLower = selectedCategory.toLowerCase();
-        return (
-          course.level.toLowerCase().includes(categoryLower) ||
-          course.title.toLowerCase().includes(categoryLower) ||
-          course.shortDescription.toLowerCase().includes(categoryLower)
-        );
+        return false;
       });
     }
 

@@ -12,6 +12,7 @@ import PageHeader from "@/components/admin/page-header";
 
 interface DashboardData {
   totalCourses: number;
+  totalScormCourses: number;
   activeCourses: number;
   draftCourses: number;
   totalVideoCourses: number;
@@ -90,6 +91,12 @@ export default function AdminDashboard() {
           title="Total Courses"
           value={stats?.totalCourses || 0}
           icon={<BookOpen className="w-6 h-6" />}
+          color="purple"
+        />
+        <StatCard
+          title="SCORM Courses"
+          value={stats?.totalScormCourses || 0}
+          icon={<FileArchive className="w-6 h-6" />}
           color="purple"
         />
         <StatCard

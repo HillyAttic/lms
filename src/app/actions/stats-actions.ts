@@ -53,7 +53,8 @@ export async function getDashboardStats() {
     return {
       success: true,
       data: serializeTimestamps({
-        totalCourses,
+        totalCourses: totalCourses + totalVideoCourses + totalGameCourses,
+        totalScormCourses: totalCourses,
         activeCourses,
         draftCourses,
         totalVideoCourses,

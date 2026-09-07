@@ -1,10 +1,5 @@
 import {
-  Briefcase,
-  DesktopComputer,
   GamepadIcon,
-  PainBrush,
-  ShieldCheck,
-  Sparkles,
   Video,
   FileStack,
 } from "@/lib/icons";
@@ -14,12 +9,6 @@ import { ReactElement } from "react";
 
 function categoryIconFinder(category: string) {
   const icons: Record<string, ReactElement> = {
-    "Web Development": <DesktopComputer />,
-    "UI/UX Design": <PainBrush />,
-    "Digital Marketing": <Briefcase />,
-    "Video Editing": <Video />,
-    "Cyber Security": <ShieldCheck />,
-    "Artificial Intelligence": <Sparkles />,
     "SCORM Courses": <FileStack />,
     "Video Courses": <Video />,
     "Game Courses": <GamepadIcon />,
