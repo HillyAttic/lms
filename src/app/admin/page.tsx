@@ -14,6 +14,10 @@ interface DashboardData {
   totalCourses: number;
   activeCourses: number;
   draftCourses: number;
+  totalVideoCourses: number;
+  activeVideoCourses: number;
+  totalGameCourses: number;
+  activeGameCourses: number;
   totalUsers: number;
   adminCount: number;
   instructorCount: number;
@@ -81,12 +85,24 @@ export default function AdminDashboard() {
       />
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
         <StatCard
           title="Total Courses"
           value={stats?.totalCourses || 0}
           icon={<BookOpen className="w-6 h-6" />}
           color="purple"
+        />
+        <StatCard
+          title="Video Courses"
+          value={stats?.totalVideoCourses || 0}
+          icon={<Video className="w-6 h-6" />}
+          color="blue"
+        />
+        <StatCard
+          title="Game Courses"
+          value={stats?.totalGameCourses || 0}
+          icon={<Sparkles className="w-6 h-6" />}
+          color="yellow"
         />
         <StatCard
           title="Active Courses"

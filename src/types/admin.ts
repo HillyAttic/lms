@@ -43,10 +43,50 @@ export interface AdminUser {
   lastLoginAt?: any;
 }
 
+export interface VideoCourse {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  status: "active" | "draft";
+  thumbnailUrl: string | null;
+  videoUrl: string | null;
+  videoStoragePath: string;
+  videoMimeType: string;
+  videoFileSize: number;
+  categories: string[];
+  tags: string[];
+  createdAt: any;
+  updatedAt: any;
+  createdBy: string;
+}
+
+export interface GameCourse {
+  id: string;
+  title: string;
+  description: string;
+  duration: number;
+  status: "active" | "draft";
+  thumbnailUrl: string | null;
+  gameUrl: string | null;
+  gameStoragePath: string;
+  gameEntryFile: string;
+  gameType: "uploaded" | "url";
+  categories: string[];
+  tags: string[];
+  createdAt: any;
+  updatedAt: any;
+  createdBy: string;
+}
+
 export interface DashboardStats {
   totalCourses: number;
   activeCourses: number;
   draftCourses: number;
+  totalVideoCourses: number;
+  activeVideoCourses: number;
+  totalGameCourses: number;
+  activeGameCourses: number;
   totalUsers: number;
   adminCount: number;
   instructorCount: number;

@@ -4,7 +4,7 @@ import { adminDb, serializeTimestamps } from "@/lib/firebase-admin";
 
 export async function getDashboardStats() {
   try {
-    // Get course counts
+    // Get SCORM course counts
     const coursesSnapshot = await adminDb.collection("courses").get();
     const courses = coursesSnapshot.docs.map((doc) => ({
       id: doc.id,
@@ -14,6 +14,18 @@ export async function getDashboardStats() {
     const totalCourses = courses.length;
     const activeCourses = courses.filter((c: any) => c.status === "active").length;
     const draftCourses = courses.filter((c: any) => c.status === "draft").length;
+
+    // Get video course counts
+    const videoCoursesSnapshot = await adminDb.collection("video_courses").get();
+    const videoCourses = videoCoursesSnapshot.docs.map((doc) => doc.data());
+    const totalVideoCourses = videoCourses.length;
+    const activeVideoCourses = videoCourses.filter((c: any) => c.status === "active").length;
+
+    // Get game course counts
+    const gameCoursesSnapshot = await adminDb.collection("game_courses").get();
+    const gameCourses = gameCoursesSnapshot.docs.map((doc) => doc.data());
+    const totalGameCourses = gameCourses.length;
+    const activeGameCourses = gameCourses.filter((c: any) => c.status === "active").length;
 
     // Get user counts
     const usersSnapshot = await adminDb.collection("users").get();
@@ -44,6 +56,10 @@ export async function getDashboardStats() {
         totalCourses,
         activeCourses,
         draftCourses,
+        totalVideoCourses,
+        activeVideoCourses,
+        totalGameCourses,
+        activeGameCourses,
         totalUsers,
         adminCount,
         instructorCount,

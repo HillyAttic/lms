@@ -138,7 +138,7 @@ export default function UploadScormModal({ onClose, onSuccess }: UploadScormModa
                       />
                     </label>
                   </p>
-                  <p className="text-xs text-gray-500 mt-1">Maximum file size: 200MB</p>
+                  <p className="text-xs text-gray-500 mt-1">Maximum file size: 500MB</p>
                 </div>
               )}
             </div>

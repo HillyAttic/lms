@@ -34,8 +34,8 @@ export default function NewCoursePage() {
         toast.error("Please upload a .zip file");
         return;
       }
-      if (selectedFile.size > 200 * 1024 * 1024) {
-        toast.error("File size must be less than 200MB");
+      if (selectedFile.size > 500 * 1024 * 1024) {
+        toast.error("File size must be less than 500MB");
         return;
       }
       setFile(selectedFile);
@@ -66,8 +66,8 @@ export default function NewCoursePage() {
         toast.error("Please upload a .zip file");
         return;
       }
-      if (droppedFile.size > 200 * 1024 * 1024) {
-        toast.error("File size must be less than 200MB");
+      if (droppedFile.size > 500 * 1024 * 1024) {
+        toast.error("File size must be less than 500MB");
         return;
       }
       setFile(droppedFile);
@@ -190,7 +190,7 @@ export default function NewCoursePage() {
                       />
                     </label>
                   </p>
-                  <p className="text-xs text-gray-500 mt-2">Maximum file size: 200MB</p>
+                  <p className="text-xs text-gray-500 mt-2">Maximum file size: 500MB</p>
                 </div>
               )}
             </div>

@@ -25,7 +25,7 @@ export default function UploadPage() {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [dragActive, setDragActive] = useState(false);
 
-  const MAX_FILE_SIZE = 200 * 1024 * 1024; // 200MB
+  const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -35,7 +35,7 @@ export default function UploadPage() {
         return;
       }
       if (selectedFile.size > MAX_FILE_SIZE) {
-        toast.error(`File size (${(selectedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds 200MB limit`);
+        toast.error(`File size (${(selectedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds 500MB limit`);
         return;
       }
       setFile(selectedFile);
@@ -68,7 +68,7 @@ export default function UploadPage() {
         return;
       }
       if (droppedFile.size > MAX_FILE_SIZE) {
-        toast.error(`File size (${(droppedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds 200MB limit`);
+        toast.error(`File size (${(droppedFile.size / 1024 / 1024).toFixed(1)}MB) exceeds 500MB limit`);
         return;
       }
       setFile(droppedFile);
@@ -211,7 +211,7 @@ export default function UploadPage() {
                     </label>
                   </p>
                   <p className="text-xs text-gray-500 mt-2">
-                    Maximum file size: 200MB • Only .zip files accepted
+                    Maximum file size: 500MB • Only .zip files accepted
                   </p>
                 </div>
               )}

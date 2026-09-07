@@ -212,10 +212,10 @@ export async function uploadRepositoryScorm(formData: FormData) {
       return { success: false, error: "File and name are required" };
     }
 
-    // Check file size (200MB limit)
-    if (file.size > 200 * 1024 * 1024) {
+    // Check file size (500MB limit)
+    if (file.size > 500 * 1024 * 1024) {
       console.error("File too large:", file.size);
-      return { success: false, error: "File size exceeds 200MB limit" };
+      return { success: false, error: "File size exceeds 500MB limit" };
     }
 
     // Generate item ID (use client-provided ID if available)

@@ -4,7 +4,6 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useAuth } from "@/lib/auth-context";
 import {
   getRepositoryItemsPaginated,
-  uploadRepositoryScorm,
   updateRepositoryItem,
   deleteRepositoryItem,
   batchDeleteRepositoryItems,
@@ -197,11 +196,16 @@ export default function AdminRepositoryPage() {
       // Start polling for progress updates
       startPolling(itemId);
 
-      const result = await uploadRepositoryScorm(form);
+      // Use direct API upload to bypass Server Action body size limits
+      const response = await fetch("/api/repository/upload", {
+        method: "POST",
+        body: form,
+      });
 
-      // Stop polling once server action completes
+      // Stop polling once request completes
       stopPolling();
 
+      const result = await response.json();
       console.log("Upload result:", result);
 
       if (result.success) {
@@ -738,7 +742,7 @@ export default function AdminRepositoryPage() {
                   className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
                 />
                 <p className="text-xs text-gray-500 mt-1">
-                  Upload a SCORM package ZIP file (max 200MB)
+                  Upload a SCORM package ZIP file (max 500MB)
                 </p>
               </div>
             </div>
