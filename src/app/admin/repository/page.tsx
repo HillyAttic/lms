@@ -165,7 +165,16 @@ export default function AdminRepositoryPage() {
     const itemId = `repo_${Date.now()}`;
     setUploading(true);
     setFormError("");
-    setUploadProgress(null);
+    // Show initial progress immediately so the UI updates right away
+    setUploadProgress({
+      status: "preparing",
+      phase: "Preparing upload...",
+      progress: 0,
+      uploadedFiles: 0,
+      totalFiles: 0,
+      currentBatch: 0,
+      totalBatches: 0,
+    });
 
     try {
       const form = new FormData();
@@ -677,16 +686,16 @@ export default function AdminRepositoryPage() {
               </div>
             </div>
             <div className="p-6 border-t space-y-4">
-              {/* Real-time upload progress */}
-              {uploading && uploadProgress && uploadProgress.status !== "error" && (
+              {/* Upload progress bar */}
+              {uploading && (
                 <div className="space-y-3 p-4 bg-purple-50 border border-purple-200 rounded-lg">
                   {/* Phase label + percentage */}
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium text-purple-900 truncate mr-2">
-                      {uploadProgress.phase}
+                      {uploadProgress?.phase || "Preparing upload..."}
                     </span>
                     <span className="text-sm font-bold text-purple-600 flex-shrink-0">
-                      {Math.round(uploadProgress.progress)}%
+                      {Math.round(uploadProgress?.progress ?? 0)}%
                     </span>
                   </div>
 
@@ -694,12 +703,12 @@ export default function AdminRepositoryPage() {
                   <div className="w-full bg-purple-200 rounded-full h-2.5 overflow-hidden">
                     <div
                       className="bg-purple-600 h-2.5 rounded-full transition-all duration-500 ease-out"
-                      style={{ width: `${Math.min(uploadProgress.progress, 100)}%` }}
+                      style={{ width: `${Math.min(uploadProgress?.progress ?? 0, 100)}%` }}
                     />
                   </div>
 
                   {/* File + batch counts */}
-                  {uploadProgress.totalFiles > 0 && (
+                  {uploadProgress && uploadProgress.totalFiles > 0 && (
                     <div className="flex items-center justify-between text-xs text-purple-700">
                       <span>
                         {uploadProgress.uploadedFiles} / {uploadProgress.totalFiles} files
@@ -714,14 +723,14 @@ export default function AdminRepositoryPage() {
                 </div>
               )}
 
-              {/* Error state */}
+              {/* Upload error */}
               {uploading && uploadProgress?.status === "error" && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   Upload failed: {uploadProgress.phase}
                 </div>
               )}
 
-              {/* General form error */}
+              {/* General form error (hide when upload error is shown) */}
               {formError && !(uploading && uploadProgress?.status === "error") && (
                 <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
                   {formError}
