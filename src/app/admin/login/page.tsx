@@ -16,12 +16,12 @@ export default function AdminLogin() {
   const { user, role, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
 
-  // Redirect to dashboard if already logged in as admin
+  // Redirect to homepage if already logged in
   useEffect(() => {
-    if (!loading && user && role === "admin") {
-      router.replace("/admin");
+    if (!loading && user) {
+      router.replace("/");
     }
-  }, [user, role, loading, router]);
+  }, [user, loading, router]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -39,7 +39,7 @@ export default function AdminLogin() {
         await signUpWithEmail(email, password, name);
         toast.success("Account created successfully!");
       }
-      router.push("/admin");
+      router.push("/");
     } catch (error: any) {
       const message = error.code === "auth/user-not-found"
         ? "No account found with this email"
@@ -69,7 +69,7 @@ export default function AdminLogin() {
     try {
       await signInWithGoogle();
       toast.success("Login successful!");
-      router.push("/admin");
+      router.push("/");
     } catch (error: any) {
       toast.error(error.message || "Google sign-in failed");
     } finally {

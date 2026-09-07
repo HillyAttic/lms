@@ -6,11 +6,12 @@ import { getUserById, updateUserRole, getUserProgress, toggleRepositoryAccess } 
 import { getCourses } from "@/app/actions/course-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
-import { ArrowLeft, Save, Trash2 } from "@/lib/icons";
+import { ArrowLeft, Save, Trash2, Key } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import LoadingSpinner from "@/components/admin/loading-spinner";
 import Badge from "@/components/admin/badge";
 import ConfirmDialog from "@/components/admin/confirm-dialog";
+import ChangePasswordModal from "@/components/admin/change-password-modal";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 
@@ -57,6 +58,7 @@ export default function UserDetailPage() {
   const [role, setRole] = useState<"admin" | "instructor" | "learner">("learner");
   const [repositoryAccess, setRepositoryAccess] = useState(false);
   const [togglingAccess, setTogglingAccess] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
 
   useEffect(() => {
     loadUser();
@@ -288,6 +290,17 @@ export default function UserDetailPage() {
                 </button>
               </div>
             </div>
+
+            {/* Change Password */}
+            <div className="mt-4 pt-4 border-t">
+              <button
+                onClick={() => setShowChangePassword(true)}
+                className="w-full flex items-center justify-center gap-2 px-4 py-2.5 border border-purple-300 text-purple-700 rounded-lg hover:bg-purple-50 transition-colors"
+              >
+                <Key className="w-4 h-4" />
+                Change Password
+              </button>
+            </div>
           </div>
         </div>
 
@@ -413,6 +426,14 @@ export default function UserDetailPage() {
           onCancel={() => setShowDeleteConfirm(false)}
           confirmText="Delete"
           variant="danger"
+        />
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal
+          userId={userId}
+          userEmail={userData.email}
+          onClose={() => setShowChangePassword(false)}
         />
       )}
     </div>

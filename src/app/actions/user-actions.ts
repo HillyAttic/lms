@@ -259,6 +259,35 @@ export async function batchToggleRepositoryAccess(
   }
 }
 
+// Update a user's password via Firebase Admin SDK
+export async function updateUserPassword(
+  userId: string,
+  newPassword: string,
+  adminUserId: string
+) {
+  try {
+    // Verify admin
+    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
+    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
+    if (!newPassword || newPassword.length < 6) {
+      return { success: false, error: "Password must be at least 6 characters" };
+    }
+
+    // Update password in Firebase Auth
+    await adminAuth.updateUser(userId, {
+      password: newPassword,
+    });
+
+    return { success: true };
+  } catch (error: any) {
+    console.error("Update user password error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 // Check if user has repository access
 export async function checkRepositoryAccess(userId: string) {
   try {

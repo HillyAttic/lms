@@ -10,7 +10,7 @@ import {
 } from "@/app/actions/user-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
-import { Trash2, Eye, UserPlus, CheckSquare } from "@/lib/icons";
+import { Trash2, Eye, UserPlus, CheckSquare, Key } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import SearchFilterBar from "@/components/admin/search-filter-bar";
 import Pagination from "@/components/admin/pagination";
@@ -19,6 +19,7 @@ import ConfirmDialog from "@/components/admin/confirm-dialog";
 import LoadingSpinner from "@/components/admin/loading-spinner";
 import EmptyState from "@/components/admin/empty-state";
 import CreateUserModal from "@/components/admin/create-user-modal";
+import ChangePasswordModal from "@/components/admin/change-password-modal";
 
 interface UserData {
   id: string;
@@ -48,6 +49,9 @@ export default function UsersPage() {
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [togglingAccessId, setTogglingAccessId] = useState<string | null>(null);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [passwordUserId, setPasswordUserId] = useState("");
+  const [passwordUserEmail, setPasswordUserEmail] = useState("");
 
   useEffect(() => {
     loadUsers();
@@ -156,6 +160,12 @@ export default function UsersPage() {
     } finally {
       setTogglingAccessId(null);
     }
+  };
+
+  const openChangePassword = (userId: string, email: string) => {
+    setPasswordUserId(userId);
+    setPasswordUserEmail(email);
+    setShowChangePassword(true);
   };
 
   const formatDate = (timestamp: any) => {
@@ -359,6 +369,14 @@ export default function UsersPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => openChangePassword(userItem.id, userItem.email)}
+                          disabled={userItem.uid === user?.uid}
+                          className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                          title="Change password"
+                        >
+                          <Key className="w-4 h-4" />
+                        </button>
                         <Link
                           href={`/admin/users/${userItem.id}`}
                           className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
@@ -393,6 +411,18 @@ export default function UsersPage() {
           onSuccess={() => {
             setShowCreateModal(false);
             loadUsers();
+          }}
+        />
+      )}
+
+      {showChangePassword && (
+        <ChangePasswordModal
+          userId={passwordUserId}
+          userEmail={passwordUserEmail}
+          onClose={() => {
+            setShowChangePassword(false);
+            setPasswordUserId("");
+            setPasswordUserEmail("");
           }}
         />
       )}
