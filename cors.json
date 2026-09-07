@@ -1,0 +1,14 @@
+[
+  {
+    "origin": ["https://lms.edventurehub.com"],
+    "method": ["GET", "PUT", "POST", "HEAD", "DELETE"],
+    "maxAgeSeconds": 3600,
+    "responseHeader": [
+      "Content-Type",
+      "Content-Length",
+      "X-Goog-Upload-Protocol",
+      "X-Goog-Upload-Status",
+      "X-Goog-Upload-Chunk-Granularity"
+    ]
+  }
+]
