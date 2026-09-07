@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getDashboardStats } from "@/app/actions/stats-actions";
 import { toast } from "react-toastify";
-import { BookOpen, Users, Upload, ArrowRight, BarChart, TrendingUp, Video, Sparkles, FileArchive } from "@/lib/icons";
+import { BookOpen, Users, Upload, ArrowRight, BarChart, TrendingUp, Video, Sparkles, FileArchive, FileText } from "@/lib/icons";
 import StatCard from "@/components/admin/stat-card";
 import Badge from "@/components/admin/badge";
 import LoadingSpinner from "@/components/admin/loading-spinner";
@@ -19,6 +19,8 @@ interface DashboardData {
   activeVideoCourses: number;
   totalGameCourses: number;
   activeGameCourses: number;
+  totalBlogs: number;
+  publishedBlogs: number;
   totalUsers: number;
   adminCount: number;
   instructorCount: number;
@@ -124,6 +126,12 @@ export default function AdminDashboard() {
           color="blue"
         />
         <StatCard
+          title="Blog Posts"
+          value={stats?.totalBlogs || 0}
+          icon={<FileText className="w-6 h-6" />}
+          color="green"
+        />
+        <StatCard
           title="Admins"
           value={stats?.adminCount || 0}
           icon={<BarChart className="w-6 h-6" />}
@@ -190,6 +198,18 @@ export default function AdminDashboard() {
               <Users className="w-5 h-5 text-green-600" />
             </div>
             <span className="font-medium text-gray-900">Manage Users</span>
+          </div>
+          <ArrowRight className="w-5 h-5 text-gray-400" />
+        </Link>
+        <Link
+          href="/admin/blogs"
+          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+        >
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-teal-100 rounded-lg">
+              <FileText className="w-5 h-5 text-teal-600" />
+            </div>
+            <span className="font-medium text-gray-900">Manage Blogs</span>
           </div>
           <ArrowRight className="w-5 h-5 text-gray-400" />
         </Link>

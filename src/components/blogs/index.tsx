@@ -1,12 +1,38 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import SectionTitle from "../sectionTitle";
 import Button from "../ui/button";
 import Link from "next/link";
 import BlogCard from "./blogCard";
 import ButtonArrow from "../ui/buttonArrow";
-import { blogData } from "./blogData";
+import { getPublishedBlogs } from "@/app/actions/blog-actions";
+import { BlogType } from "@/types/BlogType";
 
 const Blogs = () => {
-  const blogs =blogData
+  const [blogs, setBlogs] = useState<BlogType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchBlogs = async () => {
+      try {
+        const result = await getPublishedBlogs(3);
+        if (result.success && result.data) {
+          setBlogs(result.data as BlogType[]);
+        }
+      } catch (error) {
+        console.error("Failed to fetch blogs:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchBlogs();
+  }, []);
+
+  if (loading || blogs.length === 0) {
+    return null;
+  }
+
   return (
     <section className="py-16 sm:py-20 lg:py-28">
       <div className="container">

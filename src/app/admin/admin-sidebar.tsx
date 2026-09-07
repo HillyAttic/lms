@@ -16,6 +16,7 @@ import {
   CloseIcon,
   Video,
   Sparkles,
+  FileText,
 } from "@/lib/icons";
 
 const navItems = [
@@ -25,6 +26,7 @@ const navItems = [
   { label: "Video Courses", href: "/admin/video-courses", icon: Video },
   { label: "Game Courses", href: "/admin/game-courses", icon: Sparkles },
   { label: "Public Courses", href: "/admin/public-courses", icon: BookOpen },
+  { label: "Blogs", href: "/admin/blogs", icon: FileText },
   { label: "Repository", href: "/admin/repository", icon: FileArchive },
   { label: "Users", href: "/admin/users", icon: Users },
   { label: "Settings", href: "/admin/settings", icon: Settings },

@@ -8,7 +8,7 @@ import {
 } from "@/app/actions/blog-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
-import { Trash2, Eye, PenLine, CheckSquare, FileText } from "@/lib/icons";
+import { Trash2, Eye, Edit, CheckSquare, FileText } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import SearchFilterBar from "@/components/admin/search-filter-bar";
 import Pagination from "@/components/admin/pagination";
@@ -148,7 +148,7 @@ export default function BlogsPage() {
               href="/admin/blogs/new"
               className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
             >
-              <PenLine className="w-5 h-5" />
+              <Edit className="w-5 h-5" />
               Create Blog
             </Link>
           </div>
@@ -203,7 +203,7 @@ export default function BlogsPage() {
               href="/admin/blogs/new"
               className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
             >
-              <PenLine className="w-5 h-5" />
+              <Edit className="w-5 h-5" />
               Create Blog
             </Link>
           }

@@ -27,6 +27,12 @@ export async function getDashboardStats() {
     const totalGameCourses = gameCourses.length;
     const activeGameCourses = gameCourses.filter((c: any) => c.status === "active").length;
 
+    // Get blog counts
+    const blogsSnapshot = await adminDb.collection("blogs").get();
+    const blogs = blogsSnapshot.docs.map((doc) => doc.data());
+    const totalBlogs = blogs.length;
+    const publishedBlogs = blogs.filter((b: any) => b.status === "published").length;
+
     // Get user counts
     const usersSnapshot = await adminDb.collection("users").get();
     const users = usersSnapshot.docs.map((doc) => ({
@@ -54,6 +60,8 @@ export async function getDashboardStats() {
       success: true,
       data: serializeTimestamps({
         totalCourses: totalCourses + totalVideoCourses + totalGameCourses,
+        totalBlogs,
+        publishedBlogs,
         totalScormCourses: totalCourses,
         activeCourses,
         draftCourses,

@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { createBlog } from "@/app/actions/blog-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
-import { PenLine, Image, X } from "@/lib/icons";
+import { Edit, Image, X } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import { BLOG_TOPICS } from "@/types/BlogType";
 
@@ -307,7 +307,7 @@ export default function NewBlogPage() {
                 </>
               ) : (
                 <>
-                  <PenLine className="w-4 h-4" />
+                  <Edit className="w-4 h-4" />
                   Create Blog
                 </>
               )}
