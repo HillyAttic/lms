@@ -229,6 +229,7 @@ export default function AdminRepositoryPage() {
       const processResponse = await fetch("/api/repository/upload", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        cache: "no-store",
         body: JSON.stringify({
           itemId,
           userId: user?.uid || "",
@@ -242,6 +243,20 @@ export default function AdminRepositoryPage() {
       });
 
       stopPolling();
+
+      if (!processResponse.ok) {
+        let errorMessage = `Server error: ${processResponse.status} ${processResponse.statusText}`;
+        try {
+          const errorBody = await processResponse.json();
+          if (errorBody.error) errorMessage = errorBody.error;
+        } catch {
+          const textBody = await processResponse.text().catch(() => "");
+          if (textBody) errorMessage = textBody;
+        }
+        setFormError(errorMessage);
+        setUploading(false);
+        return;
+      }
 
       const result = await processResponse.json();
       console.log("Processing result:", result);

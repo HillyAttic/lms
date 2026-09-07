@@ -78,6 +78,18 @@ export async function getSignedUploadUrl(
     body: JSON.stringify({ storagePath, contentType, userId }),
   });
 
+  if (!response.ok) {
+    let errorMessage = `Server error: ${response.status} ${response.statusText}`;
+    try {
+      const errorBody = await response.json();
+      if (errorBody.error) errorMessage = errorBody.error;
+    } catch {
+      const textBody = await response.text().catch(() => "");
+      if (textBody) errorMessage = textBody;
+    }
+    throw new Error(errorMessage);
+  }
+
   const result = await response.json();
   if (!result.success) {
     throw new Error(result.error || "Failed to get upload URL");
