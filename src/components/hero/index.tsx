@@ -80,45 +80,46 @@ const Hero = () => {
             </Button>
           </div>
           {/* image gallery */}
-          <div className="pt-20 sm:pt-[154px]">
-            <div className="mx-auto grid max-w-[1048px] grid-cols-2 lg:grid-cols-4">
-              <div className="relative z-[1] h-[272px] w-[261px] rotate-[7deg] rounded-[14.7px] bg-primary p-1.5 shadow-2xl">
+          <div className="pt-12 sm:pt-20 lg:pt-[154px]">
+            <div className="mx-auto grid max-w-[1048px] grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
+              <div className="relative z-[1] rotate-[7deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl">
                 <Image
                   width={261}
                   height={272}
-                  sizes="100vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
                   src={"/images/hero/img-1.png"}
                   alt="img"
+                  className="h-auto w-full"
                 />
               </div>
-              <div className="h-[272px] w-[261px] -rotate-[15deg] rounded-[14.7px] bg-primary p-1.5 shadow-2xl">
+              <div className="-rotate-[15deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl">
                 <Image
                   width={261}
                   height={272}
-                  sizes="100vw"
+                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
                   src={"/images/hero/img-2.png"}
                   alt="img"
-                  className="rounded-[14.7px]"
+                  className="h-auto w-full rounded-[14.7px]"
                 />
               </div>
-              <div className="hidden h-[272px] w-[261px] rotate-[7deg] rounded-[14.7px] bg-primary p-1.5 shadow-2xl sm:block">
+              <div className="hidden rotate-[7deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl sm:block">
                 <Image
                   width={261}
                   height={272}
-                  sizes="100vw"
+                  sizes="(max-width: 1024px) 50vw, 25vw"
                   src={"/images/hero/img-3.png"}
                   alt="img"
-                  className="rounded-[14.7px]"
+                  className="h-auto w-full rounded-[14.7px]"
                 />
               </div>
-              <div className="hidden h-[272px] w-[261px] -rotate-[7.85deg] rounded-[14.7px] bg-primary p-1.5 shadow-2xl sm:block">
+              <div className="hidden -rotate-[7.85deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl sm:block">
                 <Image
                   width={261}
                   height={272}
-                  sizes="100vw"
+                  sizes="(max-width: 1024px) 50vw, 25vw"
                   src={"/images/hero/img-4.png"}
                   alt="img"
-                  className="rounded-[14.7px]"
+                  className="h-auto w-full rounded-[14.7px]"
                 />
               </div>
             </div>

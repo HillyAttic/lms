@@ -202,129 +202,187 @@ export default function CoursesPage() {
         />
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left">
+          {/* Mobile card view */}
+          <div className="space-y-3 md:hidden">
+            {courses.map((course) => (
+              <div key={course.id} className="rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <button
-                      onClick={toggleSelectAll}
-                      className="p-1 hover:bg-gray-200 rounded"
+                      onClick={() => toggleSelect(course.id)}
+                      className="shrink-0 p-1 hover:bg-gray-200 rounded"
                     >
                       <CheckSquare
-                        className={`w-5 h-5 ${
-                          selectedIds.length === courses.length
+                        className={`h-5 w-5 ${
+                          selectedIds.includes(course.id)
                             ? "text-purple-600"
                             : "text-gray-400"
                         }`}
                       />
                     </button>
-                  </th>
-                  <th
-                    onClick={() => handleSort("title")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
+                    {course.thumbnailUrl ? (
+                      <img
+                        src={course.thumbnailUrl}
+                        alt={course.title}
+                        className="h-10 w-10 shrink-0 rounded-lg object-cover"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                        <BookOpenIcon className="h-5 w-5 text-gray-400" />
+                      </div>
+                    )}
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-gray-900">{course.title}</div>
+                      <div className="truncate text-sm text-gray-500">{course.description}</div>
+                    </div>
+                  </div>
+                  <Link
+                    href={`/admin/courses/${course.id}`}
+                    className="shrink-0 rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
                   >
-                    Course Name {sortBy === "title" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("status")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                  >
-                    Status {sortBy === "status" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    Interactivity
-                  </th>
-                  <th
-                    onClick={() => handleSort("duration")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                  >
-                    Duration {sortBy === "duration" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                    SCORM
-                  </th>
-                  <th
-                    onClick={() => handleSort("createdAt")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                  >
-                    Created {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {courses.map((course) => (
-                  <tr key={course.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <Eye className="h-4 w-4" />
+                  </Link>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Badge
+                    label={course.status === "active" ? "Active" : "Draft"}
+                    variant={course.status === "active" ? "success" : "warning"}
+                  />
+                  {getInteractivityBadge(course.interactivityLevel)}
+                  <span className="text-xs text-gray-500">{course.duration} min</span>
+                  <span className="text-xs text-gray-500">· {course.scormVersion}</span>
+                  <span className="text-xs text-gray-500">· {formatDate(course.createdAt)}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left">
                       <button
-                        onClick={() => toggleSelect(course.id)}
-                        className="p-1 hover:bg-gray-200 rounded"
+                        onClick={toggleSelectAll}
+                        className="rounded p-1 hover:bg-gray-200"
                       >
                         <CheckSquare
-                          className={`w-5 h-5 ${
-                            selectedIds.includes(course.id)
+                          className={`h-5 w-5 ${
+                            selectedIds.length === courses.length
                               ? "text-purple-600"
                               : "text-gray-400"
                           }`}
                         />
                       </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        {course.thumbnailUrl ? (
-                          <img
-                            src={course.thumbnailUrl}
-                            alt={course.title}
-                            className="w-10 h-10 rounded-lg object-cover"
+                    </th>
+                    <th
+                      onClick={() => handleSort("title")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      Course Name {sortBy === "title" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      onClick={() => handleSort("status")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      Status {sortBy === "status" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                      Interactivity
+                    </th>
+                    <th
+                      onClick={() => handleSort("duration")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      Duration {sortBy === "duration" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                      SCORM
+                    </th>
+                    <th
+                      onClick={() => handleSort("createdAt")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      Created {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                      Actions
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {courses.map((course) => (
+                    <tr key={course.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => toggleSelect(course.id)}
+                          className="rounded p-1 hover:bg-gray-200"
+                        >
+                          <CheckSquare
+                            className={`h-5 w-5 ${
+                              selectedIds.includes(course.id)
+                                ? "text-purple-600"
+                                : "text-gray-400"
+                            }`}
                           />
-                        ) : (
-                          <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center">
-                            <BookOpenIcon className="w-5 h-5 text-gray-400" />
-                          </div>
-                        )}
-                        <div>
-                          <div className="font-medium text-gray-900">{course.title}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-xs">
-                            {course.description}
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          {course.thumbnailUrl ? (
+                            <img
+                              src={course.thumbnailUrl}
+                              alt={course.title}
+                              className="h-10 w-10 rounded-lg object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-gray-100">
+                              <BookOpenIcon className="h-5 w-5 text-gray-400" />
+                            </div>
+                          )}
+                          <div>
+                            <div className="font-medium text-gray-900">{course.title}</div>
+                            <div className="max-w-xs truncate text-sm text-gray-500">
+                              {course.description}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <Badge
-                        label={course.status === "active" ? "Active" : "Draft"}
-                        variant={course.status === "active" ? "success" : "warning"}
-                      />
-                    </td>
-                    <td className="px-6 py-4">
-                      {getInteractivityBadge(course.interactivityLevel)}
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {course.duration} min
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm text-gray-600">{course.scormVersion}</span>
-                    </td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDate(course.createdAt)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/admin/courses/${course.id}`}
-                          className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      </td>
+                      <td className="px-6 py-4">
+                        <Badge
+                          label={course.status === "active" ? "Active" : "Draft"}
+                          variant={course.status === "active" ? "success" : "warning"}
+                        />
+                      </td>
+                      <td className="px-6 py-4">
+                        {getInteractivityBadge(course.interactivityLevel)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {course.duration} min
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="text-sm text-gray-600">{course.scormVersion}</span>
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {formatDate(course.createdAt)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/admin/courses/${course.id}`}
+                            className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <Pagination

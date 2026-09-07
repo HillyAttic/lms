@@ -149,55 +149,63 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Uploads */}
-      <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b">
+      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+        <div className="border-b px-4 py-4 sm:px-6">
           <h2 className="text-lg font-semibold text-gray-900">Recent Uploads</h2>
         </div>
         {stats?.recentUploads && stats.recentUploads.length > 0 ? (
-          <table className="w-full">
-            <thead className="bg-gray-50">
-              <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Course Name
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Status
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  SCORM Version
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                  Uploaded
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-200">
-              {stats.recentUploads.map((course) => (
-                <tr key={course.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4">
-                    <Link
-                      href={`/admin/courses/${course.id}`}
-                      className="font-medium text-gray-900 hover:text-purple-600"
-                    >
-                      {course.title}
-                    </Link>
-                  </td>
-                  <td className="px-6 py-4">
-                    <Badge
-                      label={course.status === "active" ? "Active" : "Draft"}
-                      variant={course.status === "active" ? "success" : "warning"}
-                    />
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {course.scormVersion}
-                  </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
-                    {formatDate(course.createdAt)}
-                  </td>
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-gray-50">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    Course Name
+                  </th>
+                  <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 sm:table-cell">
+                    Status
+                  </th>
+                  <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 md:table-cell">
+                    SCORM Version
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    Uploaded
+                  </th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-200">
+                {stats.recentUploads.map((course) => (
+                  <tr key={course.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4">
+                      <Link
+                        href={`/admin/courses/${course.id}`}
+                        className="font-medium text-gray-900 hover:text-purple-600"
+                      >
+                        {course.title}
+                      </Link>
+                      <div className="mt-1 sm:hidden">
+                        <Badge
+                          label={course.status === "active" ? "Active" : "Draft"}
+                          variant={course.status === "active" ? "success" : "warning"}
+                        />
+                      </div>
+                    </td>
+                    <td className="hidden px-6 py-4 sm:table-cell">
+                      <Badge
+                        label={course.status === "active" ? "Active" : "Draft"}
+                        variant={course.status === "active" ? "success" : "warning"}
+                      />
+                    </td>
+                    <td className="hidden px-6 py-4 text-sm text-gray-600 md:table-cell">
+                      {course.scormVersion}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-gray-600">
+                      {formatDate(course.createdAt)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         ) : (
           <div className="p-8 text-center text-gray-500">
             No courses uploaded yet
@@ -206,9 +214,9 @@ export default function AdminDashboard() {
       </div>
 
       {/* User Role Breakdown */}
-      <div className="mt-8 bg-white rounded-xl shadow-sm p-6">
-        <h2 className="text-lg font-semibold text-gray-900 mb-4">User Roles</h2>
-        <div className="grid grid-cols-3 gap-4">
+      <div className="mt-8 rounded-xl bg-white p-4 shadow-sm sm:p-6">
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">User Roles</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-2xl font-bold text-purple-600">{stats?.adminCount || 0}</p>
             <p className="text-sm text-gray-600">Admins</p>

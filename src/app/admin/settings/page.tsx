@@ -148,14 +148,14 @@ export default function SettingsPage() {
 
       {/* Platform Settings */}
       {activeTab === "platform" && (
-        <div className="bg-white rounded-xl shadow-sm p-8 max-w-2xl">
+        <div className="max-w-2xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
           <form onSubmit={handleSavePlatform} className="space-y-6">
             {/* Logo */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
                 Platform Logo
               </label>
-              <div className="flex items-center gap-4">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
                 {logoPreview ? (
                   <div className="relative">
                     <img
@@ -227,7 +227,7 @@ export default function SettingsPage() {
               <label htmlFor="primaryColor" className="block text-sm font-medium text-gray-700 mb-2">
                 Primary Color
               </label>
-              <div className="flex items-center gap-3">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
                 <input
                   id="primaryColor"
                   type="color"
@@ -246,7 +246,7 @@ export default function SettingsPage() {
             </div>
 
             {/* Self Registration */}
-            <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+            <div className="flex flex-col gap-4 rounded-lg bg-gray-50 p-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="font-medium text-gray-900">Allow Self Registration</p>
                 <p className="text-sm text-gray-500">
@@ -294,7 +294,7 @@ export default function SettingsPage() {
 
       {/* Profile Settings */}
       {activeTab === "profile" && (
-        <div className="bg-white rounded-xl shadow-sm p-8 max-w-2xl">
+        <div className="max-w-2xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
           <div className="space-y-6">
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
               <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center">

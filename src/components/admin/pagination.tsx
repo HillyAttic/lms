@@ -48,13 +48,13 @@ export default function Pagination({
   };
 
   return (
-    <div className="flex items-center justify-between mt-6">
+    <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
       <div className="flex items-center gap-2">
         <span className="text-sm text-gray-600">Show</span>
         <select
           value={limit}
           onChange={(e) => onLimitChange(parseInt(e.target.value))}
-          className="border border-gray-300 rounded-lg px-3 py-1.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
         >
           <option value={5}>5</option>
           <option value={10}>10</option>
@@ -70,9 +70,10 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(page - 1)}
           disabled={page === 1}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Previous
+          <span className="hidden sm:inline">Previous</span>
+          <span className="sm:hidden">&laquo;</span>
         </button>
 
         {getPageNumbers().map((pageNum, index) => (
@@ -80,7 +81,7 @@ export default function Pagination({
             key={index}
             onClick={() => typeof pageNum === "number" && onPageChange(pageNum)}
             disabled={pageNum === "..." || pageNum === page}
-            className={`px-3 py-1.5 text-sm rounded-lg transition-colors ${
+            className={`rounded-lg px-3 py-1.5 text-sm transition-colors ${
               pageNum === page
                 ? "bg-purple-600 text-white"
                 : pageNum === "..."
@@ -95,9 +96,10 @@ export default function Pagination({
         <button
           onClick={() => onPageChange(page + 1)}
           disabled={page === totalPages}
-          className="px-3 py-1.5 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          className="rounded-lg border border-gray-300 px-3 py-1.5 text-sm transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
         >
-          Next
+          <span className="hidden sm:inline">Next</span>
+          <span className="sm:hidden">&raquo;</span>
         </button>
       </div>
     </div>

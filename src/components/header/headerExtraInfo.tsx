@@ -57,62 +57,91 @@ const HeaderExtraInfo = () => {
 
       {/* Auth UI */}
       {user ? (
-        <div className="relative">
-          <button
-            onClick={() => setDropdownOpen(!dropdownOpen)}
-            className="flex items-center gap-2 h-12 px-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
-          >
-            <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-medium">
-              {user.email?.[0].toUpperCase() || "U"}
-            </div>
-            <span className="hidden lg:block text-sm font-medium">
-              {user.displayName || user.email?.split("@")[0] || "User"}
-            </span>
-          </button>
+        <div className="flex items-center gap-x-3">
+          {/* Admin button - shown next to profile when user is admin */}
+          {role === "admin" && (
+            <Link
+              href="/admin"
+              className="flex items-center gap-2 h-12 px-4 rounded-lg border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-colors"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
+                />
+              </svg>
+              <span className="hidden lg:block text-sm font-medium">
+                Admin Panel
+              </span>
+            </Link>
+          )}
 
-          {dropdownOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-40"
-                onClick={() => setDropdownOpen(false)}
-              />
-              <div className="absolute right-0 mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-2 z-50">
-                <div className="px-4 py-2 border-b border-gray-100">
-                  <p className="text-sm font-medium text-gray-900 truncate">
-                    {user.email}
-                  </p>
-                  <p className="text-xs text-gray-500 capitalize">
-                    {role || "learner"}
-                  </p>
-                </div>
+          {/* Profile button + dropdown wrapper */}
+          <div className="relative">
+            <button
+              onClick={() => setDropdownOpen(!dropdownOpen)}
+              className="flex items-center gap-2 h-12 px-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
+            >
+              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-medium">
+                {user.email?.[0].toUpperCase() || "U"}
+              </div>
+              <span className="hidden lg:block text-sm font-medium">
+                {user.displayName || user.email?.split("@")[0] || "User"}
+              </span>
+            </button>
 
-                <Link
-                  href="/repository"
+            {dropdownOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-40"
                   onClick={() => setDropdownOpen(false)}
-                  className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                >
-                  Repository
-                </Link>
+                />
+                <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-3 z-50">
+                  <div className="px-4 py-3 border-b border-gray-100">
+                    <p className="text-sm font-medium text-gray-900 truncate">
+                      {user.email}
+                    </p>
+                    <p className="text-xs text-gray-500 capitalize mt-0.5">
+                      {role || "learner"}
+                    </p>
+                  </div>
 
-                {role === "admin" && (
                   <Link
-                    href="/admin"
+                    href="/repository"
                     onClick={() => setDropdownOpen(false)}
                     className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
                   >
-                    Admin Panel
+                    Repository
                   </Link>
-                )}
 
-                <button
-                  onClick={handleSignOut}
-                  className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                >
-                  Sign Out
-                </button>
-              </div>
-            </>
-          )}
+                  {role === "admin" && (
+                    <Link
+                      href="/admin"
+                      onClick={() => setDropdownOpen(false)}
+                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+                    >
+                      Admin Panel
+                    </Link>
+                  )}
+
+                  <button
+                    onClick={handleSignOut}
+                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
         </div>
       ) : (
         <Button

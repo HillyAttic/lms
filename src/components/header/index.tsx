@@ -58,14 +58,14 @@ const Header = () => {
   return (
     <header className="sticky top-0 left-0 z-50 w-full overflow-x-clip bg-primary py-4">
       <div className="container">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-10">
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-4 sm:gap-10">
             <Link href={"/"} className="inline-block shrink-0 py-1.75">
-              <Logo className="text-purple-500 max-sm:w-27" />
+              <Logo className="text-purple-500 max-w-[120px] sm:max-w-none" />
             </Link>
             <Navigation data={menuList} />
           </div>
-          <div className="flex items-center gap-7">
+          <div className="flex items-center gap-4 sm:gap-7">
             <HeaderExtraInfo  />
             <MobileNavigation data={menuList}  />
           </div>

@@ -215,19 +215,19 @@ export default function UserDetailPage() {
         title="User Details"
         subtitle={userData.email}
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 px-4 py-2.5 border border-red-300 text-red-600 rounded-lg hover:bg-red-50 transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-red-300 px-3 py-2.5 text-sm text-red-600 transition-colors hover:bg-red-50 sm:px-4"
             >
-              <Trash2 className="w-5 h-5" />
+              <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
               Delete
             </button>
             <button
               onClick={() => router.push("/admin/users")}
-              className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 sm:px-4"
             >
-              <ArrowLeft className="w-5 h-5" />
+              <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />
               Back
             </button>
           </div>
@@ -237,7 +237,7 @@ export default function UserDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Profile */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6">
             <div className="text-center mb-6">
               <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-purple-600">
@@ -307,7 +307,7 @@ export default function UserDetailPage() {
         {/* Edit Form & Progress */}
         <div className="lg:col-span-2 space-y-6">
           {/* Edit Form */}
-          <div className="bg-white rounded-xl shadow-sm p-6">
+          <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
@@ -364,51 +364,58 @@ export default function UserDetailPage() {
           </div>
 
           {/* Course Progress */}
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <div className="px-6 py-4 border-b">
+          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+            <div className="border-b px-4 py-4 sm:px-6">
               <h3 className="text-lg font-semibold text-gray-900">Course Progress</h3>
             </div>
             {progress.length > 0 ? (
-              <table className="w-full">
-                <thead className="bg-gray-50">
-                  <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Course
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Status
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Score
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Time
-                    </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                      Last Updated
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {progress.map((p) => (
-                    <tr key={p.id} className="hover:bg-gray-50">
-                      <td className="px-6 py-4 font-medium text-gray-900">
-                        {courses[p.courseId] || "Unknown Course"}
-                      </td>
-                      <td className="px-6 py-4">{getStatusBadge(p.status)}</td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {p.score !== null ? `${p.score}%` : "N/A"}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatTime(p.sessionTime)}
-                      </td>
-                      <td className="px-6 py-4 text-sm text-gray-600">
-                        {formatDate(p.lastUpdated)}
-                      </td>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                        Course
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                        Status
+                      </th>
+                      <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 sm:table-cell">
+                        Score
+                      </th>
+                      <th className="hidden px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 sm:table-cell">
+                        Time
+                      </th>
+                      <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                        Last Updated
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody className="divide-y divide-gray-200">
+                    {progress.map((p) => (
+                      <tr key={p.id} className="hover:bg-gray-50">
+                        <td className="px-6 py-4">
+                          <div className="font-medium text-gray-900">
+                            {courses[p.courseId] || "Unknown Course"}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500 sm:hidden">
+                            {p.score !== null ? `Score: ${p.score}%` : "N/A"} · {formatTime(p.sessionTime)}
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">{getStatusBadge(p.status)}</td>
+                        <td className="hidden px-6 py-4 text-sm text-gray-600 sm:table-cell">
+                          {p.score !== null ? `${p.score}%` : "N/A"}
+                        </td>
+                        <td className="hidden px-6 py-4 text-sm text-gray-600 sm:table-cell">
+                          {formatTime(p.sessionTime)}
+                        </td>
+                        <td className="px-6 py-4 text-sm text-gray-600">
+                          {formatDate(p.lastUpdated)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             ) : (
               <div className="p-8 text-center text-gray-500">
                 No course progress recorded yet

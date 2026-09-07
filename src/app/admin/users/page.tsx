@@ -197,30 +197,35 @@ export default function UsersPage() {
         title="Users"
         subtitle="Manage platform users and their roles"
         actions={
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {selectedIds.length > 0 && (
               <>
                 <button
                   onClick={() => setShowRoleConfirm(true)}
-                  className="flex items-center gap-2 bg-blue-600 text-white px-4 py-2.5 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-blue-700 sm:px-4"
                 >
-                  Change Role ({selectedIds.length})
+                  <span className="hidden sm:inline">Change Role</span>
+                  <span className="sm:hidden">Role</span>
+                  ({selectedIds.length})
                 </button>
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
-                  className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 transition-colors"
+                  className="flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-red-700 sm:px-4"
                 >
-                  <Trash2 className="w-5 h-5" />
-                  Delete ({selectedIds.length})
+                  <Trash2 className="h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Delete</span>
+                  <span className="sm:hidden">Del</span>
+                  ({selectedIds.length})
                 </button>
               </>
             )}
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-purple-700 sm:px-4"
             >
-              <UserPlus className="w-5 h-5" />
-              Create User
+              <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+              <span className="hidden sm:inline">Create User</span>
+              <span className="sm:hidden">Create</span>
             </button>
           </div>
         }
@@ -270,125 +275,185 @@ export default function UsersPage() {
         />
       ) : (
         <>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden">
-            <table className="w-full">
-              <thead className="bg-gray-50 border-b">
-                <tr>
-                  <th className="px-6 py-3 text-left">
+          {/* Mobile card view */}
+          <div className="space-y-3 md:hidden">
+            {users.map((userItem) => (
+              <div key={userItem.id} className="rounded-xl bg-white p-4 shadow-sm">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-3 min-w-0">
                     <button
-                      onClick={toggleSelectAll}
-                      className="p-1 hover:bg-gray-200 rounded"
+                      onClick={() => toggleSelect(userItem.id)}
+                      disabled={userItem.uid === user?.uid}
+                      className="shrink-0 rounded p-1 hover:bg-gray-200 disabled:opacity-50"
                     >
                       <CheckSquare
-                        className={`w-5 h-5 ${
-                          selectedIds.length === users.length
+                        className={`h-5 w-5 ${
+                          selectedIds.includes(userItem.id)
                             ? "text-purple-600"
                             : "text-gray-400"
                         }`}
                       />
                     </button>
-                  </th>
-                  <th
-                    onClick={() => handleSort("displayName")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                  >
-                    User {sortBy === "displayName" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("role")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                  >
-                    Role {sortBy === "role" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th
-                    onClick={() => handleSort("createdAt")}
-                    className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:text-gray-700"
-                  >
-                    Joined {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
-                  </th>
-                  <th className="px-6 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                    Repository
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                    Actions
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-200">
-                {users.map((userItem) => (
-                  <tr key={userItem.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-purple-100">
+                      <span className="text-sm font-medium text-purple-600">
+                        {(userItem.displayName || userItem.email || "?")[0].toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-gray-900">
+                        {userItem.displayName || "No name"}
+                      </div>
+                      <div className="truncate text-sm text-gray-500">{userItem.email}</div>
+                    </div>
+                  </div>
+                  <div className="flex shrink-0 items-center gap-1">
+                    <button
+                      onClick={() => openChangePassword(userItem.id, userItem.email)}
+                      disabled={userItem.uid === user?.uid}
+                      className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+                      title="Change password"
+                    >
+                      <Key className="h-4 w-4" />
+                    </button>
+                    <Link
+                      href={`/admin/users/${userItem.id}`}
+                      className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                  </div>
+                </div>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  {getRoleBadge(userItem.role)}
+                  <span className="text-xs text-gray-500">{formatDate(userItem.createdAt)}</span>
+                  <span className="text-xs text-gray-500">· Repo: {userItem.repositoryAccess ? "On" : "Off"}</span>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop table view */}
+          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+            <div className="overflow-x-auto">
+              <table className="w-full">
+                <thead className="border-b bg-gray-50">
+                  <tr>
+                    <th className="px-6 py-3 text-left">
                       <button
-                        onClick={() => toggleSelect(userItem.id)}
-                        disabled={userItem.uid === user?.uid}
-                        className="p-1 hover:bg-gray-200 rounded disabled:opacity-50"
+                        onClick={toggleSelectAll}
+                        className="rounded p-1 hover:bg-gray-200"
                       >
                         <CheckSquare
-                          className={`w-5 h-5 ${
-                            selectedIds.includes(userItem.id)
+                          className={`h-5 w-5 ${
+                            selectedIds.length === users.length
                               ? "text-purple-600"
                               : "text-gray-400"
                           }`}
                         />
                       </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-full bg-purple-100 flex items-center justify-center">
-                          <span className="text-sm font-medium text-purple-600">
-                            {(userItem.displayName || userItem.email || "?")[0].toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <div className="font-medium text-gray-900">
-                            {userItem.displayName || "No name"}
-                          </div>
-                          <div className="text-sm text-gray-500">{userItem.email}</div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">{getRoleBadge(userItem.role)}</td>
-                    <td className="px-6 py-4 text-sm text-gray-600">
-                      {formatDate(userItem.createdAt)}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <button
-                        onClick={() => handleToggleRepositoryAccess(userItem.id)}
-                        disabled={togglingAccessId === userItem.id}
-                        className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          userItem.repositoryAccess ? "bg-purple-600" : "bg-gray-200"
-                        }`}
-                        title={userItem.repositoryAccess ? "Repository access enabled" : "Repository access disabled"}
-                      >
-                        <span
-                          className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-                            userItem.repositoryAccess ? "translate-x-5" : "translate-x-0"
-                          }`}
-                        />
-                      </button>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => openChangePassword(userItem.id, userItem.email)}
-                          disabled={userItem.uid === user?.uid}
-                          className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          title="Change password"
-                        >
-                          <Key className="w-4 h-4" />
-                        </button>
-                        <Link
-                          href={`/admin/users/${userItem.id}`}
-                          className="p-2 text-gray-600 hover:text-purple-600 hover:bg-purple-50 rounded-lg transition-colors"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Link>
-                      </div>
-                    </td>
+                    </th>
+                    <th
+                      onClick={() => handleSort("displayName")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      User {sortBy === "displayName" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      onClick={() => handleSort("role")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      Role {sortBy === "role" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th
+                      onClick={() => handleSort("createdAt")}
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                    >
+                      Joined {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-6 py-3 text-center text-xs font-medium uppercase text-gray-500">
+                      Repository
+                    </th>
+                    <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                      Actions
+                    </th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-gray-200">
+                  {users.map((userItem) => (
+                    <tr key={userItem.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4">
+                        <button
+                          onClick={() => toggleSelect(userItem.id)}
+                          disabled={userItem.uid === user?.uid}
+                          className="rounded p-1 hover:bg-gray-200 disabled:opacity-50"
+                        >
+                          <CheckSquare
+                            className={`h-5 w-5 ${
+                              selectedIds.includes(userItem.id)
+                                ? "text-purple-600"
+                                : "text-gray-400"
+                            }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-purple-100">
+                            <span className="text-sm font-medium text-purple-600">
+                              {(userItem.displayName || userItem.email || "?")[0].toUpperCase()}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {userItem.displayName || "No name"}
+                            </div>
+                            <div className="text-sm text-gray-500">{userItem.email}</div>
+                          </div>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">{getRoleBadge(userItem.role)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {formatDate(userItem.createdAt)}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={() => handleToggleRepositoryAccess(userItem.id)}
+                          disabled={togglingAccessId === userItem.id}
+                          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
+                            userItem.repositoryAccess ? "bg-purple-600" : "bg-gray-200"
+                          }`}
+                          title={userItem.repositoryAccess ? "Repository access enabled" : "Repository access disabled"}
+                        >
+                          <span
+                            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                              userItem.repositoryAccess ? "translate-x-5" : "translate-x-0"
+                            }`}
+                          />
+                        </button>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => openChangePassword(userItem.id, userItem.email)}
+                            disabled={userItem.uid === user?.uid}
+                            className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+                            title="Change password"
+                          >
+                            <Key className="h-4 w-4" />
+                          </button>
+                          <Link
+                            href={`/admin/users/${userItem.id}`}
+                            className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
+                          >
+                            <Eye className="h-4 w-4" />
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           <Pagination

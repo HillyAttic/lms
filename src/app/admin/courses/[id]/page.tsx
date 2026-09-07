@@ -206,14 +206,14 @@ export default function CourseEditPage() {
         }
       />
 
-      <div className="bg-white rounded-xl shadow-sm p-8 max-w-3xl">
+      <div className="max-w-3xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Thumbnail */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Thumbnail Image
             </label>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               {thumbnailPreview ? (
                 <div className="relative">
                   <img
@@ -311,7 +311,7 @@ export default function CourseEditPage() {
           </div>
 
           {/* Categories and Tags */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="categories" className="block text-sm font-medium text-gray-700 mb-2">
                 Categories
@@ -341,7 +341,7 @@ export default function CourseEditPage() {
           </div>
 
           {/* Interactivity Level & Duration */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="interactivity" className="block text-sm font-medium text-gray-700 mb-2">
                 Level of Interactivity
@@ -388,7 +388,7 @@ export default function CourseEditPage() {
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="prerequisites" className="block text-sm font-medium text-gray-700 mb-2">
                 Prerequisites
@@ -420,7 +420,7 @@ export default function CourseEditPage() {
           {/* SCORM Info (read-only) */}
           <div className="bg-gray-50 rounded-lg p-4">
             <h3 className="text-sm font-medium text-gray-700 mb-2">SCORM Package Info</h3>
-            <div className="grid grid-cols-2 gap-4 text-sm">
+            <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div>
                 <span className="text-gray-500">Version:</span>{" "}
                 <span className="text-gray-900">{course.scormVersion}</span>

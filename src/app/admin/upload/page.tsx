@@ -161,7 +161,7 @@ export default function UploadPage() {
         subtitle="Upload a new SCORM course package to the platform"
       />
 
-      <div className="bg-white rounded-xl shadow-sm p-8 max-w-2xl">
+      <div className="max-w-2xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* File Upload */}
           <div>
@@ -223,7 +223,7 @@ export default function UploadPage() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Thumbnail Image
             </label>
-            <div className="flex items-center gap-4">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               {thumbnailPreview ? (
                 <div className="relative">
                   <img
@@ -307,7 +307,7 @@ export default function UploadPage() {
           </div>
 
           {/* Categories and Tags */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="categories" className="block text-sm font-medium text-gray-700 mb-2">
                 Categories
@@ -337,7 +337,7 @@ export default function UploadPage() {
           </div>
 
           {/* Interactivity Level & Duration */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
               <label htmlFor="interactivity" className="block text-sm font-medium text-gray-700 mb-2">
                 Level of Interactivity
