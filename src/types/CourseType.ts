@@ -19,4 +19,5 @@ export type CourseType = {
   overview: [];
   duration?: number; // in minutes
   lessonsCount?: number;
+  courseType?: "SCORM" | "VIDEO" | "GAMES";
 };

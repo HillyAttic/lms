@@ -55,5 +55,31 @@ export const categoryData:CategoryType[] = [
     },
     title: "Video Editing"
   },
-
+  {
+    _id: "7",
+    courseCount: 15,
+    description: "Interactive SCORM-compliant courses for standardized e-learning experiences.",
+    slug:{
+        current: "scorm-courses"
+    },
+    title: "SCORM Courses"
+  },
+  {
+    _id: "8",
+    courseCount: 12,
+    description: "High-quality video courses with expert instructors and engaging content.",
+    slug:{
+        current: "video-courses"
+    },
+    title: "Video Courses"
+  },
+  {
+    _id: "9",
+    courseCount: 8,
+    description: "Fun and interactive game-based courses to learn while playing.",
+    slug:{
+        current: "game-courses"
+    },
+    title: "Game Courses"
+  },
 ]

@@ -1,10 +1,12 @@
 import {
   Briefcase,
   DesktopComputer,
+  GamepadIcon,
   PainBrush,
   ShieldCheck,
   Sparkles,
   Video,
+  FileStack,
 } from "@/lib/icons";
 import { CategoryType } from "@/types/CategoryType";
 import Image from "next/image";
@@ -18,6 +20,9 @@ function categoryIconFinder(category: string) {
     "Video Editing": <Video />,
     "Cyber Security": <ShieldCheck />,
     "Artificial Intelligence": <Sparkles />,
+    "SCORM Courses": <FileStack />,
+    "Video Courses": <Video />,
+    "Game Courses": <GamepadIcon />,
   };
   return icons[category];
 }

@@ -19,6 +19,7 @@ export const coursesData: CourseType[] = [
     overview: [],
     duration: 120,
     lessonsCount: 24,
+    courseType: "SCORM",
   },
   {
     _id: "course-2",
@@ -38,6 +39,7 @@ export const coursesData: CourseType[] = [
     overview: [],
     duration: 180,
     lessonsCount: 30,
+    courseType: "VIDEO",
   },
   {
     _id: "course-3",
@@ -57,6 +59,7 @@ export const coursesData: CourseType[] = [
     overview: [],
     duration: 200,
     lessonsCount: 28,
+    courseType: "GAMES",
   },
   {
     _id: "course-4",
@@ -76,6 +79,7 @@ export const coursesData: CourseType[] = [
     overview: [],
     duration: 190,
     lessonsCount: 26,
+    courseType: "VIDEO",
   },
   {
     _id: "course-5",
@@ -95,6 +99,7 @@ export const coursesData: CourseType[] = [
     overview: [],
     duration: 300,
     lessonsCount: 58,
+    courseType: "SCORM",
   },
   {
     _id: "course-6",
@@ -114,5 +119,6 @@ export const coursesData: CourseType[] = [
     overview: [],
     duration: 120,
     lessonsCount: 24,
+    courseType: "GAMES",
   },
 ];
