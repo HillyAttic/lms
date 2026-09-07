@@ -1,3 +1,32 @@
+export type BlogTopic =
+  | "LMS"
+  | "SCORM"
+  | "EdTech"
+  | "E-Learning"
+  | "Digital Learning"
+  | "Instructional Design"
+  | "Corporate Training"
+  | "Gamification"
+  | "AI in Education"
+  | "Assessment"
+  | "Learning Analytics"
+  | "Content Development";
+
+export const BLOG_TOPICS: BlogTopic[] = [
+  "LMS",
+  "SCORM",
+  "EdTech",
+  "E-Learning",
+  "Digital Learning",
+  "Instructional Design",
+  "Corporate Training",
+  "Gamification",
+  "AI in Education",
+  "Assessment",
+  "Learning Analytics",
+  "Content Development",
+];
+
 export type BlogType = {
   _id: string;
   title: string;
@@ -13,4 +42,7 @@ export type BlogType = {
     title: string;
   };
   date: string;
+  topic?: BlogTopic;
+  status?: "published" | "draft";
+  tags?: string[];
 };
