@@ -19,12 +19,21 @@ interface ScormStructure {
   sourceZipPath: string;
 }
 
-export async function uploadScormPackage(formData: FormData) {
+/**
+ * Process SCORM package from Firebase Storage
+ * File must already be uploaded directly to storage via signed URL
+ */
+export async function processScormPackage(
+  userId: string,
+  sourceZipPath: string,
+  title: string,
+  description: string,
+  features: string,
+  interactivityLevel: number,
+  duration: number,
+  thumbnailUrl?: string | null
+) {
   try {
-    // Note: Server actions don't have direct access to auth.currentUser
-    // We'll get the user ID from the form data (passed from client after auth check)
-    const userId = formData.get("userId") as string;
-
     if (!userId) {
       return { success: false, error: "User not authenticated" };
     }
@@ -35,33 +44,19 @@ export async function uploadScormPackage(formData: FormData) {
       return { success: false, error: "Admin access required" };
     }
 
-    // Get form data
-    const file = formData.get("file") as File;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const features = formData.get("features") as string;
-    const interactivityLevel = parseFloat(formData.get("interactivityLevel") as string);
-    const duration = parseInt(formData.get("duration") as string);
-    const thumbnailFile = formData.get("thumbnail") as File | null;
-
-    if (!file || !title) {
-      return { success: false, error: "File and title are required" };
+    if (!sourceZipPath || !title) {
+      return { success: false, error: "Source ZIP path and title are required" };
     }
 
     // Generate course ID
     const courseId = `course_${Date.now()}`;
     const storageBase = `scorm/${courseId}`;
-    const sourceZipPath = `${storageBase}/source.zip`;
     const extractedPath = `${storageBase}/extracted`;
 
-    // Convert file to buffer
-    const fileBuffer = Buffer.from(await file.arrayBuffer());
-
-    // Upload source zip to Firebase Storage using Admin SDK
     const bucket = adminStorage.bucket();
-    await bucket.file(sourceZipPath).save(fileBuffer, {
-      contentType: "application/zip",
-    });
+
+    // Download ZIP from Firebase Storage
+    const [fileBuffer] = await bucket.file(sourceZipPath).download();
 
     // Extract zip using JSZip
     const zip = new JSZip();
@@ -86,7 +81,10 @@ export async function uploadScormPackage(formData: FormData) {
 
         uploadPromises.push(
           zipEntry.async("uint8array").then((content) => {
-            return bucket.file(`${extractedPath}/${relativePath}`).save(Buffer.from(content)).then(() => {});
+            return bucket
+              .file(`${extractedPath}/${relativePath}`)
+              .save(Buffer.from(content))
+              .then(() => {});
           })
         );
       }
@@ -105,7 +103,9 @@ export async function uploadScormPackage(formData: FormData) {
 
     if (imsManifestContent) {
       // Detect SCORM version
-      const schemaMatch = imsManifestContent.match(/<schemaversion>(.*?)<\/schemaversion>/i);
+      const schemaMatch = imsManifestContent.match(
+        /<schemaversion>(.*?)<\/schemaversion>/i
+      );
       if (schemaMatch) {
         const schemaVersion = schemaMatch[1];
         if (schemaVersion.includes("2004") || schemaVersion.includes("CAM")) {
@@ -117,7 +117,8 @@ export async function uploadScormPackage(formData: FormData) {
 
       // Parse resources
       const resources: Map<string, { href: string; files: string[] }> = new Map();
-      const resourceRegex = /<resource[^>]*identifier="([^"]*)"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/resource>/gi;
+      const resourceRegex =
+        /<resource[^>]*identifier="([^"]*)"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/resource>/gi;
       let resourceMatch;
 
       while ((resourceMatch = resourceRegex.exec(imsManifestContent)) !== null) {
@@ -135,8 +136,14 @@ export async function uploadScormPackage(formData: FormData) {
       }
 
       // Parse items (SCOs)
-      const scos: Array<{ identifier: string; title: string; href: string; resources: string[] }> = [];
-      const itemRegex = /<item[^>]*identifier="([^"]*)"[^>]*title="([^"]*)"[^>]*identifierref="([^"]*)"[^>]*\/?>/gi;
+      const scos: Array<{
+        identifier: string;
+        title: string;
+        href: string;
+        resources: string[];
+      }> = [];
+      const itemRegex =
+        /<item[^>]*identifier="([^"]*)"[^>]*title="([^"]*)"[^>]*identifierref="([^"]*)"[^>]*\/?>/gi;
       let itemMatch;
 
       while ((itemMatch = itemRegex.exec(imsManifestContent)) !== null) {
@@ -184,23 +191,6 @@ export async function uploadScormPackage(formData: FormData) {
       };
     }
 
-    // Handle thumbnail upload
-    let thumbnailUrl: string | null = null;
-    if (thumbnailFile) {
-      const thumbBuffer = Buffer.from(await thumbnailFile.arrayBuffer());
-      const ext = thumbnailFile.name.split(".").pop() || "jpg";
-      const thumbPath = `thumbnails/${courseId}/thumbnail.${ext}`;
-      await bucket.file(thumbPath).save(thumbBuffer, {
-        contentType: thumbnailFile.type,
-      });
-      // Get public URL
-      const [url] = await bucket.file(thumbPath).getSignedUrl({
-        action: "read",
-        expires: "2037-12-31",
-      });
-      thumbnailUrl = url;
-    }
-
     // Create Firestore document using Admin SDK
     await adminDb.collection("courses").add({
       title,
@@ -210,7 +200,7 @@ export async function uploadScormPackage(formData: FormData) {
       duration,
       status: "active",
       scormVersion,
-      thumbnailUrl,
+      thumbnailUrl: thumbnailUrl || null,
       categories: [],
       tags: [],
       objectives: "",
@@ -227,8 +217,8 @@ export async function uploadScormPackage(formData: FormData) {
 
     return { success: true, courseId };
   } catch (error: any) {
-    console.error("Upload error:", error);
-    return { success: false, error: error.message || "Upload failed" };
+    console.error("Process SCORM error:", error);
+    return { success: false, error: error.message || "Processing failed" };
   }
 }
 

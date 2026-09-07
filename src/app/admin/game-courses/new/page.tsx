@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
 import { Sparkles, X, Upload, Globe } from "@/lib/icons";
-import { uploadGameCourse } from "@/app/actions/game-course-actions";
+import { processGameCourse } from "@/app/actions/game-course-actions";
 import PageHeader from "@/components/admin/page-header";
+import { getSignedUploadUrl, uploadFileDirect } from "@/lib/upload-utils";
 
 const ACCEPTED_GAME_TYPES = [".zip"];
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
@@ -99,7 +100,6 @@ export default function CreateGameCoursePage() {
       return;
     }
 
-    // Validate URL format if URL type is selected
     if (gameType === "url" && gameUrl.trim()) {
       try {
         new URL(gameUrl.trim());
@@ -112,50 +112,56 @@ export default function CreateGameCoursePage() {
     setUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 500);
+    let gameZipPath: string | null = null;
 
     try {
-      const formData = new FormData();
-      formData.append("userId", user.uid);
-      formData.append("gameType", gameType);
       if (gameType === "uploaded" && gameFile) {
-        formData.append("file", gameFile);
-      }
-      if (gameType === "url") {
-        formData.append("gameUrl", gameUrl);
-      }
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("duration", duration);
-      formData.append("categories", categories);
-      formData.append("tags", tags);
-      if (thumbnail) {
-        formData.append("thumbnail", thumbnail);
+        // Step 1: Get signed upload URL for ZIP
+        setUploadProgress(5);
+        const courseId = `game_${Date.now()}`;
+        gameZipPath = `games/${courseId}/source.zip`;
+        const { uploadUrl } = await getSignedUploadUrl(
+          gameZipPath,
+          "application/zip",
+          user.uid
+        );
+
+        // Step 2: Upload ZIP directly to Firebase Storage
+        setUploadProgress(10);
+        await uploadFileDirect(gameFile, uploadUrl, "application/zip", (progress) => {
+          // Map 0-100% to 10-70% of overall progress
+          setUploadProgress(10 + Math.round(progress.percent * 0.6));
+        });
       }
 
-      const result = await uploadGameCourse(formData);
+      // Step 3: Process the uploaded game (or just metadata for URL type)
+      setUploadProgress(75);
+      const catsArr = categories.split(",").map((c) => c.trim()).filter(Boolean);
+      const tagsArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
 
-      clearInterval(progressInterval);
+      const result = await processGameCourse(
+        user.uid,
+        gameType,
+        gameZipPath,
+        gameUrl,
+        title,
+        description,
+        parseInt(duration) || 0,
+        catsArr,
+        tagsArr,
+        null
+      );
+
+      setUploadProgress(100);
 
       if (result.success) {
-        setUploadProgress(100);
         toast.success("Game course created successfully!");
         router.push("/admin/game-courses");
       } else {
         toast.error(result.error || "Failed to create game course");
       }
-    } catch (error) {
-      clearInterval(progressInterval);
-      toast.error("Failed to create game course");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create game course");
       console.error(error);
     } finally {
       setUploading(false);
@@ -300,7 +306,9 @@ export default function CreateGameCoursePage() {
           {uploading && (
             <div>
               <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-gray-600">Uploading...</span>
+                <span className="text-gray-600">
+                  {uploadProgress < 75 ? "Uploading..." : "Processing game..."}
+                </span>
                 <span className="text-purple-600">{uploadProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">

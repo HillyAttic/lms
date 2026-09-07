@@ -9,7 +9,6 @@ import {
   getVideoCourseById,
   updateVideoCourse,
   deleteVideoCourse,
-  uploadVideoCourse,
 } from "@/app/actions/video-course-actions";
 import VideoPlayer from "@/components/admin/video-player";
 import PageHeader from "@/components/admin/page-header";

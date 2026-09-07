@@ -2,11 +2,12 @@
 
 import { useState, FormEvent } from "react";
 import { useRouter } from "next/navigation";
-import { uploadScormPackage } from "@/app/actions/scorm-actions";
+import { processScormPackage } from "@/app/actions/scorm-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
 import { Upload, FileArchive, X, Image } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
+import { getSignedUploadUrl, uploadFileDirect } from "@/lib/upload-utils";
 
 export default function UploadPage() {
   const { user } = useAuth();
@@ -102,32 +103,35 @@ export default function UploadPage() {
     setUploadProgress(0);
 
     try {
-      const formData = new FormData();
-      formData.append("userId", user?.uid || "");
-      formData.append("file", file);
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("features", features);
-      formData.append("interactivityLevel", interactivityLevel.toString());
-      formData.append("duration", duration.toString());
-      if (thumbnail) {
-        formData.append("thumbnail", thumbnail);
-      }
+      // Step 1: Get signed upload URL
+      setUploadProgress(10);
+      const sourceZipPath = `scorm/course_${Date.now()}/source.zip`;
+      const { uploadUrl } = await getSignedUploadUrl(
+        sourceZipPath,
+        "application/zip",
+        user?.uid || ""
+      );
 
-      // Simulate progress (server actions don't support real progress tracking)
-      const progressInterval = setInterval(() => {
-        setUploadProgress((prev) => {
-          if (prev >= 90) {
-            clearInterval(progressInterval);
-            return 90;
-          }
-          return prev + 5;
-        });
-      }, 300);
+      // Step 2: Upload file directly to Firebase Storage
+      setUploadProgress(20);
+      await uploadFileDirect(file, uploadUrl, "application/zip", (progress) => {
+        // Map 0-100% to 20-80% of overall progress
+        setUploadProgress(20 + Math.round(progress.percent * 0.6));
+      });
 
-      const result = await uploadScormPackage(formData);
+      // Step 3: Process the uploaded package
+      setUploadProgress(85);
+      const result = await processScormPackage(
+        user?.uid || "",
+        sourceZipPath,
+        title,
+        description,
+        features,
+        interactivityLevel,
+        duration,
+        null
+      );
 
-      clearInterval(progressInterval);
       setUploadProgress(100);
 
       if (result.success) {
@@ -373,7 +377,9 @@ export default function UploadPage() {
           {uploading && (
             <div className="space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Uploading and processing SCORM package...</span>
+                <span className="text-gray-600">
+                  {uploadProgress < 80 ? "Uploading file..." : "Processing SCORM package..."}
+                </span>
                 <span className="text-purple-600 font-medium">{uploadProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2.5">
@@ -382,15 +388,6 @@ export default function UploadPage() {
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>
-              <p className="text-xs text-gray-500">
-                {uploadProgress < 30
-                  ? "Uploading file..."
-                  : uploadProgress < 60
-                  ? "Extracting SCORM package..."
-                  : uploadProgress < 90
-                  ? "Processing course content..."
-                  : "Finalizing..."}
-              </p>
             </div>
           )}
 

@@ -21,6 +21,7 @@ import Pagination from "@/components/admin/pagination";
 import SearchFilterBar from "@/components/admin/search-filter-bar";
 import EmptyState from "@/components/admin/empty-state";
 import { Edit, Trash2, Upload, X, Save, Eye } from "@/lib/icons";
+import { getSignedUploadUrl, uploadFileDirect } from "@/lib/upload-utils";
 
 interface RepositoryItem {
   id: string;
@@ -155,40 +156,6 @@ export default function AdminRepositoryPage() {
     }, 500);
   }, [stopPolling]);
 
-  const uploadFileDirect = (file: File, uploadUrl: string): Promise<void> => {
-    return new Promise((resolve, reject) => {
-      const xhr = new XMLHttpRequest();
-      xhr.open("PUT", uploadUrl, true);
-      xhr.setRequestHeader("Content-Type", "application/zip");
-      xhr.setRequestHeader("x-upload-content-type", "application/zip");
-
-      xhr.upload.onprogress = (event) => {
-        if (event.lengthComputable) {
-          const pct = Math.round((event.loaded / event.total) * 100);
-          setUploadProgress((prev) =>
-            prev
-              ? { ...prev, phase: `Uploading ZIP... ${pct}%`, progress: pct }
-              : null
-          );
-        }
-      };
-
-      xhr.onload = () => {
-        if (xhr.status >= 200 && xhr.status < 300) {
-          resolve();
-        } else {
-          reject(new Error(`Upload failed with status ${xhr.status}`));
-        }
-      };
-
-      xhr.onerror = () => reject(new Error("Network error during upload"));
-      xhr.ontimeout = () => reject(new Error("Upload timed out"));
-      xhr.timeout = 600_000; // 10 minutes
-
-      xhr.send(file);
-    });
-  };
-
   const handleUpload = async () => {
     if (!formData.name || !selectedFile) {
       setFormError("Name and ZIP file are required");
@@ -198,7 +165,6 @@ export default function AdminRepositoryPage() {
     const itemId = `repo_${Date.now()}`;
     setUploading(true);
     setFormError("");
-    // Show initial progress immediately so the UI updates right away
     setUploadProgress({
       status: "preparing",
       phase: "Preparing upload...",
@@ -210,39 +176,41 @@ export default function AdminRepositoryPage() {
     });
 
     try {
-      // Step 1: Get a signed upload URL from the server
+      const sourceZipPath = `repository/${itemId}/source.zip`;
+
+      // Step 1: Get signed upload URL from generic endpoint
       console.log("Step 1: Getting signed upload URL...");
-      const urlResponse = await fetch("/api/repository/upload-url", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ itemId, userId: user?.uid || "" }),
-      });
+      setUploadProgress((prev) =>
+        prev ? { ...prev, phase: "Preparing upload URL...", progress: 5 } : null
+      );
 
-      const urlResult = await urlResponse.json();
-      if (!urlResult.success) {
-        setFormError(urlResult.error || "Failed to get upload URL");
-        setUploading(false);
-        return;
-      }
+      const { uploadUrl } = await getSignedUploadUrl(
+        sourceZipPath,
+        "application/zip",
+        user?.uid || ""
+      );
 
-      const { uploadUrl, sourceZipPath } = urlResult;
-
-      // Step 2: Upload the ZIP directly to Firebase Storage (bypasses Vercel body limit)
+      // Step 2: Upload ZIP directly to Firebase Storage (bypasses Vercel)
       console.log("Step 2: Uploading file directly to storage...", {
         fileName: selectedFile.name,
         fileSize: selectedFile.size,
       });
       setUploadProgress((prev) =>
-        prev ? { ...prev, phase: "Uploading ZIP... 0%", progress: 0 } : null
+        prev ? { ...prev, phase: "Uploading ZIP... 0%", progress: 10 } : null
       );
 
       try {
-        await uploadFileDirect(selectedFile, uploadUrl);
+        await uploadFileDirect(selectedFile, uploadUrl, "application/zip", (progress) => {
+          // Map 0-100% upload progress to 10-90% of overall progress
+          setUploadProgress((prev) =>
+            prev
+              ? { ...prev, phase: `Uploading ZIP... ${progress.percent}%`, progress: 10 + progress.percent * 0.8 }
+              : null
+          );
+        });
         console.log("Direct upload to storage complete");
       } catch (uploadError: any) {
-        setFormError(
-          `File upload failed: ${uploadError.message}. Please try again.`
-        );
+        setFormError(`File upload failed: ${uploadError.message}. Please try again.`);
         setUploading(false);
         return;
       }
@@ -251,7 +219,7 @@ export default function AdminRepositoryPage() {
       console.log("Step 3: Processing uploaded ZIP...");
       setUploadProgress((prev) =>
         prev
-          ? { ...prev, phase: "Processing ZIP on server...", progress: 10 }
+          ? { ...prev, phase: "Processing ZIP on server...", progress: 90 }
           : null
       );
 
@@ -279,7 +247,6 @@ export default function AdminRepositoryPage() {
       console.log("Processing result:", result);
 
       if (result.success) {
-        // Clean up progress doc in background
         cleanupUploadProgress(itemId).catch(() => {});
         setShowUploadModal(false);
         resetForm();

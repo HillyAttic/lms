@@ -1,23 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
-import { adminDb, adminStorage } from "@/lib/firebase-admin";
-
-export const runtime = "nodejs";
+import { adminStorage, adminDb } from "@/lib/firebase-admin";
 
 /**
- * Generates a signed upload URL for direct browser-to-Firebase-Storage uploads.
- * Bypasses Vercel's 4.5MB body size limit by having the client upload directly.
- *
- * POST /api/repository/upload-url
- * Body: { itemId, userId }
- * Returns: { uploadUrl, sourceZipPath }
+ * Generic signed upload URL generator
+ * POST /api/upload-url
+ * Body: { storagePath, contentType, userId }
+ * Returns: { uploadUrl, storagePath }
  */
 export async function POST(request: NextRequest) {
   try {
-    const { itemId, userId } = await request.json();
+    const body = await request.json();
+    const { storagePath, contentType, userId } = body;
 
-    if (!itemId || !userId) {
+    if (!storagePath || !contentType || !userId) {
       return NextResponse.json(
-        { success: false, error: "Missing required fields: itemId and userId" },
+        { success: false, error: "Missing required fields: storagePath, contentType, userId" },
         { status: 400 }
       );
     }
@@ -31,18 +28,21 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const sourceZipPath = `repository/${itemId}/source.zip`;
     const bucket = adminStorage.bucket();
 
-    // Generate a signed upload URL (PUT request, expires in 15 minutes)
-    const [uploadUrl] = await bucket.file(sourceZipPath).getSignedUrl({
+    // Generate signed upload URL (v4, expires in 15 minutes)
+    const [uploadUrl] = await bucket.file(storagePath).getSignedUrl({
       version: "v4",
       action: "write",
       expires: Date.now() + 15 * 60 * 1000,
-      contentType: "application/zip",
+      contentType,
     });
 
-    return NextResponse.json({ success: true, uploadUrl, sourceZipPath });
+    return NextResponse.json({
+      success: true,
+      uploadUrl,
+      storagePath,
+    });
   } catch (error: any) {
     console.error("Upload URL generation error:", error);
     return NextResponse.json(

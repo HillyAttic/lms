@@ -5,7 +5,7 @@ import JSZip from "jszip";
 /**
  * Process an already-uploaded SCORM package from Firebase Storage.
  * The ZIP must already be at the `sourceZipPath` (uploaded directly by the client
- * via a signed URL from /api/repository/upload-url).
+ * via a signed URL from /api/upload-url).
  *
  * POST /api/repository/upload
  * Content-Type: application/json

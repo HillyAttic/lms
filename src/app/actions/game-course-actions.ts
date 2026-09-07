@@ -19,23 +19,26 @@ async function verifyAdmin(userId: string) {
   return userData;
 }
 
-// Upload game course
-export async function uploadGameCourse(formData: FormData) {
+/**
+ * Process game course from Firebase Storage
+ * ZIP file must already be uploaded directly to storage via signed URL
+ */
+export async function processGameCourse(
+  userId: string,
+  gameType: "uploaded" | "url",
+  gameZipPath: string | null,
+  gameUrl: string,
+  title: string,
+  description: string,
+  duration: number,
+  categories: string[],
+  tags: string[],
+  thumbnailUrl?: string | null
+) {
   try {
-    const userId = formData.get("userId") as string;
-    const gameType = formData.get("gameType") as "uploaded" | "url";
-    const file = formData.get("file") as File | null;
-    const gameUrl = formData.get("gameUrl") as string;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const duration = parseInt(formData.get("duration") as string) || 0;
-    const categories = (formData.get("categories") as string || "").split(",").map(c => c.trim()).filter(Boolean);
-    const tags = (formData.get("tags") as string || "").split(",").map(t => t.trim()).filter(Boolean);
-    const thumbnail = formData.get("thumbnail") as File | null;
-
     if (!userId) throw new Error("User ID is required");
     if (!title?.trim()) throw new Error("Title is required");
-    if (gameType === "uploaded" && !file) throw new Error("Game file is required");
+    if (gameType === "uploaded" && !gameZipPath) throw new Error("Game ZIP path is required");
     if (gameType === "url" && !gameUrl?.trim()) throw new Error("Game URL is required");
 
     await verifyAdmin(userId);
@@ -46,29 +49,29 @@ export async function uploadGameCourse(formData: FormData) {
     let gameStoragePath = "";
     let gameEntryFile = "index.html";
 
-    if (gameType === "uploaded" && file) {
-      // Upload ZIP file
-      const zipPath = `games/${courseId}/source.zip`;
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const zipRef = bucket.file(zipPath);
-
-      await zipRef.save(buffer, {
-        metadata: {
-          contentType: "application/zip",
-        },
-      });
+    if (gameType === "uploaded" && gameZipPath) {
+      // Download ZIP from Firebase Storage
+      const [fileBuffer] = await bucket.file(gameZipPath).download();
 
       // Extract ZIP contents
-      const zip = await JSZip.loadAsync(buffer);
-      const extractedFiles: { path: string; buffer: Buffer }[] = [];
+      const zip = await JSZip.loadAsync(fileBuffer);
+      const extractedFiles: { path: string; content: Uint8Array }[] = [];
 
-      for (const [filename, zipEntry] of Object.entries(zip.files)) {
+      zip.forEach((filename, zipEntry) => {
         if (!zipEntry.dir) {
-          const content = await zipEntry.async("nodebuffer");
           extractedFiles.push({
             path: `games/${courseId}/extracted/${filename}`,
-            buffer: content,
+            content: null as any, // will be loaded below
           });
+        }
+      });
+
+      // Load content for each file
+      for (const file of extractedFiles) {
+        const relativePath = file.path.replace(`games/${courseId}/extracted/`, "");
+        const zipEntry = zip.file(relativePath);
+        if (zipEntry) {
+          file.content = await zipEntry.async("uint8array");
         }
       }
 
@@ -78,8 +81,10 @@ export async function uploadGameCourse(formData: FormData) {
         const batch = extractedFiles.slice(i, i + BATCH_SIZE);
         await Promise.all(
           batch.map(async (file) => {
-            const fileRef = bucket.file(file.path);
-            await fileRef.save(file.buffer);
+            if (file.content) {
+              const fileRef = bucket.file(file.path);
+              await fileRef.save(Buffer.from(file.content));
+            }
           })
         );
       }
@@ -95,34 +100,13 @@ export async function uploadGameCourse(formData: FormData) {
       gameStoragePath = `games/${courseId}/extracted`;
     }
 
-    // Upload thumbnail if provided
-    let thumbnailUrl = null;
-    if (thumbnail) {
-      const thumbExt = thumbnail.name.split(".").pop() || "jpg";
-      const thumbPath = `thumbnails/${courseId}/thumbnail.${thumbExt}`;
-      const thumbBuffer = Buffer.from(await thumbnail.arrayBuffer());
-      const thumbRef = bucket.file(thumbPath);
-
-      await thumbRef.save(thumbBuffer, {
-        metadata: {
-          contentType: thumbnail.type || `image/${thumbExt}`,
-        },
-      });
-
-      const [thumbUrl] = await thumbRef.getSignedUrl({
-        action: "read",
-        expires: "2037-12-31",
-      });
-      thumbnailUrl = thumbUrl;
-    }
-
     // Create Firestore document
     const courseData = {
       title: title.trim(),
       description: description?.trim() || "",
       duration,
       status: "draft",
-      thumbnailUrl,
+      thumbnailUrl: thumbnailUrl || null,
       gameUrl: gameType === "url" ? gameUrl.trim() : null,
       gameStoragePath,
       gameEntryFile,
@@ -141,7 +125,7 @@ export async function uploadGameCourse(formData: FormData) {
 
     return { success: true, data: { id: courseId, ...courseData } };
   } catch (error: any) {
-    console.error("Error uploading game course:", error);
+    console.error("Error processing game course:", error);
     return { success: false, error: error.message };
   }
 }

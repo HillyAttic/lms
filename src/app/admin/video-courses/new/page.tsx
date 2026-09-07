@@ -5,8 +5,9 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
 import { Video, X, Upload } from "@/lib/icons";
-import { uploadVideoCourse } from "@/app/actions/video-course-actions";
+import { processVideoCourse } from "@/app/actions/video-course-actions";
 import PageHeader from "@/components/admin/page-header";
+import { getSignedUploadUrl, uploadFileDirect } from "@/lib/upload-utils";
 
 const ACCEPTED_VIDEO_TYPES = [".mp4", ".webm", ".ogg", ".mov"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
@@ -95,43 +96,60 @@ export default function UploadVideoCoursePage() {
     setUploading(true);
     setUploadProgress(0);
 
-    // Simulate upload progress
-    const progressInterval = setInterval(() => {
-      setUploadProgress((prev) => {
-        if (prev >= 90) {
-          clearInterval(progressInterval);
-          return 90;
-        }
-        return prev + 10;
-      });
-    }, 500);
-
     try {
-      const formData = new FormData();
-      formData.append("userId", user.uid);
-      formData.append("file", videoFile);
-      formData.append("title", title);
-      formData.append("description", description);
-      formData.append("duration", duration);
-      formData.append("categories", categories);
-      formData.append("tags", tags);
-      if (thumbnail) {
-        formData.append("thumbnail", thumbnail);
-      }
+      const courseId = `video_${Date.now()}`;
+      const ext = videoFile.name.split(".").pop() || "mp4";
+      const videoStoragePath = `videos/${courseId}/video.${ext}`;
+      const contentType = videoFile.type || `video/${ext}`;
 
-      const result = await uploadVideoCourse(formData);
+      // Step 1: Get signed upload URL
+      setUploadProgress(5);
+      const { uploadUrl } = await getSignedUploadUrl(
+        videoStoragePath,
+        contentType,
+        user.uid
+      );
 
-      clearInterval(progressInterval);
+      // Step 2: Upload video directly to Firebase Storage
+      setUploadProgress(10);
+      await uploadFileDirect(videoFile, uploadUrl, contentType, (progress) => {
+        // Map 0-100% to 10-90% of overall progress
+        setUploadProgress(10 + Math.round(progress.percent * 0.8));
+      });
+
+      // Step 3: Process the uploaded video
+      setUploadProgress(92);
+      const catsArr = categories
+        .split(",")
+        .map((c) => c.trim())
+        .filter(Boolean);
+      const tagsArr = tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean);
+
+      const result = await processVideoCourse(
+        user.uid,
+        videoStoragePath,
+        title,
+        description,
+        parseInt(duration) || 0,
+        catsArr,
+        tagsArr,
+        contentType,
+        videoFile.size,
+        null
+      );
+
+      setUploadProgress(100);
 
       if (result.success) {
-        setUploadProgress(100);
         toast.success("Video course uploaded successfully!");
         router.push("/admin/video-courses");
       } else {
         toast.error(result.error || "Failed to upload video course");
       }
     } catch (error) {
-      clearInterval(progressInterval);
       toast.error("Failed to upload video course");
       console.error(error);
     } finally {
@@ -224,7 +242,9 @@ export default function UploadVideoCoursePage() {
           {uploading && (
             <div>
               <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-gray-600">Uploading...</span>
+                <span className="text-gray-600">
+                  {uploadProgress < 90 ? "Uploading video..." : "Finalizing..."}
+                </span>
                 <span className="text-purple-600">{uploadProgress}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">

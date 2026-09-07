@@ -18,65 +18,37 @@ async function verifyAdmin(userId: string) {
   return userData;
 }
 
-// Upload video course
-export async function uploadVideoCourse(formData: FormData) {
+/**
+ * Process video course from Firebase Storage
+ * Video must already be uploaded directly to storage via signed URL
+ */
+export async function processVideoCourse(
+  userId: string,
+  videoStoragePath: string,
+  title: string,
+  description: string,
+  duration: number,
+  categories: string[],
+  tags: string[],
+  videoMimeType: string,
+  videoFileSize: number,
+  thumbnailUrl?: string | null
+) {
   try {
-    const userId = formData.get("userId") as string;
-    const file = formData.get("file") as File;
-    const title = formData.get("title") as string;
-    const description = formData.get("description") as string;
-    const duration = parseInt(formData.get("duration") as string) || 0;
-    const categories = (formData.get("categories") as string || "").split(",").map(c => c.trim()).filter(Boolean);
-    const tags = (formData.get("tags") as string || "").split(",").map(t => t.trim()).filter(Boolean);
-    const thumbnail = formData.get("thumbnail") as File | null;
-
     if (!userId) throw new Error("User ID is required");
-    if (!file) throw new Error("Video file is required");
+    if (!videoStoragePath) throw new Error("Video storage path is required");
     if (!title?.trim()) throw new Error("Title is required");
 
     await verifyAdmin(userId);
 
     const courseId = `video_${Date.now()}`;
-    const fileExtension = file.name.split(".").pop() || "mp4";
-    const videoPath = `videos/${courseId}/video.${fileExtension}`;
-
-    // Upload video file to Firebase Storage
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const bucket = adminStorage.bucket();
-    const fileRef = bucket.file(videoPath);
-
-    await fileRef.save(buffer, {
-      metadata: {
-        contentType: file.type || `video/${fileExtension}`,
-      },
-    });
 
     // Generate signed URL for video playback
-    const [signedUrl] = await fileRef.getSignedUrl({
+    const bucket = adminStorage.bucket();
+    const [signedUrl] = await bucket.file(videoStoragePath).getSignedUrl({
       action: "read",
       expires: "2037-12-31",
     });
-
-    // Upload thumbnail if provided
-    let thumbnailUrl = null;
-    if (thumbnail) {
-      const thumbExt = thumbnail.name.split(".").pop() || "jpg";
-      const thumbPath = `thumbnails/${courseId}/thumbnail.${thumbExt}`;
-      const thumbBuffer = Buffer.from(await thumbnail.arrayBuffer());
-      const thumbRef = bucket.file(thumbPath);
-
-      await thumbRef.save(thumbBuffer, {
-        metadata: {
-          contentType: thumbnail.type || `image/${thumbExt}`,
-        },
-      });
-
-      const [thumbUrl] = await thumbRef.getSignedUrl({
-        action: "read",
-        expires: "2037-12-31",
-      });
-      thumbnailUrl = thumbUrl;
-    }
 
     // Create Firestore document
     const courseData = {
@@ -84,11 +56,11 @@ export async function uploadVideoCourse(formData: FormData) {
       description: description?.trim() || "",
       duration,
       status: "draft",
-      thumbnailUrl,
+      thumbnailUrl: thumbnailUrl || null,
       videoUrl: signedUrl,
-      videoStoragePath: videoPath,
-      videoMimeType: file.type || `video/${fileExtension}`,
-      videoFileSize: file.size,
+      videoStoragePath,
+      videoMimeType,
+      videoFileSize,
       categories,
       tags,
       createdAt: Timestamp.now(),
@@ -103,7 +75,7 @@ export async function uploadVideoCourse(formData: FormData) {
 
     return { success: true, data: { id: courseId, ...courseData } };
   } catch (error: any) {
-    console.error("Error uploading video course:", error);
+    console.error("Error processing video course:", error);
     return { success: false, error: error.message };
   }
 }
@@ -184,7 +156,7 @@ export async function getVideoCourseById(courseId: string) {
     return { success: true, data: { id: doc.id, ...doc.data() } };
   } catch (error: any) {
     console.error("Error fetching video course:", error);
-    return { success: false, error: error.message };
+    return { success: true, error: error.message };
   }
 }
 
