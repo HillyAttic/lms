@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   getUsersPaginated,
@@ -53,11 +53,7 @@ export default function UsersPage() {
   const [passwordUserId, setPasswordUserId] = useState("");
   const [passwordUserEmail, setPasswordUserEmail] = useState("");
 
-  useEffect(() => {
-    loadUsers();
-  }, [page, limit, searchQuery, filterRole, sortBy, sortOrder]);
-
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setLoading(true);
     try {
       const result = await getUsersPaginated(
@@ -71,7 +67,7 @@ export default function UsersPage() {
         setTotal(result.total || 0);
         setTotalPages(result.totalPages || 0);
       } else {
-        toast.error("Failed to load users");
+        toast.error(result.error || "Failed to load users");
       }
     } catch (error) {
       toast.error("Failed to load users");
@@ -79,7 +75,11 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, limit, searchQuery, filterRole]);
+
+  useEffect(() => {
+    loadUsers();
+  }, [loadUsers]);
 
   const handleBulkRoleChange = async () => {
     if (!user || selectedIds.length === 0) return;

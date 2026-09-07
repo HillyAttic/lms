@@ -15,11 +15,27 @@ let _adminStorage: ReturnType<typeof getStorage> | null = null;
 function initialize() {
   if (_initialized) return;
 
-  const { readFileSync } = require("fs");
-  const { join } = require("path");
+  let serviceAccount: Record<string, string>;
 
-  const serviceAccountPath = join(process.cwd(), "firebase-service-account.json");
-  const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
+  // In production (e.g. Vercel), the service-account JSON file is not deployed.
+  // Fall back to the FIREBASE_SERVICE_ACCOUNT env var which should contain the
+  // full JSON string of the service-account credentials.
+  const envJson = process.env.FIREBASE_SERVICE_ACCOUNT;
+  if (envJson) {
+    serviceAccount = JSON.parse(envJson);
+  } else {
+    const { readFileSync, existsSync } = require("fs");
+    const { join } = require("path");
+
+    const serviceAccountPath = join(process.cwd(), "firebase-service-account.json");
+    if (!existsSync(serviceAccountPath)) {
+      throw new Error(
+        "Firebase Admin SDK: firebase-service-account.json not found and " +
+        "FIREBASE_SERVICE_ACCOUNT env var is not set. One of these is required."
+      );
+    }
+    serviceAccount = JSON.parse(readFileSync(serviceAccountPath, "utf-8"));
+  }
 
   // Firebase Storage bucket name - remove protocol prefix only
   // Keep .appspot.com or .firebasestorage.app as they are part of the bucket name
@@ -74,8 +90,9 @@ export function serializeTimestamps(obj: any): any {
   if (Array.isArray(obj)) {
     return obj.map(serializeTimestamps);
   }
-  if (typeof obj === "object" && obj.constructor?.name !== "Object") {
-    // Not a plain object — return as-is (e.g. Buffer, Date, etc.)
+  // Return non-plain objects as-is (Buffer, Date, GeoPoint, DocumentReference, etc.)
+  // A plain object has Object (or null) as its prototype.
+  if (typeof obj === "object" && Object.getPrototypeOf(obj) !== Object.prototype) {
     return obj;
   }
   if (typeof obj === "object") {
