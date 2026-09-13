@@ -9,11 +9,50 @@ interface ExternalShareData {
   name: string;
   email?: string;
   mobile?: string;
+  expirationDate?: string;
   courseIds: {
     scorm: Array<{ id: string; source?: string }>;
     video: string[];
     game: string[];
   };
+}
+
+function resolveExpirationDate(expirationDate: string | undefined, now: Date): Date {
+  if (expirationDate === undefined) {
+    return new Date(now.getTime() + EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+  }
+
+  if (typeof expirationDate !== "string") {
+    throw new Error("Expiration date must be in YYYY-MM-DD format");
+  }
+
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(expirationDate);
+  if (!match) {
+    throw new Error("Expiration date must be in YYYY-MM-DD format");
+  }
+
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1];
+
+  if (year < 1 || month < 1 || month > 12 || day < 1 || day > daysInMonth) {
+    throw new Error("Expiration date is invalid");
+  }
+
+  const expiresAt = new Date(0);
+  expiresAt.setUTCFullYear(year, month - 1, day);
+  expiresAt.setUTCHours(23, 59, 59, 999);
+
+  if (expiresAt <= now) {
+    throw new Error("Expiration date must be in the future");
+  }
+
+  return expiresAt;
+}
+
+function isLeapYear(year: number): boolean {
+  return year % 4 === 0 && (year % 100 !== 0 || year % 400 === 0);
 }
 
 // Helper to verify admin role
@@ -51,7 +90,7 @@ export async function createExternalShare(data: ExternalShareData, adminUserId: 
 
     const token = crypto.randomUUID();
     const now = new Date();
-    const expiresAt = new Date(now.getTime() + EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+    const expiresAt = resolveExpirationDate(data.expirationDate, now);
 
     // Derive access types from selected courses
     const accessTypes: string[] = [];
@@ -257,13 +296,23 @@ export async function getExternalShareByToken(token: string) {
         if (source === "repository") {
           const courseDoc = await adminDb.doc(`repository/${id}`).get();
           if (courseDoc.exists) {
-            courses.scorm.push({ id: courseDoc.id, ...courseDoc.data(), source: "repository" });
+            courses.scorm.push({
+              id: courseDoc.id,
+              ...courseDoc.data(),
+              title: courseDoc.data()?.title || courseDoc.data()?.name || "Untitled course",
+              source: "repository",
+            });
             continue;
           }
         } else if (source === "courses") {
           const courseDoc = await adminDb.doc(`courses/${id}`).get();
           if (courseDoc.exists) {
-            courses.scorm.push({ id: courseDoc.id, ...courseDoc.data(), source: "courses" });
+            courses.scorm.push({
+              id: courseDoc.id,
+              ...courseDoc.data(),
+              title: courseDoc.data()?.title || courseDoc.data()?.name || "Untitled course",
+              source: "courses",
+            });
             continue;
           }
         }
@@ -271,12 +320,22 @@ export async function getExternalShareByToken(token: string) {
         // Fallback: try both collections
         let courseDoc = await adminDb.doc(`courses/${id}`).get();
         if (courseDoc.exists) {
-          courses.scorm.push({ id: courseDoc.id, ...courseDoc.data(), source: "courses" });
+          courses.scorm.push({
+            id: courseDoc.id,
+            ...courseDoc.data(),
+            title: courseDoc.data()?.title || courseDoc.data()?.name || "Untitled course",
+            source: "courses",
+          });
           continue;
         }
         courseDoc = await adminDb.doc(`repository/${id}`).get();
         if (courseDoc.exists) {
-          courses.scorm.push({ id: courseDoc.id, ...courseDoc.data(), source: "repository" });
+          courses.scorm.push({
+            id: courseDoc.id,
+            ...courseDoc.data(),
+            title: courseDoc.data()?.title || courseDoc.data()?.name || "Untitled course",
+            source: "repository",
+          });
         }
       }
     }
@@ -286,7 +345,11 @@ export async function getExternalShareByToken(token: string) {
       for (const id of courseIds.video) {
         const courseDoc = await adminDb.doc(`video_courses/${id}`).get();
         if (courseDoc.exists) {
-          courses.video.push({ id: courseDoc.id, ...courseDoc.data() });
+          courses.video.push({
+            id: courseDoc.id,
+            ...courseDoc.data(),
+            title: courseDoc.data()?.title || courseDoc.data()?.name || "Untitled course",
+          });
         }
       }
     }
@@ -296,7 +359,11 @@ export async function getExternalShareByToken(token: string) {
       for (const id of courseIds.game) {
         const courseDoc = await adminDb.doc(`game_courses/${id}`).get();
         if (courseDoc.exists) {
-          courses.game.push({ id: courseDoc.id, ...courseDoc.data() });
+          courses.game.push({
+            id: courseDoc.id,
+            ...courseDoc.data(),
+            title: courseDoc.data()?.title || courseDoc.data()?.name || "Untitled course",
+          });
         }
       }
     }

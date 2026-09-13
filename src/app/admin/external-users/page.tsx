@@ -151,6 +151,7 @@ export default function ExternalUsersPage() {
       day: "2-digit",
       month: "short",
       year: "numeric",
+      timeZone: "UTC",
     });
   };
 
@@ -310,7 +311,12 @@ export default function ExternalUsersPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {getStatusBadge(share)}
                   {getAccessTypesBadges(share)}
-                  <span className="text-xs text-gray-500">{formatDate(share.createdAt)}</span>
+                  <span className="text-xs text-gray-500">
+                    Created {formatDate(share.createdAt)}
+                  </span>
+                  <span className="text-xs text-gray-500">
+                    Expires {formatDate(share.expiresAt)}
+                  </span>
                 </div>
               </div>
             ))}

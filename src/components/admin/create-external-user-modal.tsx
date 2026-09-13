@@ -19,6 +19,36 @@ interface CoursesData {
   game: CourseItem[];
 }
 
+interface SerializedTimestamp {
+  seconds: number;
+  nanoseconds?: number;
+}
+
+const DEFAULT_EXPIRY_DAYS = 15;
+
+function toDateInputValue(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function getTodayDate(): string {
+  return toDateInputValue(new Date());
+}
+
+function getDefaultExpirationDate(): string {
+  return toDateInputValue(new Date(Date.now() + DEFAULT_EXPIRY_DAYS * 24 * 60 * 60 * 1000));
+}
+
+function formatExpirationDate(timestamp: SerializedTimestamp | null): string {
+  if (!timestamp?.seconds) return "N/A";
+
+  return new Date(timestamp.seconds * 1000).toLocaleDateString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+}
+
 interface CreateExternalUserModalProps {
   onClose: () => void;
   onSuccess: () => void;
@@ -29,6 +59,7 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [mobile, setMobile] = useState("");
+  const [expirationDate, setExpirationDate] = useState(() => getDefaultExpirationDate());
   const [selectedScorm, setSelectedScorm] = useState<string[]>([]);
   const [selectedVideo, setSelectedVideo] = useState<string[]>([]);
   const [selectedGame, setSelectedGame] = useState<string[]>([]);
@@ -36,6 +67,7 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
   const [loading, setLoading] = useState(false);
   const [loadingCourses, setLoadingCourses] = useState(true);
   const [generatedLink, setGeneratedLink] = useState<string | null>(null);
+  const [generatedExpiresAt, setGeneratedExpiresAt] = useState<SerializedTimestamp | null>(null);
   const [expandedScorm, setExpandedScorm] = useState(false);
   const [expandedVideo, setExpandedVideo] = useState(false);
   const [expandedGame, setExpandedGame] = useState(false);
@@ -98,6 +130,11 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
       return;
     }
 
+    if (!expirationDate) {
+      toast.error("Expiration date is required");
+      return;
+    }
+
     setLoading(true);
     try {
       if (!user?.uid) {
@@ -116,6 +153,7 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
           name: name.trim(),
           email: email.trim() || undefined,
           mobile: mobile.trim() || undefined,
+          expirationDate,
           courseIds: {
             scorm: scormItems,
             video: selectedVideo,
@@ -127,6 +165,7 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
 
       if (result.success && result.data) {
         setGeneratedLink(result.data.shareUrl);
+        setGeneratedExpiresAt(result.data.expiresAt);
         toast.success("Share link generated successfully");
       } else {
         toast.error(result.error || "Failed to create share link");
@@ -150,14 +189,16 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
 
   const shareViaWhatsApp = () => {
     if (!generatedLink) return;
-    const text = encodeURIComponent(`Check out this content: ${generatedLink}`);
+    const expiresOn = formatExpirationDate(generatedExpiresAt);
+    const text = encodeURIComponent(`Check out this content: ${generatedLink}\n\nAvailable until: ${expiresOn}`);
     window.open(`https://wa.me/?text=${text}`, "_blank");
   };
 
   const shareViaEmail = () => {
     if (!generatedLink) return;
     const subject = encodeURIComponent("Content Access Link");
-    const body = encodeURIComponent(`Here is your access link: ${generatedLink}\n\nThis link is valid for 15 days.`);
+    const expiresOn = formatExpirationDate(generatedExpiresAt);
+    const body = encodeURIComponent(`Here is your access link: ${generatedLink}\n\nThis link is available until ${expiresOn}.`);
     window.open(`mailto:?subject=${subject}&body=${body}`, "_blank");
   };
 
@@ -233,12 +274,8 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
             </div>
 
             <p className="text-xs text-gray-500">
-              This link is valid for 15 days and will expire on{" "}
-              {new Date(Date.now() + 15 * 24 * 60 * 60 * 1000).toLocaleDateString("en-GB", {
-                day: "2-digit",
-                month: "short",
-                year: "numeric",
-              })}
+              This link is available until{" "}
+              <strong className="font-semibold text-gray-700">{formatExpirationDate(generatedExpiresAt)}</strong>.
             </p>
 
             <div className="flex justify-end pt-4">
@@ -320,6 +357,24 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               placeholder="Enter mobile number"
             />
+          </div>
+
+          {/* Expiration Date */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Expiration Date *
+            </label>
+            <input
+              type="date"
+              value={expirationDate}
+              min={getTodayDate()}
+              onChange={(e) => setExpirationDate(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              required
+            />
+            <p className="mt-1.5 text-xs text-gray-500">
+              The link will remain available through the selected date.
+            </p>
           </div>
 
           {/* Course Selection */}

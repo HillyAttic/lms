@@ -91,6 +91,7 @@ export default function AdminRepositoryPage() {
     duration: "30",
   });
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [selectedThumbnail, setSelectedThumbnail] = useState<File | null>(null);
   const [formError, setFormError] = useState("");
 
   const limit = 10;
@@ -215,6 +216,26 @@ export default function AdminRepositoryPage() {
         return;
       }
 
+      // Step 2.5: Upload thumbnail if provided
+      let thumbnailUrl: string | null = null;
+      if (selectedThumbnail) {
+        console.log("Step 2.5: Uploading thumbnail...");
+        setUploadProgress((prev) =>
+          prev ? { ...prev, phase: "Uploading thumbnail...", progress: 88 } : null
+        );
+        const thumbExt = selectedThumbnail.name.split(".").pop() || "jpg";
+        const thumbPath = `thumbnails/${itemId}/thumbnail.${thumbExt}`;
+        const { uploadUrl: thumbUploadUrl } = await getSignedUploadUrl(
+          thumbPath,
+          selectedThumbnail.type,
+          user?.uid || ""
+        );
+        await uploadFileDirect(selectedThumbnail, thumbUploadUrl, selectedThumbnail.type);
+        // Generate the public URL
+        const bucketName = process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET || "";
+        thumbnailUrl = `https://storage.googleapis.com/${bucketName}/${thumbPath}`;
+      }
+
       // Step 3: Tell the server to process the uploaded ZIP
       console.log("Step 3: Processing uploaded ZIP...");
       setUploadProgress((prev) =>
@@ -239,6 +260,7 @@ export default function AdminRepositoryPage() {
           interactivityLevel: formData.interactivityLevel,
           duration: formData.duration,
           sourceZipPath,
+          thumbnailUrl,
         }),
       });
 
@@ -352,6 +374,7 @@ export default function AdminRepositoryPage() {
       duration: "30",
     });
     setSelectedFile(null);
+    setSelectedThumbnail(null);
     setFormError("");
     setUploadProgress(null);
   };
@@ -795,6 +818,20 @@ export default function AdminRepositoryPage() {
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   Upload a SCORM package ZIP file (max 500MB)
+                </p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Thumbnail Image
+                </label>
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => setSelectedThumbnail(e.target.files?.[0] || null)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+                />
+                <p className="text-xs text-gray-500 mt-1">
+                  Optional. Recommended size: 800x450px. Shows on the shared link page.
                 </p>
               </div>
             </div>

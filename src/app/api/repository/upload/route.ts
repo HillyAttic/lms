@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       interactivityLevel,
       duration,
       sourceZipPath,
+      thumbnailUrl,
     } = body;
 
     if (!name || !userId || !sourceZipPath) {
@@ -236,6 +237,7 @@ export async function POST(request: NextRequest) {
       entryPoint,
       storagePath: extractedPath,
       sourceZipPath,
+      thumbnailUrl: thumbnailUrl || null,
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       createdBy: userId,
