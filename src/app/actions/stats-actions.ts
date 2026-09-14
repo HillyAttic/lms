@@ -42,6 +42,7 @@ export async function getDashboardStats() {
 
     const totalUsers = users.length;
     const adminCount = users.filter((u: any) => u.role === "admin").length;
+    const managerCount = users.filter((u: any) => u.role === "manager").length;
     const instructorCount = users.filter((u: any) => u.role === "instructor").length;
     const learnerCount = users.filter((u: any) => u.role === "learner").length;
 
@@ -71,6 +72,7 @@ export async function getDashboardStats() {
         activeGameCourses,
         totalUsers,
         adminCount,
+        managerCount,
         instructorCount,
         learnerCount,
         recentUploads,

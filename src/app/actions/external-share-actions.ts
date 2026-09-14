@@ -1,6 +1,8 @@
 "use server";
 
 import { adminDb, FieldValue, Timestamp, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
+import { resolveThumbnails } from "@/lib/storage-urls";
 import crypto from "crypto";
 
 const EXPIRY_DAYS = 15;
@@ -58,7 +60,7 @@ function isLeapYear(year: number): boolean {
 // Helper to verify admin role
 async function verifyAdmin(adminUserId: string): Promise<boolean> {
   const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-  return adminDoc.exists && adminDoc.data()?.role === "admin";
+  return adminDoc.exists && canAccessAdminPanel(adminDoc.data()?.role);
 }
 
 // Create a new external share link
@@ -377,7 +379,11 @@ export async function getExternalShareByToken(token: string) {
         mobile: data.mobile,
         accessTypes: data.accessTypes,
         expiresAt: data.expiresAt,
-        courses,
+        courses: {
+          scorm: await resolveThumbnails(courses.scorm),
+          video: await resolveThumbnails(courses.video),
+          game: await resolveThumbnails(courses.game),
+        },
       }),
     };
   } catch (error: any) {

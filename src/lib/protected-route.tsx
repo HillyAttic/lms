@@ -1,11 +1,13 @@
 "use client";
 
 import { useAuth } from "@/lib/auth-context";
+import { canAccessAdminPanel } from "@/lib/roles";
 import { useRouter } from "next/navigation";
 import { useEffect, ReactNode } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
+  /** Admin panel gate: admin and manager only. Learners and instructors are bounced. */
   adminOnly?: boolean;
   instructorOrAbove?: boolean;
 }
@@ -18,9 +20,9 @@ export function ProtectedRoute({ children, adminOnly = false, instructorOrAbove 
     if (!loading) {
       if (!user) {
         router.replace("/admin/login");
-      } else if (adminOnly && role !== "admin") {
+      } else if (adminOnly && !canAccessAdminPanel(role)) {
         router.replace("/");
-      } else if (instructorOrAbove && role !== "admin" && role !== "instructor") {
+      } else if (instructorOrAbove && !canAccessAdminPanel(role) && role !== "instructor") {
         router.replace("/");
       }
     }
@@ -34,7 +36,7 @@ export function ProtectedRoute({ children, adminOnly = false, instructorOrAbove 
     );
   }
 
-  if (!user || (adminOnly && role !== "admin") || (instructorOrAbove && role !== "admin" && role !== "instructor")) {
+  if (!user || (adminOnly && !canAccessAdminPanel(role)) || (instructorOrAbove && !canAccessAdminPanel(role) && role !== "instructor")) {
     return null;
   }
 

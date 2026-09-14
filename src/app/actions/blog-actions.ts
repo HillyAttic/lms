@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
 
 export async function getBlogById(blogId: string) {
   try {
@@ -122,7 +123,7 @@ export async function createBlog(data: {
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${data.userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -174,7 +175,7 @@ export async function updateBlog(
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -206,7 +207,7 @@ export async function deleteBlog(blogId: string, userId: string) {
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -230,7 +231,7 @@ export async function batchDeleteBlogs(blogIds: string[], userId: string) {
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -260,7 +261,7 @@ export async function uploadBlogImage(
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 

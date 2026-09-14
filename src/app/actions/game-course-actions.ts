@@ -1,6 +1,8 @@
 "use server";
 
-import { adminDb, adminStorage, FieldValue, Timestamp } from "@/lib/firebase-admin";
+import { adminDb, adminStorage, FieldValue, Timestamp, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
+import { resolveThumbnails, resolveThumbnailUrl } from "@/lib/storage-urls";
 import { revalidatePath } from "next/cache";
 import JSZip from "jszip";
 
@@ -13,7 +15,7 @@ async function verifyAdmin(userId: string) {
     throw new Error("User not found");
   }
   const userData = userDoc.data();
-  if (userData?.role !== "admin") {
+  if (!canAccessAdminPanel(userData?.role)) {
     throw new Error("Unauthorized: Admin access required");
   }
   return userData;
@@ -33,7 +35,8 @@ export async function processGameCourse(
   duration: number,
   categories: string[],
   tags: string[],
-  thumbnailUrl?: string | null
+  thumbnailUrl?: string | null,
+  courseId?: string
 ) {
   try {
     if (!userId) throw new Error("User ID is required");
@@ -43,7 +46,9 @@ export async function processGameCourse(
 
     await verifyAdmin(userId);
 
-    const courseId = `game_${Date.now()}`;
+    // Callers that already uploaded the ZIP supply the ID so the extracted path
+    // `games/{courseId}/extracted` matches the document deleteGameCourse cleans up.
+    const resolvedCourseId = courseId || `game_${Date.now()}`;
     const bucket = adminStorage.bucket();
 
     let gameStoragePath = "";
@@ -60,7 +65,7 @@ export async function processGameCourse(
       zip.forEach((filename, zipEntry) => {
         if (!zipEntry.dir) {
           extractedFiles.push({
-            path: `games/${courseId}/extracted/${filename}`,
+            path: `games/${resolvedCourseId}/extracted/${filename}`,
             content: null as any, // will be loaded below
           });
         }
@@ -68,7 +73,7 @@ export async function processGameCourse(
 
       // Load content for each file
       for (const file of extractedFiles) {
-        const relativePath = file.path.replace(`games/${courseId}/extracted/`, "");
+        const relativePath = file.path.replace(`games/${resolvedCourseId}/extracted/`, "");
         const zipEntry = zip.file(relativePath);
         if (zipEntry) {
           file.content = await zipEntry.async("uint8array");
@@ -89,15 +94,18 @@ export async function processGameCourse(
         );
       }
 
-      // Detect entry point
+      // Detect entry point, kept relative to the extracted root so the launch
+      // route can still serve it when it sits inside a subdirectory.
       const indexFiles = extractedFiles.filter((f) =>
         f.path.endsWith("/index.html") || f.path.endsWith("/index.htm")
       );
       if (indexFiles.length > 0) {
-        gameEntryFile = indexFiles[0].path.split("/").pop() || "index.html";
+        gameEntryFile =
+          indexFiles[0].path.replace(`games/${resolvedCourseId}/extracted/`, "") ||
+          "index.html";
       }
 
-      gameStoragePath = `games/${courseId}/extracted`;
+      gameStoragePath = `games/${resolvedCourseId}/extracted`;
     }
 
     // Create Firestore document
@@ -118,12 +126,17 @@ export async function processGameCourse(
       createdBy: userId,
     };
 
-    await adminDb.collection(COLLECTION).doc(courseId).set(courseData);
+    await adminDb.collection(COLLECTION).doc(resolvedCourseId).set(courseData);
 
     revalidatePath("/admin/game-courses");
+    revalidatePath("/admin/repository");
+    revalidatePath("/repository");
     revalidatePath("/admin");
 
-    return { success: true, data: { id: courseId, ...courseData } };
+    return {
+      success: true,
+      data: serializeTimestamps({ id: resolvedCourseId, ...courseData }),
+    };
   } catch (error: any) {
     console.error("Error processing game course:", error);
     return { success: false, error: error.message };
@@ -182,9 +195,10 @@ export async function getGameCoursesPaginated(
     const startIndex = (page - 1) * limit;
     const paginatedCourses = courses.slice(startIndex, startIndex + limit);
 
+    // Signed after the sort above, which reads Timestamp.seconds directly.
     return {
       success: true,
-      data: paginatedCourses,
+      data: serializeTimestamps(await resolveThumbnails(paginatedCourses)),
       total,
       page,
       limit,
@@ -203,7 +217,15 @@ export async function getGameCourseById(courseId: string) {
     if (!doc.exists) {
       return { success: false, error: "Course not found" };
     }
-    return { success: true, data: { id: doc.id, ...doc.data() } };
+    const data = doc.data()!;
+    return {
+      success: true,
+      data: serializeTimestamps({
+        id: doc.id,
+        ...data,
+        thumbnailUrl: await resolveThumbnailUrl(data.thumbnailUrl),
+      }),
+    };
   } catch (error: any) {
     console.error("Error fetching game course:", error);
     return { success: false, error: error.message };

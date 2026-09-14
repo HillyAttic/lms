@@ -55,8 +55,8 @@ const contentMeta: Record<
     description: "Explore structured lessons and interactive training modules.",
     action: "Launch course",
     gradient: "from-[#7651ef] via-[#6339d8] to-[#4d26b7]",
-    accent: "text-purple-700",
-    softAccent: "bg-purple-50 text-purple-700 ring-purple-100",
+    accent: "text-purple-300",
+    softAccent: "bg-purple-400/10 text-purple-300 ring-purple-400/20",
   },
   video: {
     label: "Video courses",
@@ -64,8 +64,8 @@ const contentMeta: Record<
     description: "Watch expert-led lessons at your own pace, wherever you are.",
     action: "Watch video",
     gradient: "from-[#38bdf8] via-[#168bd4] to-[#1765b5]",
-    accent: "text-sky-700",
-    softAccent: "bg-sky-50 text-sky-700 ring-sky-100",
+    accent: "text-sky-300",
+    softAccent: "bg-sky-400/10 text-sky-300 ring-sky-400/20",
   },
   game: {
     label: "Game courses",
@@ -73,8 +73,8 @@ const contentMeta: Record<
     description: "Put your skills into practice with engaging challenges and games.",
     action: "Play game",
     gradient: "from-[#45c98d] via-[#20a875] to-[#13815f]",
-    accent: "text-emerald-700",
-    softAccent: "bg-emerald-50 text-emerald-700 ring-emerald-100",
+    accent: "text-emerald-300",
+    softAccent: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
   },
 };
 
@@ -174,12 +174,12 @@ export default function SharedPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center bg-[#f7f8fc]">
+      <main className="flex min-h-[60vh] items-center justify-center bg-[#0f0d1a]">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-purple-50 ring-1 ring-purple-100">
+          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06] ring-1 ring-white/10">
             <LoadingSpinner />
           </div>
-          <p className="text-sm font-medium text-gray-500">Preparing your learning space...</p>
+          <p className="text-sm font-medium text-white/50">Preparing your learning space...</p>
         </div>
       </main>
     );
@@ -187,16 +187,16 @@ export default function SharedPage() {
 
   if (error) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center bg-[#f7f8fc] px-4 py-20">
-        <div className="w-full max-w-lg rounded-3xl border border-gray-200 bg-white p-8 text-center shadow-xl shadow-gray-200/50 sm:p-12">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-50 text-red-600 ring-1 ring-red-100">
+      <main className="flex min-h-[60vh] items-center justify-center bg-[#0f0d1a] px-4 py-20">
+        <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#171326] p-8 text-center sm:p-12">
+          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-400/10 text-red-300 ring-1 ring-red-400/20">
             <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v3m0 4h.01M10.29 3.86 2.82 17a2 2 0 0 0 1.74 3h14.88a2 2 0 0 0 1.74-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
             </svg>
           </div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-red-600">Unable to continue</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-gray-950">Access unavailable</h1>
-          <p className="mt-3 text-sm leading-6 text-gray-500">{error}</p>
+          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-red-300">Unable to continue</p>
+          <h1 className="text-2xl font-semibold tracking-tight text-white">Access unavailable</h1>
+          <p className="mt-3 text-sm leading-6 text-white/55">{error}</p>
         </div>
       </main>
     );
@@ -223,18 +223,20 @@ export default function SharedPage() {
     if (type === "scorm") {
       launchScorm(course);
     } else if (type === "video") {
-      window.open(course.videoUrl || "#", "_blank");
+      // Dedicated player page rather than the raw signed file.
+      window.open(`/watch/${course.id}`, "_blank");
     } else {
-      window.open(course.gameUrl || "#", "_blank");
+      // Uploaded games have no public URL — the launch proxy serves their files.
+      window.open(course.gameUrl || `/api/game/launch/${course.id}`, "_blank");
     }
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f7f8fc] text-gray-950">
+    <main className="min-h-screen overflow-hidden bg-[#0f0d1a] text-white">
       <section className="relative isolate overflow-hidden bg-[#171326]">
-        <div className="absolute -right-32 -top-44 h-[30rem] w-[30rem] rounded-full bg-purple-500/25 blur-3xl" />
-        <div className="absolute -bottom-56 left-1/3 h-[24rem] w-[24rem] rounded-full bg-indigo-500/20 blur-3xl" />
-        <div className="absolute inset-0 opacity-20 [background-image:radial-gradient(#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
+        <div className="absolute -right-32 -top-44 h-[30rem] w-[30rem] rounded-full bg-purple-500/15 blur-3xl" />
+        <div className="absolute -bottom-56 left-1/3 h-[24rem] w-[24rem] rounded-full bg-indigo-500/12 blur-3xl" />
+        <div className="absolute inset-0 opacity-[0.13] [background-image:radial-gradient(#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
 
         <div className="container relative py-12 sm:py-16 lg:py-20">
           <div className="mx-auto max-w-7xl">
@@ -298,66 +300,66 @@ export default function SharedPage() {
 
       <div className="container relative z-10 -mt-6 pb-16 sm:-mt-8 sm:pb-20">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-          <div className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-lg shadow-gray-200/40 sm:p-6">
+          <div className="rounded-2xl border border-white/10 bg-[#171326] p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">Courses available</span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-50 text-purple-600">
+              <span className="text-sm font-medium text-white/55">Courses available</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-400/10 text-purple-300">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v14H6.5A2.5 2.5 0 0 0 4 20.5v-14Zm0 0V20.5A2.5 2.5 0 0 1 6.5 18H20" />
                 </svg>
               </span>
             </div>
-            <p className="text-3xl font-semibold tracking-tight text-gray-950">{totalCourses}</p>
-            <p className="mt-1 text-xs text-gray-400">Ready when you are</p>
+            <p className="text-3xl font-semibold tracking-tight text-white">{totalCourses}</p>
+            <p className="mt-1 text-xs text-white/40">Ready when you are</p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-lg shadow-gray-200/40 sm:p-6">
+          <div className="rounded-2xl border border-white/10 bg-[#171326] p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">Learning formats</span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-50 text-sky-600">
+              <span className="text-sm font-medium text-white/55">Learning formats</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9ZM8 9.5h.01M11 9.5h5M8 13.5h.01M11 13.5h5" />
                 </svg>
               </span>
             </div>
-            <p className="text-3xl font-semibold tracking-tight text-gray-950">{availableTypes.length}</p>
-            <p className="mt-1 truncate text-xs text-gray-400">{availableTypes.join(" · ") || "No formats available"}</p>
+            <p className="text-3xl font-semibold tracking-tight text-white">{availableTypes.length}</p>
+            <p className="mt-1 truncate text-xs text-white/40">{availableTypes.join(" · ") || "No formats available"}</p>
           </div>
 
-          <div className="rounded-2xl border border-gray-200/80 bg-white p-5 shadow-lg shadow-gray-200/40 sm:p-6">
+          <div className="rounded-2xl border border-white/10 bg-[#171326] p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-gray-500">Access status</span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+              <span className="text-sm font-medium text-white/55">Access status</span>
+              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m5 12 4 4L19 6" />
                 </svg>
               </span>
             </div>
-            <p className="text-3xl font-semibold tracking-tight text-gray-950">Active</p>
-            <p className="mt-1 text-xs text-gray-400">Secure invitation link</p>
+            <p className="text-3xl font-semibold tracking-tight text-white">Active</p>
+            <p className="mt-1 text-xs text-white/40">Secure invitation link</p>
           </div>
         </div>
 
         <div className="mx-auto mt-16 max-w-7xl sm:mt-20">
           <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-purple-600">Your library</p>
-              <h2 className="text-2xl font-semibold tracking-tight text-gray-950 sm:text-3xl">Start learning today</h2>
-              <p className="mt-2 text-sm text-gray-500">Pick a course and make progress in a way that works for you.</p>
+              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-purple-300">Your library</p>
+              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Start learning today</h2>
+              <p className="mt-2 text-sm text-white/55">Pick a course and make progress in a way that works for you.</p>
             </div>
-            <div className="hidden items-center gap-2 text-xs font-medium text-gray-400 sm:flex">
+            <div className="hidden items-center gap-2 text-xs font-medium text-white/40 sm:flex">
               <span className="h-2 w-2 rounded-full bg-emerald-400" />
               {totalCourses} {totalCourses === 1 ? "course" : "courses"} shared with you
             </div>
           </div>
 
           {totalCourses === 0 ? (
-            <div className="rounded-3xl border border-dashed border-gray-300 bg-white px-6 py-16 text-center shadow-sm">
-              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-gray-100 text-gray-400">
+            <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-16 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white/50">
                 <ContentIcon type="scorm" className="h-7 w-7" />
               </div>
-              <h3 className="mt-5 text-lg font-semibold text-gray-900">No courses available yet</h3>
-              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-gray-500">There is no learning content attached to this share link.</p>
+              <h3 className="mt-5 text-lg font-semibold text-white">No courses available yet</h3>
+              <p className="mx-auto mt-2 max-w-sm text-sm leading-6 text-white/55">There is no learning content attached to this share link.</p>
             </div>
           ) : (
             <div className="space-y-14">
@@ -373,16 +375,16 @@ export default function SharedPage() {
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <h2 id={`${type}-heading`} className="text-xl font-semibold tracking-tight text-gray-950">{meta.label}</h2>
-                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[11px] font-semibold text-gray-500">{items.length} {items.length === 1 ? "course" : "courses"}</span>
+                          <h2 id={`${type}-heading`} className="text-xl font-semibold tracking-tight text-white">{meta.label}</h2>
+                          <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/60">{items.length} {items.length === 1 ? "course" : "courses"}</span>
                         </div>
-                        <p className="mt-1 text-sm text-gray-500">{meta.description}</p>
+                        <p className="mt-1 text-sm text-white/55">{meta.description}</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                       {items.map((course) => (
-                        <article key={course.id} className="group flex min-h-[25rem] flex-col overflow-hidden rounded-3xl border border-gray-200/80 bg-white shadow-sm shadow-gray-200/40 transition-all duration-300 hover:-translate-y-1 hover:border-purple-200 hover:shadow-xl hover:shadow-gray-200/60">
+                        <article key={course.id} className="group flex min-h-[25rem] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#171326] transition-colors duration-300 hover:border-purple-400/40">
                           <div className={`relative h-48 shrink-0 overflow-hidden bg-gradient-to-br ${meta.gradient}`}>
                             <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/10" />
                             <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-white/10 blur-sm" />
@@ -402,21 +404,21 @@ export default function SharedPage() {
                           </div>
 
                           <div className="flex flex-1 flex-col p-5">
-                            <h3 className="min-h-14 line-clamp-2 text-lg font-semibold leading-7 tracking-tight text-gray-950">
+                            <h3 className="min-h-14 line-clamp-2 text-lg font-semibold leading-7 tracking-tight text-white">
                               {course.title || course.name || "Untitled course"}
                             </h3>
-                            <div className="mt-3 space-y-2 text-sm leading-5 text-gray-600">
+                            <div className="mt-3 space-y-2 text-sm leading-5 text-white/60">
                               <p className="line-clamp-2">
-                                <span className="font-semibold text-gray-900">Features:</span>{" "}
+                                <span className="font-semibold text-white/90">Features:</span>{" "}
                                 {course.features?.trim() || "—"}
                               </p>
                               <p className="line-clamp-3">
-                                <span className="font-semibold text-gray-900">Description:</span>{" "}
+                                <span className="font-semibold text-white/90">Description:</span>{" "}
                                 {course.description?.trim() || "—"}
                               </p>
                             </div>
                             <div className="mt-auto pt-6">
-                              <button onClick={() => openCourse(type, course)} className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${meta.gradient} px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2`}>
+                              <button onClick={() => openCourse(type, course)} className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${meta.gradient} px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-[#171326]`}>
                                 <PlayIcon />
                                 {meta.action}
                                 <ExternalLinkIcon />
@@ -433,11 +435,11 @@ export default function SharedPage() {
           )}
         </div>
 
-        <div className="mx-auto mt-16 flex max-w-7xl flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-5 py-4 text-center shadow-sm sm:flex-row sm:items-center sm:justify-center sm:gap-3 sm:px-6">
-          <svg className="mx-auto h-5 w-5 shrink-0 text-gray-400 sm:mx-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <div className="mx-auto mt-16 flex max-w-7xl flex-col gap-4 rounded-2xl border border-white/10 bg-[#171326] px-5 py-4 text-center sm:flex-row sm:items-center sm:justify-center sm:gap-3 sm:px-6">
+          <svg className="mx-auto h-5 w-5 shrink-0 text-white/40 sm:mx-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm3-8V7a3 3 0 1 1 6 0v4" />
           </svg>
-          <p className="text-xs leading-5 text-gray-500">This content is shared through a secure link. Please keep this invitation private.</p>
+          <p className="text-xs leading-5 text-white/50">This content is shared through a secure link. Please keep this invitation private.</p>
         </div>
       </div>
     </main>

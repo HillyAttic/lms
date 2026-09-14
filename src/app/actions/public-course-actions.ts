@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
 
 const COLLECTION = "public_courses";
 const THUMBNAIL_PATH = "public-courses/thumbnails";
@@ -139,7 +140,7 @@ export async function createPublicCourse(
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -201,7 +202,7 @@ export async function updatePublicCourse(
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -237,7 +238,7 @@ export async function deletePublicCourse(courseId: string, userId: string) {
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -261,7 +262,7 @@ export async function batchDeletePublicCourses(courseIds: string[], userId: stri
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -292,7 +293,7 @@ export async function uploadPublicCourseThumbnail(
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 

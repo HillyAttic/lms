@@ -23,6 +23,7 @@ interface DashboardData {
   publishedBlogs: number;
   totalUsers: number;
   adminCount: number;
+  managerCount: number;
   instructorCount: number;
   learnerCount: number;
   recentUploads: Array<{
@@ -307,10 +308,14 @@ export default function AdminDashboard() {
       {/* User Role Breakdown */}
       <div className="mt-8 rounded-xl bg-white p-4 shadow-sm sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">User Roles</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-2xl font-bold text-purple-600">{stats?.adminCount || 0}</p>
             <p className="text-sm text-gray-600">Admins</p>
+          </div>
+          <div className="text-center p-4 bg-amber-50 rounded-lg">
+            <p className="text-2xl font-bold text-amber-600">{stats?.managerCount || 0}</p>
+            <p className="text-sm text-gray-600">Managers</p>
           </div>
           <div className="text-center p-4 bg-blue-50 rounded-lg">
             <p className="text-2xl font-bold text-blue-600">{stats?.instructorCount || 0}</p>

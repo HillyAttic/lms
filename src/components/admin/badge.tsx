@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 
 interface BadgeProps {
   label: string;
-  variant?: "success" | "warning" | "danger" | "info" | "purple" | "blue" | "green" | "gray";
+  variant?: "success" | "warning" | "danger" | "info" | "purple" | "blue" | "green" | "amber" | "gray";
   className?: string;
 }
 
@@ -16,6 +16,7 @@ const variantStyles: Record<string, string> = {
   purple: "bg-purple-100 text-purple-800",
   blue: "bg-blue-100 text-blue-800",
   green: "bg-green-100 text-green-800",
+  amber: "bg-amber-100 text-amber-800",
   gray: "bg-gray-100 text-gray-800",
 };
 

@@ -1,4 +1,6 @@
-export type UserRole = "admin" | "instructor" | "learner";
+import type { UserRole } from "@/lib/roles";
+
+export type { UserRole };
 
 export interface AdminCourse {
   id: string;
@@ -89,6 +91,7 @@ export interface DashboardStats {
   activeGameCourses: number;
   totalUsers: number;
   adminCount: number;
+  managerCount: number;
   instructorCount: number;
   learnerCount: number;
   recentUploads: AdminCourse[];

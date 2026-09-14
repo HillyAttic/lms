@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { adminStorage, adminDb } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
 
 /**
  * Generic signed upload URL generator
@@ -21,7 +22,7 @@ export async function POST(request: NextRequest) {
 
     // Verify admin user
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return NextResponse.json(
         { success: false, error: "Admin access required" },
         { status: 403 }

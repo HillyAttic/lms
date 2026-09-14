@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
 
 export async function getCourses() {
   const snapshot = await adminDb.collection("courses").get();
@@ -109,7 +110,7 @@ export async function batchDeleteCourses(courseIds: string[], userId: string) {
   try {
     // Verify admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 

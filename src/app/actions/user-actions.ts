@@ -1,6 +1,14 @@
 "use server";
 
 import { adminDb, adminAuth, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel, type UserRole } from "@/lib/roles";
+
+// Admin or manager. Managers run every user action except createUser below.
+async function isStaffUser(userId: string): Promise<boolean> {
+  if (!userId) return false;
+  const doc = await adminDb.doc(`users/${userId}`).get();
+  return doc.exists && canAccessAdminPanel(doc.data()?.role);
+}
 
 export async function getUsers() {
   const snapshot = await adminDb.collection("users").get();
@@ -71,13 +79,22 @@ export async function getUsersPaginated(
   }
 }
 
-export async function createUser(data: {
-  email: string;
-  password: string;
-  displayName: string;
-  role: "admin" | "instructor" | "learner";
-}) {
+export async function createUser(
+  data: {
+    email: string;
+    password: string;
+    displayName: string;
+    role: UserRole;
+  },
+  adminUserId: string
+) {
   try {
+    // Admin only — managers may not create users.
+    const callerDoc = await adminDb.doc(`users/${adminUserId}`).get();
+    if (!callerDoc.exists || callerDoc.data()?.role !== "admin") {
+      return { success: false, error: "Admin access required" };
+    }
+
     // Create Firebase Auth user
     const userRecord = await adminAuth.createUser({
       email: data.email,
@@ -107,14 +124,12 @@ export async function updateUserProfile(
   userId: string,
   data: {
     displayName?: string;
-    role?: "admin" | "instructor" | "learner";
+    role?: UserRole;
   },
   adminUserId: string
 ) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -141,7 +156,7 @@ export async function updateUserProfile(
 
 export async function updateUserRole(
   userId: string,
-  newRole: "admin" | "instructor" | "learner",
+  newRole: UserRole,
   adminUserId: string
 ) {
   return updateUserProfile(userId, { role: newRole }, adminUserId);
@@ -149,13 +164,11 @@ export async function updateUserRole(
 
 export async function batchUpdateUserRole(
   userIds: string[],
-  newRole: "admin" | "instructor" | "learner",
+  newRole: UserRole,
   adminUserId: string
 ) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -178,9 +191,7 @@ export async function batchUpdateUserRole(
 
 export async function batchDeleteUsers(userIds: string[], adminUserId: string) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -200,9 +211,7 @@ export async function batchDeleteUsers(userIds: string[], adminUserId: string) {
 
 export async function deleteUser(userId: string, adminUserId: string) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -247,9 +256,7 @@ export async function toggleRepositoryAccess(
   adminUserId: string
 ) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -280,9 +287,7 @@ export async function batchToggleRepositoryAccess(
   adminUserId: string
 ) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -310,9 +315,7 @@ export async function updateUserPassword(
   adminUserId: string
 ) {
   try {
-    // Verify admin
-    const adminDoc = await adminDb.doc(`users/${adminUserId}`).get();
-    if (!adminDoc.exists || adminDoc.data()?.role !== "admin") {
+    if (!(await isStaffUser(adminUserId))) {
       return { success: false, error: "Admin access required" };
     }
 

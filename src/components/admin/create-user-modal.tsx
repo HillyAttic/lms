@@ -3,18 +3,21 @@
 import { useState, FormEvent } from "react";
 import { X } from "@/lib/icons";
 import { createUser } from "@/app/actions/user-actions";
+import type { UserRole } from "@/lib/roles";
 import { toast } from "react-toastify";
 
 interface CreateUserModalProps {
+  /** uid of the admin performing the create — the action re-checks the role server-side. */
+  createdBy: string;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function CreateUserModal({ onClose, onSuccess }: CreateUserModalProps) {
+export default function CreateUserModal({ createdBy, onClose, onSuccess }: CreateUserModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<"admin" | "instructor" | "learner">("learner");
+  const [role, setRole] = useState<UserRole>("learner");
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: FormEvent) => {
@@ -32,12 +35,15 @@ export default function CreateUserModal({ onClose, onSuccess }: CreateUserModalP
 
     setLoading(true);
     try {
-      const result = await createUser({
-        email,
-        password,
-        displayName,
-        role,
-      });
+      const result = await createUser(
+        {
+          email,
+          password,
+          displayName,
+          role,
+        },
+        createdBy
+      );
 
       if (result.success) {
         toast.success("User created successfully");
@@ -115,11 +121,12 @@ export default function CreateUserModal({ onClose, onSuccess }: CreateUserModalP
             </label>
             <select
               value={role}
-              onChange={(e) => setRole(e.target.value as "admin" | "instructor" | "learner")}
+              onChange={(e) => setRole(e.target.value as UserRole)}
               className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
             >
               <option value="learner">Learner</option>
               <option value="instructor">Instructor</option>
+              <option value="manager">Manager</option>
               <option value="admin">Admin</option>
             </select>
           </div>

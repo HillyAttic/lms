@@ -5,21 +5,26 @@ import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
 import {
   getRepositoryItems,
+  type RepositoryContentItem,
+  type RepositoryContentType,
 } from "@/app/actions/repository-actions";
 import { checkRepositoryAccess } from "@/app/actions/user-actions";
 import { Search, Filter, Play, RefreshCw } from "@/lib/icons";
 
-interface RepositoryItem {
-  id: string;
-  serialNumber: number;
-  name: string;
-  interactivityLevel: number;
-  features: string;
-  description: string;
-  duration: number;
-  scormVersion: string;
-  entryPoint: string;
-}
+// SCORM, video and game content all surface here.
+type RepositoryItem = RepositoryContentItem;
+
+const TYPE_LABELS: Record<RepositoryContentType, string> = {
+  scorm: "SCORM",
+  video: "Video",
+  game: "Game",
+};
+
+const TYPE_BADGE_STYLES: Record<RepositoryContentType, string> = {
+  scorm: "bg-purple-50 text-purple-700 border-purple-200",
+  video: "bg-blue-50 text-blue-700 border-blue-200",
+  game: "bg-green-50 text-green-700 border-green-200",
+};
 
 export default function RepositoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -75,15 +80,28 @@ export default function RepositoryPage() {
   const handleLaunch = async (item: RepositoryItem) => {
     setLaunchingId(item.id);
     try {
-      // Open via proxy route — hides signed URL, serves all assets cleanly
-      window.open(`/api/repository/launch/${item.id}/story.html`, "_blank");
+      if (item.type === "video") {
+        // Dedicated player page rather than the raw signed file.
+        window.open(`/watch/${item.id}`, "_blank");
+      } else if (item.type === "game") {
+        window.open(item.gameUrl || `/api/game/launch/${item.id}`, "_blank");
+      } else {
+        // Open via proxy route — hides signed URL, serves all assets cleanly
+        window.open(
+          `/api/repository/launch/${item.id}/${item.entryPoint || "story.html"}`,
+          "_blank"
+        );
+      }
     } catch (error) {
-      console.error("Failed to launch SCORM:", error);
-      alert("Failed to launch SCORM package. Please try again.");
+      console.error("Failed to launch course:", error);
+      alert("Failed to launch course. Please try again.");
     } finally {
       setLaunchingId(null);
     }
   };
+
+  const launchLabel = (item: RepositoryItem) =>
+    item.type === "video" ? "Watch" : item.type === "game" ? "Play" : "Launch";
 
   const filteredItems = items.filter((item) => {
     const matchesSearch =
@@ -95,7 +113,11 @@ export default function RepositoryPage() {
     return matchesSearch && matchesLevel;
   });
 
-  const getInteractivityBadge = (level: number) => {
+  const getInteractivityBadge = (level?: number) => {
+    if (level === undefined || level === null) {
+      // Video and game rows have no interactivity level.
+      return <span className="text-sm text-gray-400">—</span>;
+    }
     const colors: Record<number, string> = {
       1: "bg-gray-100 text-gray-800 border-gray-200",
       2: "bg-blue-50 text-blue-700 border-blue-200",
@@ -174,9 +196,9 @@ export default function RepositoryPage() {
       <div className="container mx-auto px-4 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">SCORM Repository</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Course Repository</h1>
           <p className="text-gray-600 mt-2">
-            Browse and launch interactive SCORM courses
+            Browse and launch SCORM courses, videos and games
           </p>
         </div>
 
@@ -220,7 +242,7 @@ export default function RepositoryPage() {
             <p className="text-gray-600">
               {searchTerm || filterLevel
                 ? "Try adjusting your search or filters"
-                : "No SCORM courses available yet"}
+                : "No courses available yet"}
             </p>
           </div>
         ) : (
@@ -232,8 +254,11 @@ export default function RepositoryPage() {
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[60px]">
                       S.No
                     </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[200px]">
-                      Module Name
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[90px]">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[240px]">
+                      Name
                     </th>
                     <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[120px]">
                       Interactivity
@@ -261,12 +286,35 @@ export default function RepositoryPage() {
                       }`}
                     >
                       <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r border-gray-200 text-center">
-                        {item.serialNumber}
+                        {item.serialNumber ?? "—"}
                       </td>
                       <td className="px-4 py-3 border-r border-gray-200">
-                        <div className="font-semibold text-gray-900">{item.name}</div>
-                        <div className="text-xs text-gray-500 mt-0.5">
-                          SCORM {item.scormVersion}
+                        <span
+                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${TYPE_BADGE_STYLES[item.type]}`}
+                        >
+                          {TYPE_LABELS[item.type]}
+                        </span>
+                      </td>
+                      <td className="px-4 py-3 border-r border-gray-200">
+                        <div className="flex items-center gap-3">
+                          {item.thumbnailUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                              src={item.thumbnailUrl}
+                              alt=""
+                              className="h-12 w-20 shrink-0 rounded object-cover"
+                            />
+                          ) : null}
+                          <div className="min-w-0">
+                            <div className="font-semibold text-gray-900">{item.name}</div>
+                            <div className="text-xs text-gray-500 mt-0.5">
+                              {item.type === "scorm"
+                                ? `SCORM ${item.scormVersion}`
+                                : item.type === "video"
+                                  ? "Video course"
+                                  : "Game course"}
+                            </div>
+                          </div>
                         </div>
                       </td>
                       <td className="px-4 py-3 border-r border-gray-200">
@@ -301,7 +349,7 @@ export default function RepositoryPage() {
                           ) : (
                             <>
                               <Play className="w-4 h-4" />
-                              Launch
+                              {launchLabel(item)}
                             </>
                           )}
                         </button>

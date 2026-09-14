@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import Link from "next/link";
 import ButtonArrow from "../ui/buttonArrow";
 import { useAuth } from "@/lib/auth-context";
+import { canAccessAdminPanel } from "@/lib/roles";
 
 const HeaderExtraInfo = () => {
   const [searchBarShow, setSearchBarShow] = useState(false);
@@ -59,9 +60,11 @@ const HeaderExtraInfo = () => {
       {user ? (
         <div className="flex items-center gap-x-3">
           {/* Admin button - shown next to profile when user is admin */}
-          {role === "admin" && (
+          {canAccessAdminPanel(role) && (
             <Link
               href="/admin"
+              target="_blank"
+              rel="noopener noreferrer"
               className="flex items-center gap-2 h-12 px-4 rounded-lg border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-colors"
             >
               <svg
@@ -122,7 +125,7 @@ const HeaderExtraInfo = () => {
                     Repository
                   </Link>
 
-                  {role === "admin" && (
+                  {canAccessAdminPanel(role) && (
                     <Link
                       href="/admin"
                       onClick={() => setDropdownOpen(false)}

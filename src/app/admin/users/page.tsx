@@ -10,6 +10,7 @@ import {
 } from "@/app/actions/user-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
+import type { UserRole } from "@/lib/roles";
 import { Trash2, Eye, UserPlus, CheckSquare, Key } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import SearchFilterBar from "@/components/admin/search-filter-bar";
@@ -26,13 +27,14 @@ interface UserData {
   uid: string;
   email: string;
   displayName: string;
-  role: "admin" | "instructor" | "learner";
+  role: UserRole;
   repositoryAccess: boolean;
   createdAt: any;
 }
 
 export default function UsersPage() {
-  const { user } = useAuth();
+  const { user, role: currentUserRole } = useAuth();
+  const canCreateUsers = currentUserRole === "admin";
   const [users, setUsers] = useState<UserData[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +46,7 @@ export default function UsersPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showRoleConfirm, setShowRoleConfirm] = useState(false);
-  const [bulkRole, setBulkRole] = useState<"admin" | "instructor" | "learner">("learner");
+  const [bulkRole, setBulkRole] = useState<UserRole>("learner");
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
@@ -178,8 +180,9 @@ export default function UsersPage() {
   };
 
   const getRoleBadge = (role: string) => {
-    const variants: Record<string, "purple" | "blue" | "green"> = {
+    const variants: Record<string, "purple" | "amber" | "blue" | "green"> = {
       admin: "purple",
+      manager: "amber",
       instructor: "blue",
       learner: "green",
     };
@@ -219,14 +222,16 @@ export default function UsersPage() {
                 </button>
               </>
             )}
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-purple-700 sm:px-4"
-            >
-              <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
-              <span className="hidden sm:inline">Create User</span>
-              <span className="sm:hidden">Create</span>
-            </button>
+            {canCreateUsers && (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 rounded-lg bg-purple-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-purple-700 sm:px-4"
+              >
+                <UserPlus className="h-4 w-4 sm:h-5 sm:w-5" />
+                <span className="hidden sm:inline">Create User</span>
+                <span className="sm:hidden">Create</span>
+              </button>
+            )}
           </div>
         }
       />
@@ -245,6 +250,7 @@ export default function UsersPage() {
             options: [
               { label: "All Roles", value: "all" },
               { label: "Admin", value: "admin" },
+              { label: "Manager", value: "manager" },
               { label: "Instructor", value: "instructor" },
               { label: "Learner", value: "learner" },
             ],
@@ -264,13 +270,15 @@ export default function UsersPage() {
           title="No users yet"
           description="Users will appear here after they register or are created"
           action={
-            <button
-              onClick={() => setShowCreateModal(true)}
-              className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <UserPlus className="w-5 h-5" />
-              Create User
-            </button>
+            canCreateUsers ? (
+              <button
+                onClick={() => setShowCreateModal(true)}
+                className="inline-flex items-center gap-2 bg-purple-600 text-white px-6 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
+              >
+                <UserPlus className="w-5 h-5" />
+                Create User
+              </button>
+            ) : undefined
           }
         />
       ) : (
@@ -472,6 +480,7 @@ export default function UsersPage() {
 
       {showCreateModal && (
         <CreateUserModal
+          createdBy={user?.uid || ""}
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
@@ -515,11 +524,12 @@ export default function UsersPage() {
               </p>
               <select
                 value={bulkRole}
-                onChange={(e) => setBulkRole(e.target.value as "admin" | "instructor" | "learner")}
+                onChange={(e) => setBulkRole(e.target.value as UserRole)}
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               >
                 <option value="learner">Learner</option>
                 <option value="instructor">Instructor</option>
+                <option value="manager">Manager</option>
                 <option value="admin">Admin</option>
               </select>
             </div>

@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
 import JSZip from "jszip";
 import { revalidatePath } from "next/cache";
 
@@ -40,7 +41,7 @@ export async function processScormPackage(
 
     // Check if user is admin
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -245,7 +246,7 @@ export async function updateCourse(
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -271,7 +272,7 @@ export async function deleteCourse(courseId: string, userId: string) {
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -308,7 +309,7 @@ export async function uploadThumbnail(courseId: string, file: File, userId: stri
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 

@@ -18,6 +18,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return <>{children}</>;
   }
 
+  // adminOnly here means "admin or manager" — see canAccessAdminPanel in @/lib/roles
   return (
     <ProtectedRoute adminOnly={true}>
       <div className="flex min-h-screen bg-gray-100">

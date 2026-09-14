@@ -1,6 +1,8 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
+import { getSignedReadUrl, resolveThumbnails } from "@/lib/storage-urls";
 import JSZip from "jszip";
 import { revalidatePath } from "next/cache";
 
@@ -42,37 +44,114 @@ export async function cleanupUploadProgress(itemId: string) {
   }
 }
 
-interface RepositoryItem {
+export type RepositoryContentType = "scorm" | "video" | "game";
+
+/**
+ * SCORM packages, video courses and game courses each live in their own
+ * collection, but all three are uploaded from the repository page — so the
+ * repository presents them as one list.
+ */
+export interface RepositoryContentItem {
   id: string;
-  serialNumber: number;
+  type: RepositoryContentType;
   name: string;
-  interactivityLevel: number;
-  features: string;
   description: string;
+  features: string;
   duration: number;
-  scormVersion: string;
-  entryPoint: string;
-  storagePath: string;
-  sourceZipPath: string;
-  createdAt: any;
-  updatedAt: any;
-  createdBy: string;
+  thumbnailUrl: string | null;
+  createdAt: { seconds: number; nanoseconds: number } | null;
+  /** Display position in the combined list — see `loadRepositoryContent`. */
+  serialNumber?: number;
+  interactivityLevel?: number;
+  scormVersion?: string;
+  entryPoint?: string;
+  /** Video only */
+  videoUrl?: string | null;
+  /** Game only */
+  gameUrl?: string | null;
+  gameType?: string;
+  gameEntryFile?: string;
 }
 
-// Get all repository items
+/**
+ * Read all three content collections and normalise them into one list.
+ * Thumbnails are resolved on the way out — see `resolveThumbnails`.
+ */
+async function loadRepositoryContent(): Promise<RepositoryContentItem[]> {
+  const [scormSnapshot, videoSnapshot, gameSnapshot] = await Promise.all([
+    adminDb.collection("repository").get(),
+    adminDb.collection("video_courses").get(),
+    adminDb.collection("game_courses").get(),
+  ]);
+
+  const scorm: RepositoryContentItem[] = scormSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      type: "scorm",
+      name: data.name || data.title || "Untitled",
+      description: data.description || "",
+      features: data.features || "",
+      duration: data.duration || 0,
+      thumbnailUrl: data.thumbnailUrl || null,
+      createdAt: data.createdAt || null,
+      interactivityLevel: data.interactivityLevel,
+      scormVersion: data.scormVersion,
+      entryPoint: data.entryPoint,
+    };
+  });
+
+  const video: RepositoryContentItem[] = videoSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      type: "video",
+      name: data.title || data.name || "Untitled",
+      description: data.description || "",
+      features: "",
+      duration: data.duration || 0,
+      thumbnailUrl: data.thumbnailUrl || null,
+      createdAt: data.createdAt || null,
+      videoUrl: data.videoUrl || null,
+    };
+  });
+
+  const game: RepositoryContentItem[] = gameSnapshot.docs.map((doc) => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      type: "game",
+      name: data.title || data.name || "Untitled",
+      description: data.description || "",
+      features: "",
+      duration: data.duration || 0,
+      thumbnailUrl: data.thumbnailUrl || null,
+      createdAt: data.createdAt || null,
+      gameUrl: data.gameUrl || null,
+      gameType: data.gameType,
+      gameEntryFile: data.gameEntryFile,
+    };
+  });
+
+  const items = [...scorm, ...video, ...game];
+
+  // Newest first: only SCORM documents carry a serial number, so creation time
+  // is the one ordering all three collections share.
+  items.sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+
+  // S.No is this row's position counted from the oldest, so video and game
+  // courses continue the SCORM sequence instead of showing "—".
+  items.forEach((item, index) => {
+    item.serialNumber = items.length - index;
+  });
+
+  return resolveThumbnails(items);
+}
+
+// Get all repository content (SCORM + video + game)
 export async function getRepositoryItems() {
   try {
-    const snapshot = await adminDb
-      .collection("repository")
-      .orderBy("serialNumber", "asc")
-      .get();
-
-    const items = snapshot.docs.map((doc, index) => ({
-      id: doc.id,
-      serialNumber: index + 1,
-      ...doc.data(),
-    }));
-
+    const items = await loadRepositoryContent();
     return { success: true, data: serializeTimestamps(items) };
   } catch (error: any) {
     console.error("Get repository items error:", error);
@@ -80,67 +159,45 @@ export async function getRepositoryItems() {
   }
 }
 
-// Get repository items with pagination
+// Get repository content with pagination
 export async function getRepositoryItemsPaginated(
   page: number = 1,
   limit: number = 10,
   search?: string,
-  interactivityLevel?: number
+  interactivityLevel?: number,
+  type?: RepositoryContentType
 ) {
   try {
-    // Start with a query
-    let query = adminDb.collection("repository").orderBy("serialNumber", "asc");
-
-    // Get all items for counting (but only IDs and filter fields)
-    const countSnapshot = await adminDb
-      .collection("repository")
-      .select("serialNumber", "name", "description", "features", "interactivityLevel")
-      .get();
-
-    let allItems = countSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      serialNumber: doc.data().serialNumber,
-      name: doc.data().name,
-      description: doc.data().description,
-      features: doc.data().features,
-      interactivityLevel: doc.data().interactivityLevel,
-    }));
+    let allItems = await loadRepositoryContent();
 
     // Apply search filter
     if (search) {
       const searchLower = search.toLowerCase();
       allItems = allItems.filter(
-        (item: any) =>
+        (item) =>
           item.name?.toLowerCase().includes(searchLower) ||
           item.description?.toLowerCase().includes(searchLower) ||
           item.features?.toLowerCase().includes(searchLower)
       );
     }
 
-    // Apply interactivity level filter
+    // Apply type filter
+    if (type) {
+      allItems = allItems.filter((item) => item.type === type);
+    }
+
+    // Interactivity level only exists on SCORM packages, so filtering by it
+    // also drops video and game rows — they have no level to match.
     if (interactivityLevel !== undefined && interactivityLevel !== null) {
       allItems = allItems.filter(
-        (item: any) => item.interactivityLevel === interactivityLevel
+        (item) => item.interactivityLevel === interactivityLevel
       );
     }
 
     const total = allItems.length;
     const totalPages = Math.ceil(total / limit);
     const offset = (page - 1) * limit;
-    
-    // Get only the IDs we need for this page
-    const pageItemIds = allItems.slice(offset, offset + limit).map(item => item.id);
-
-    // Fetch only the full data for items on this page
-    const pageItemsPromises = pageItemIds.map(id => 
-      adminDb.doc(`repository/${id}`).get()
-    );
-    const pageItemsDocs = await Promise.all(pageItemsPromises);
-
-    const data = pageItemsDocs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const data = allItems.slice(offset, offset + limit);
 
     return {
       success: true,
@@ -154,6 +211,19 @@ export async function getRepositoryItemsPaginated(
     console.error("Get repository items paginated error:", error);
     return { success: false, error: error.message };
   }
+}
+
+/**
+ * Sign a freshly uploaded file (a thumbnail) so it can be stored as a URL the
+ * browser can actually load. Storage objects are private, so the raw
+ * `storage.googleapis.com` form would 403.
+ */
+export async function getSignedThumbnailUrl(storagePath: string) {
+  const url = await getSignedReadUrl(storagePath);
+  if (!url) {
+    return { success: false, error: "Could not sign the uploaded file" };
+  }
+  return { success: true, url };
 }
 
 // Get single repository item by ID
@@ -265,6 +335,7 @@ export async function updateRepositoryItem(
     features?: string;
     interactivityLevel?: number;
     duration?: number;
+    thumbnailUrl?: string;
   }
 ) {
   try {
@@ -273,7 +344,7 @@ export async function updateRepositoryItem(
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 
@@ -305,7 +376,7 @@ export async function deleteRepositoryItem(itemId: string, userId: string) {
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       console.error("User is not admin or doesn't exist:", userDoc.exists ? "exists but wrong role" : "not found");
       return { success: false, error: "Admin access required" };
     }
@@ -356,7 +427,7 @@ export async function batchDeleteRepositoryItems(itemIds: string[], userId: stri
     }
 
     const userDoc = await adminDb.doc(`users/${userId}`).get();
-    if (!userDoc.exists || userDoc.data()?.role !== "admin") {
+    if (!userDoc.exists || !canAccessAdminPanel(userDoc.data()?.role)) {
       return { success: false, error: "Admin access required" };
     }
 

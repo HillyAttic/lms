@@ -6,6 +6,7 @@ import { getUserById, updateUserProfile, deleteUser, getUserProgress, toggleRepo
 import { getCourses } from "@/app/actions/course-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
+import type { UserRole } from "@/lib/roles";
 import { ArrowLeft, Save, Trash2, Key } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import LoadingSpinner from "@/components/admin/loading-spinner";
@@ -19,7 +20,7 @@ interface UserData {
   email: string;
   displayName: string;
   photoURL: string | null;
-  role: "admin" | "instructor" | "learner";
+  role: UserRole;
   repositoryAccess: boolean;
   createdAt: any;
 }
@@ -53,7 +54,7 @@ export default function UserDetailPage() {
 
   // Form state
   const [displayName, setDisplayName] = useState("");
-  const [role, setRole] = useState<"admin" | "instructor" | "learner">("learner");
+  const [role, setRole] = useState<UserRole>("learner");
   const [repositoryAccess, setRepositoryAccess] = useState(false);
   const [togglingAccess, setTogglingAccess] = useState(false);
   const [showChangePassword, setShowChangePassword] = useState(false);
@@ -192,8 +193,9 @@ export default function UserDetailPage() {
   };
 
   const getRoleBadge = (role: string) => {
-    const variants: Record<string, "purple" | "blue" | "green"> = {
+    const variants: Record<string, "purple" | "amber" | "blue" | "green"> = {
       admin: "purple",
+      manager: "amber",
       instructor: "blue",
       learner: "green",
     };
@@ -332,12 +334,13 @@ export default function UserDetailPage() {
                 </label>
                 <select
                   value={role}
-                  onChange={(e) => setRole(e.target.value as "admin" | "instructor" | "learner")}
+                  onChange={(e) => setRole(e.target.value as UserRole)}
                   disabled={userData.uid === user?.uid}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                 >
                   <option value="learner">Learner</option>
                   <option value="instructor">Instructor</option>
+                  <option value="manager">Manager</option>
                   <option value="admin">Admin</option>
                 </select>
                 {userData.uid === user?.uid && (

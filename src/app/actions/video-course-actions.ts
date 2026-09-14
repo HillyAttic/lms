@@ -1,6 +1,8 @@
 "use server";
 
-import { adminDb, adminStorage, FieldValue, Timestamp } from "@/lib/firebase-admin";
+import { adminDb, adminStorage, FieldValue, Timestamp, serializeTimestamps } from "@/lib/firebase-admin";
+import { canAccessAdminPanel } from "@/lib/roles";
+import { resolveThumbnails, resolveThumbnailUrl } from "@/lib/storage-urls";
 import { revalidatePath } from "next/cache";
 
 const COLLECTION = "video_courses";
@@ -12,7 +14,7 @@ async function verifyAdmin(userId: string) {
     throw new Error("User not found");
   }
   const userData = userDoc.data();
-  if (userData?.role !== "admin") {
+  if (!canAccessAdminPanel(userData?.role)) {
     throw new Error("Unauthorized: Admin access required");
   }
   return userData;
@@ -32,7 +34,8 @@ export async function processVideoCourse(
   tags: string[],
   videoMimeType: string,
   videoFileSize: number,
-  thumbnailUrl?: string | null
+  thumbnailUrl?: string | null,
+  courseId?: string
 ) {
   try {
     if (!userId) throw new Error("User ID is required");
@@ -41,7 +44,9 @@ export async function processVideoCourse(
 
     await verifyAdmin(userId);
 
-    const courseId = `video_${Date.now()}`;
+    // Callers that already picked a storage path supply the ID so the document
+    // ID matches the `videos/{courseId}/` prefix that deleteVideoCourse cleans up.
+    const resolvedCourseId = courseId || `video_${Date.now()}`;
 
     // Generate signed URL for video playback
     const bucket = adminStorage.bucket();
@@ -68,12 +73,17 @@ export async function processVideoCourse(
       createdBy: userId,
     };
 
-    await adminDb.collection(COLLECTION).doc(courseId).set(courseData);
+    await adminDb.collection(COLLECTION).doc(resolvedCourseId).set(courseData);
 
     revalidatePath("/admin/video-courses");
+    revalidatePath("/admin/repository");
+    revalidatePath("/repository");
     revalidatePath("/admin");
 
-    return { success: true, data: { id: courseId, ...courseData } };
+    return {
+      success: true,
+      data: serializeTimestamps({ id: resolvedCourseId, ...courseData }),
+    };
   } catch (error: any) {
     console.error("Error processing video course:", error);
     return { success: false, error: error.message };
@@ -132,9 +142,10 @@ export async function getVideoCoursesPaginated(
     const startIndex = (page - 1) * limit;
     const paginatedCourses = courses.slice(startIndex, startIndex + limit);
 
+    // Signed after the sort above, which reads Timestamp.seconds directly.
     return {
       success: true,
-      data: paginatedCourses,
+      data: serializeTimestamps(await resolveThumbnails(paginatedCourses)),
       total,
       page,
       limit,
@@ -153,10 +164,18 @@ export async function getVideoCourseById(courseId: string) {
     if (!doc.exists) {
       return { success: false, error: "Course not found" };
     }
-    return { success: true, data: { id: doc.id, ...doc.data() } };
+    const data = doc.data()!;
+    return {
+      success: true,
+      data: serializeTimestamps({
+        id: doc.id,
+        ...data,
+        thumbnailUrl: await resolveThumbnailUrl(data.thumbnailUrl),
+      }),
+    };
   } catch (error: any) {
     console.error("Error fetching video course:", error);
-    return { success: true, error: error.message };
+    return { success: false, error: error.message };
   }
 }
 
