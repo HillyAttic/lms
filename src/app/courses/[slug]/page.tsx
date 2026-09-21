@@ -4,9 +4,11 @@ import Link from "next/link";
 import Breadcrumb from "@/components/breadcrumb";
 import Button from "@/components/ui/button";
 import ButtonArrow from "@/components/ui/buttonArrow";
-import { StarDisplay } from "@/components/ui/starDisplay";
+import { StarRating } from "@/components/ui/starRating";
 import { BookOpen, Clock, FileStack, GamepadIcon, Star, Video } from "@/lib/icons";
+import { CourseReviews } from "@/components/courses/courseReviews";
 import {
+  getCourseReviews,
   getPublicCourseBySlug,
   type PublicCourse,
 } from "@/app/actions/public-course-actions";
@@ -89,16 +91,19 @@ export default async function CourseDetailPage({
     notFound();
   }
 
+  const reviewsResult = await getCourseReviews(slug);
+  const reviews = reviewsResult.success ? reviewsResult.data : [];
+
   const title = publicCourse?.title || content?.name || "Untitled course";
   const description =
     publicCourse?.shortDescription || content?.description || "";
   const thumbnail = publicCourse?.thumbnailUrl || content?.thumbnailUrl || null;
   const duration = content?.duration || 0;
   const category = publicCourse?.category || content?.type || "";
-  const rating = publicCourse?.rating || 0;
+  const rating = publicCourse?.rating || content?.rating || 0;
+  const ratingCount = publicCourse?.ratingCount || content?.ratingCount || 0;
   const price = publicCourse?.discountPrice || publicCourse?.price || 0;
   const instructor = publicCourse?.instructor?.name || siteName;
-  const learned = publicCourse?.totalLearners || 0;
   const TypeIcon = content ? typeIcons[content.type] : null;
 
   return (
@@ -162,12 +167,11 @@ export default async function CourseDetailPage({
             )}
 
             <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <StarDisplay value={rating} />
-              <span className="text-sm text-gray-500">
-                {/* Courses carry no review count, so learners stand in as the
-                    activity figure the mock shows after the rating. */}
-                {rating.toFixed(1)} ({learned})
-              </span>
+              <StarRating
+                slug={slug}
+                rating={rating}
+                count={ratingCount}
+              />
               {duration ? (
                 <span className="inline-flex items-center gap-1 text-sm text-gray-500">
                   <Clock className="size-4" />
@@ -198,6 +202,8 @@ export default async function CourseDetailPage({
             </div>
           </div>
         </div>
+
+        <CourseReviews reviews={reviews} />
       </div>
     </main>
   );

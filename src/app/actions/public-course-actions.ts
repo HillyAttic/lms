@@ -1,6 +1,7 @@
 "use server";
 
-import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import { revalidatePath } from "next/cache";
+import { adminAuth, adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
 import { canAccessAdminPanel } from "@/lib/roles";
 import type { CategorySlug } from "@/types/CategoryType";
 
@@ -20,6 +21,8 @@ export type PublicCourse = {
   totalLearners?: number;
   category?: CategorySlug | "";
   rating?: number;
+  /** How many learners the `rating` average is drawn from. */
+  ratingCount?: number;
   /** Repository item this course launches. */
   contentId?: string;
 };
@@ -377,5 +380,165 @@ export async function uploadPublicCourseThumbnail(
   } catch (error: any) {
     console.error("Upload public course thumbnail error:", error);
     return { success: false, error: error.message };
+  }
+}
+
+/**
+ * A rating targets a `public_courses` doc when one exists, otherwise the
+ * repository upload behind the slug — the same two-way fallback the detail page
+ * and the launch page already use.
+ */
+async function resolveRatingTarget(slug: string) {
+  const snapshot = await adminDb
+    .collection(COLLECTION)
+    .where("slug", "==", slug)
+    .limit(1)
+    .get();
+  if (!snapshot.empty) {
+    return { kind: "course" as const, id: snapshot.docs[0].id };
+  }
+  const item = await adminDb.collection("repository").doc(slug).get();
+  return item.exists ? { kind: "content" as const, id: slug } : null;
+}
+
+async function aggregateRating(kind: "course" | "content", id: string) {
+  const field = kind === "course" ? "courseId" : "contentId";
+  const ratings = await adminDb
+    .collection("ratings")
+    .where(field, "==", id)
+    .get();
+  if (ratings.empty) return { average: 0, count: 0 };
+
+  const average =
+    ratings.docs.reduce((sum, doc) => sum + (doc.data().value || 0), 0) /
+    ratings.size;
+
+  return { average: Math.round(average * 10) / 10, count: ratings.size };
+}
+
+/** Writes the aggregate back onto the rated doc so list cards stay cheap. */
+async function publishRating(
+  kind: "course" | "content",
+  id: string,
+  aggregate: { average: number; count: number }
+) {
+  await adminDb
+    .collection(kind === "course" ? COLLECTION : "repository")
+    .doc(id)
+    .set(
+      {
+        rating: aggregate.average,
+        ratingCount: aggregate.count,
+        ratingUpdatedAt: FieldValue.serverTimestamp(),
+      },
+      { merge: true }
+    );
+}
+
+/**
+ * The written half of a rating. Passing `comment` replaces the learner's
+ * existing review; omitting it leaves any review they already wrote intact —
+ * which is what lets a bare star click rate without wiping their text.
+ */
+export async function submitRating(
+  slug: string,
+  value: number,
+  idToken: string,
+  comment?: string
+) {
+  if (!Number.isInteger(value) || value < 1 || value > 5) {
+    return { success: false, error: "Rating must be a whole number from 1 to 5" };
+  }
+  const review = comment?.trim();
+  if (review && review.length > 1000) {
+    return { success: false, error: "Reviews are limited to 1000 characters" };
+  }
+
+  try {
+    // Server Functions are POST-reachable, so the learner's identity is taken
+    // from the verified token rather than trusted from the caller.
+    const { uid: userId } = await adminAuth.verifyIdToken(idToken);
+
+    const target = await resolveRatingTarget(slug);
+    if (!target) return { success: false, error: "Course not found" };
+
+    // Reviews are attributed, so the name is read server-side from the profile
+    // the learner cannot edit through this action.
+    const profile = await adminDb.doc(`users/${userId}`).get();
+    const userName = profile.data()?.displayName || "Learner";
+
+    // One rating per learner, per course: re-clicking a star replaces it.
+    await adminDb
+      .collection("ratings")
+      .doc(`${userId}_${target.id}`)
+      .set(
+        {
+          value,
+          userId,
+          userName,
+          ...(review !== undefined ? { comment: review } : {}),
+          [target.kind === "course" ? "courseId" : "contentId"]: target.id,
+          updatedAt: FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+
+    const aggregate = await aggregateRating(target.kind, target.id);
+    await publishRating(target.kind, target.id, aggregate);
+
+    // Without this the action's response carries no fresh RSC payload, so the
+    // stars and the review list would keep the figures they were rendered with.
+    revalidatePath(`/courses/${slug}`);
+
+    return { success: true, data: aggregate };
+  } catch (error: any) {
+    console.error("Submit rating error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export type CourseReview = {
+  userId: string;
+  userName: string;
+  value: number;
+  comment?: string;
+  updatedAt: { seconds: number; nanoseconds: number } | null;
+};
+
+/**
+ * Reviews shown under a course. `updatedAt` is stamped on every write, so
+ * closing the keys and reversing gives newest-first without a composite index.
+ */
+export async function getCourseReviews(slug: string) {
+  try {
+    const target = await resolveRatingTarget(slug);
+    if (!target) return { success: true, data: [] as CourseReview[] };
+
+    const snapshot = await adminDb
+      .collection("ratings")
+      .where(target.kind === "course" ? "courseId" : "contentId", "==", target.id)
+      .get();
+
+    const data = snapshot.docs
+      .map((doc) => {
+        const rating = doc.data();
+        return {
+          userId: rating.userId || "",
+          userName: rating.userName || "Learner",
+          value: rating.value || 0,
+          // Legacy docs predate `userName`; a blank review still counts as a star.
+          comment: typeof rating.comment === "string" ? rating.comment : undefined,
+          updatedAt: rating.updatedAt || null,
+        };
+      })
+      // Reviews are trimmed on the way in, but a whitespace-only one written
+      // before that guard existed would still render as an empty card.
+      .filter((review) => review.comment?.trim())
+      .sort((a, b) => (b.updatedAt?.seconds || 0) - (a.updatedAt?.seconds || 0));
+
+    return { success: true, data: serializeTimestamps(data) as CourseReview[] };
+  } catch (error: any) {
+    console.error("Get course reviews error:", error);
+    return { success: false, error: error.message, data: [] as CourseReview[] };
   }
 }

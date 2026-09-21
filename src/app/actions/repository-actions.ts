@@ -60,6 +60,9 @@ export interface RepositoryContentItem {
   duration: number;
   thumbnailUrl: string | null;
   createdAt: { seconds: number; nanoseconds: number } | null;
+  /** Aggregate written by `submitRating` — absent until the first rating. */
+  rating?: number;
+  ratingCount?: number;
   /** Display position in the combined list — see `loadRepositoryContent`. */
   serialNumber?: number;
   interactivityLevel?: number;
@@ -95,6 +98,8 @@ async function loadRepositoryContent(): Promise<RepositoryContentItem[]> {
       duration: data.duration || 0,
       thumbnailUrl: data.thumbnailUrl || null,
       createdAt: data.createdAt || null,
+      rating: data.rating || 0,
+      ratingCount: data.ratingCount || 0,
       interactivityLevel: data.interactivityLevel,
       scormVersion: data.scormVersion,
       entryPoint: data.entryPoint,
@@ -112,6 +117,8 @@ async function loadRepositoryContent(): Promise<RepositoryContentItem[]> {
       duration: data.duration || 0,
       thumbnailUrl: data.thumbnailUrl || null,
       createdAt: data.createdAt || null,
+      rating: data.rating || 0,
+      ratingCount: data.ratingCount || 0,
       videoUrl: data.videoUrl || null,
     };
   });
@@ -127,6 +134,8 @@ async function loadRepositoryContent(): Promise<RepositoryContentItem[]> {
       duration: data.duration || 0,
       thumbnailUrl: data.thumbnailUrl || null,
       createdAt: data.createdAt || null,
+      rating: data.rating || 0,
+      ratingCount: data.ratingCount || 0,
       gameUrl: data.gameUrl || null,
       gameType: data.gameType,
       gameEntryFile: data.gameEntryFile,
