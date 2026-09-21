@@ -5,18 +5,35 @@ import Breadcrumb from "@/components/breadcrumb";
 import Button from "@/components/ui/button";
 import ButtonArrow from "@/components/ui/buttonArrow";
 import { StarDisplay } from "@/components/ui/starDisplay";
-import { BookOpen, Star } from "@/lib/icons";
+import { BookOpen, Clock, FileStack, GamepadIcon, Star, Video } from "@/lib/icons";
 import {
   getPublicCourseBySlug,
   type PublicCourse,
 } from "@/app/actions/public-course-actions";
-import { getLaunchableItemById } from "@/app/actions/repository-actions";
+import {
+  getLaunchableItemById,
+  type RepositoryContentItem,
+  type RepositoryContentType,
+} from "@/app/actions/repository-actions";
+import { calculateMinutes } from "@/lib/utils";
 import { siteName } from "@/utils/envExport";
 import { categoryData } from "@/components/categories/categoryData";
 
 const categoryLabels = Object.fromEntries(
   categoryData.map((category) => [category.slug.current, category.title]),
 );
+
+const typeLabels: Record<RepositoryContentType, string> = {
+  scorm: "SCORM",
+  video: "Video",
+  game: "Game",
+};
+
+const typeIcons: Record<RepositoryContentType, typeof FileStack> = {
+  scorm: FileStack,
+  video: Video,
+  game: GamepadIcon,
+};
 
 /**
  * Metadata and the page body both need this course. React dedupes within one
@@ -47,23 +64,42 @@ export default async function CourseDetailPage({
 }) {
   const { slug } = await params;
   const result = await getCourse(slug);
+  const publicCourse = result.success
+    ? (result.data as PublicCourse | undefined)
+    : undefined;
 
-  if (!result.success || !result.data) {
+  // Two things can live at this URL: a `public_courses` record, or — when the
+  // admin panel hasn't created one — the repository upload itself. The second
+  // branch is why a freshly uploaded SCORM package is browsable immediately.
+  const linkedContent = publicCourse?.contentId
+    ? await getLaunchableItemById(publicCourse.contentId)
+    : null;
+  let content = linkedContent?.success
+    ? (linkedContent.data as RepositoryContentItem)
+    : undefined;
+
+  if (!content) {
+    const fallback = await getLaunchableItemById(slug);
+    content = fallback.success
+      ? (fallback.data as RepositoryContentItem)
+      : undefined;
+  }
+
+  if (!publicCourse && !content) {
     notFound();
   }
 
-  const course = result.data as PublicCourse;
-
-  // A course with no linked repository item has nothing to launch yet, so the
-  // enrol button stays inert rather than leading to an empty player.
-  const contentResult = course.contentId
-    ? await getLaunchableItemById(course.contentId)
-    : null;
-  const content = contentResult?.success ? contentResult.data : null;
-
-  const category = course.category || "";
-  const rating = course.rating || 0;
-  const price = course.discountPrice || course.price || 0;
+  const title = publicCourse?.title || content?.name || "Untitled course";
+  const description =
+    publicCourse?.shortDescription || content?.description || "";
+  const thumbnail = publicCourse?.thumbnailUrl || content?.thumbnailUrl || null;
+  const duration = content?.duration || 0;
+  const category = publicCourse?.category || content?.type || "";
+  const rating = publicCourse?.rating || 0;
+  const price = publicCourse?.discountPrice || publicCourse?.price || 0;
+  const instructor = publicCourse?.instructor?.name || siteName;
+  const learned = publicCourse?.totalLearners || 0;
+  const TypeIcon = content ? typeIcons[content.type] : null;
 
   return (
     <main className="bg-gray-50 pt-16 pb-16 sm:pt-20 sm:pb-20 lg:pb-28">
@@ -72,21 +108,20 @@ export default async function CourseDetailPage({
           items={[
             { label: "Home", href: "/" },
             { label: "Courses", href: "/courses" },
-            { label: "Course Detail" },
-            { label: course.title },
+            { label: title },
           ]}
         />
 
         <div className="mt-8 flex flex-col items-start gap-x-16 gap-y-10 lg:flex-row">
           {/* Thumbnail */}
           <div className="relative w-full shrink-0 lg:w-[46%]">
-            {course.thumbnailUrl ? (
+            {thumbnail ? (
               // Thumbnails are signed URLs from storage, which next/image is not
               // configured for.
               // eslint-disable-next-line @next/next/no-img-element
               <img
-                src={course.thumbnailUrl}
-                alt={course.title}
+                src={thumbnail}
+                alt={title}
                 className="aspect-760/430 w-full rounded-[2rem] object-cover"
               />
             ) : (
@@ -99,28 +134,30 @@ export default async function CourseDetailPage({
           {/* Detail */}
           <div className="w-full lg:flex-1">
             <h1 className="font-mulish text-[clamp(1.75rem,1.4rem+1.4vw,2.75rem)] leading-tight font-bold">
-              {course.title}
+              {title}
             </h1>
 
-            {course.instructor?.name && (
-              <p className="mt-3 text-lg text-secondary">
-                By{" "}
-                <span className="font-semibold text-foreground">
-                  {course.instructor.name}
-                </span>
-              </p>
-            )}
+            <p className="mt-3 text-lg text-secondary">
+              By{" "}
+              <span className="font-semibold text-foreground">{instructor}</span>
+            </p>
 
             {category && (
               <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-3.5 py-1.5 text-sm font-semibold text-purple-700">
-                <BookOpen className="size-4 stroke-[0.75]" />
-                {categoryLabels[category] || category}
+                {TypeIcon ? (
+                  <TypeIcon className="size-4 stroke-[0.75]" />
+                ) : (
+                  <BookOpen className="size-4 stroke-[0.75]" />
+                )}
+                {typeLabels[category as RepositoryContentType] ||
+                  categoryLabels[category] ||
+                  category}
               </span>
             )}
 
-            {course.shortDescription && (
+            {description && (
               <p className="mt-6 text-[clamp(1rem,0.92rem+0.35vw,1.375rem)] leading-relaxed text-secondary">
-                {course.shortDescription}
+                {description}
               </p>
             )}
 
@@ -129,8 +166,14 @@ export default async function CourseDetailPage({
               <span className="text-sm text-gray-500">
                 {/* Courses carry no review count, so learners stand in as the
                     activity figure the mock shows after the rating. */}
-                {rating.toFixed(1)} ({course.totalLearners || 0})
+                {rating.toFixed(1)} ({learned})
               </span>
+              {duration ? (
+                <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+                  <Clock className="size-4" />
+                  {calculateMinutes(duration)}
+                </span>
+              ) : null}
               <span className="text-gray-300">|</span>
               <span className="text-sm font-bold tracking-wide text-emerald-500 uppercase">
                 {price > 0 ? `$${price.toFixed(2)}` : "Free"}
@@ -140,7 +183,7 @@ export default async function CourseDetailPage({
             <div className="mt-8">
               {content ? (
                 <Button asChild size="lg" className="rounded-full px-8 py-1.5">
-                  <Link href={`/courses/${course.slug}/launch`}>
+                  <Link href={`/courses/${slug}/launch`}>
                     <span className="text-base font-semibold">Enroll Now</span>
                     <ButtonArrow />
                   </Link>

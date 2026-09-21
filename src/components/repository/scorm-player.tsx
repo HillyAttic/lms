@@ -28,10 +28,13 @@ interface ScormPlayerProps {
   onComplete?: () => void;
   /** Fill the parent box instead of taking over the viewport, and drop the modal chrome. */
   embedded?: boolean;
+  /** Bare frame for the public detail page: no header/footer, just a floating zoom button. */
+  minimal?: boolean;
 }
 
-export default function ScormPlayer({ course, onClose, initialData, onComplete, embedded }: ScormPlayerProps) {
+export default function ScormPlayer({ course, onClose, initialData, onComplete, embedded, minimal }: ScormPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [iframeUrl, setIframeUrl] = useState<string>("");
@@ -156,6 +159,13 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
     return `PT${hours}H${minutes}M${secs}S`;
   };
 
+  // The player's own zoom control. In minimal mode the browser is already in
+  // fullscreen, so the iframe element itself is what has to grow.
+  const toggleZoom = () => {
+    const container = minimal ? iframeRef.current : containerRef.current;
+    void container?.requestFullscreen();
+  };
+
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
       iframeRef.current?.requestFullscreen();
@@ -184,15 +194,18 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
 
   return (
     <div
+      ref={containerRef}
       className={
-        embedded
-          ? "flex h-full w-full flex-col bg-white"
-          : "fixed inset-0 bg-black/80 z-50 flex flex-col"
+        minimal
+          ? "relative h-full w-full bg-gray-900"
+          : embedded
+            ? "flex h-full w-full flex-col bg-white"
+            : "fixed inset-0 bg-black/80 z-50 flex flex-col"
       }
     >
       {/* Header */}
       <div
-        className={`bg-gray-900 text-white px-6 py-3 flex items-center justify-between ${
+        className={`bg-gray-900 text-white px-6 py-3 ${minimal ? "hidden" : "flex"} items-center justify-between ${
           embedded ? "rounded-t-3xl" : ""
         }`}
       >
@@ -230,12 +243,14 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
       </div>
 
       {/* Content */}
-      <div className="flex-1 relative bg-white">
+      <div className={minimal ? "absolute inset-0" : "flex-1 relative bg-white"}>
         {loading ? (
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="text-center">
               <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading SCORM content...</p>
+              <p className={minimal ? "text-gray-300" : "text-gray-600"}>
+                Loading SCORM content...
+              </p>
             </div>
           </div>
         ) : (
@@ -251,7 +266,7 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
 
       {/* Footer */}
       <div
-        className={`bg-gray-900 text-white px-6 py-2 flex items-center justify-between text-sm ${
+        className={`bg-gray-900 text-white px-6 py-2 ${minimal ? "hidden" : "flex"} items-center justify-between text-sm ${
           embedded ? "rounded-b-3xl" : ""
         }`}
       >
@@ -265,6 +280,23 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
           Progress auto-saves as you interact with the course
         </div>
       </div>
+
+      {/* Minimal chrome: the one button the mock shows, floating over the frame. */}
+      {minimal && (
+        <button
+          type="button"
+          onClick={toggleZoom}
+          title={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          aria-label={isFullscreen ? "Exit fullscreen" : "Fullscreen"}
+          className="absolute top-3 right-3 z-10 grid size-10 place-items-center rounded-full bg-white text-gray-900 shadow-md transition-colors hover:bg-gray-100"
+        >
+          {isFullscreen ? (
+            <Minimize2 className="size-5" />
+          ) : (
+            <Maximize2 className="size-5" />
+          )}
+        </button>
+      )}
     </div>
   );
 }

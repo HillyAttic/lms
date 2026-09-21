@@ -1,5 +1,6 @@
 "use client";
 import { BookOpen, Clock, GraduationHat, Star } from "@/lib/icons";
+import Link from "next/link";
 import Button from "../ui/button";
 import ButtonArrow from "../ui/buttonArrow";
 import { calculateMinutes } from "@/lib/utils";
@@ -12,7 +13,14 @@ const typeColors: Record<string, string> = {
 };
 
 /** Real repository content has no price, instructor or rating; just the type badge. */
-const HomeCourseCard = ({ course }: { course: RepositoryContentItem }) => {
+const HomeCourseCard = ({
+  course,
+  href,
+}: {
+  course: RepositoryContentItem;
+  /** Detail page to browse the course on. Without it the card launches straight away. */
+  href?: string;
+}) => {
   const thumbnail = course.thumbnailUrl;
 
   return (
@@ -67,7 +75,13 @@ const HomeCourseCard = ({ course }: { course: RepositoryContentItem }) => {
         </ul>
 
         <h5 className="grow font-medium md:text-lg md:leading-7">
-          {course.name}
+          {href ? (
+            <Link href={href} className="transition-colors hover:text-purple-500">
+              {course.name}
+            </Link>
+          ) : (
+            course.name
+          )}
         </h5>
         {course.description ? (
           <small className="mt-2 block text-sm leading-5 tracking-sm text-secondary line-clamp-2">
@@ -77,14 +91,21 @@ const HomeCourseCard = ({ course }: { course: RepositoryContentItem }) => {
 
         <div className="mt-7">
           <Button asChild variant="outline" size="lg" className="w-full">
-            <a
-              href={launchHref(course)}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Launch Course
-              <ButtonArrow />
-            </a>
+            {href ? (
+              <Link href={href}>
+                View Course
+                <ButtonArrow />
+              </Link>
+            ) : (
+              <a
+                href={launchHref(course)}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Launch Course
+                <ButtonArrow />
+              </a>
+            )}
           </Button>
         </div>
       </div>

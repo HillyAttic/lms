@@ -72,11 +72,19 @@ const CoursesDsiplay = ({
           </Select>
         </div>
 
-        {/* courses — same card the homepage rows use, so launching behaves alike */}
+        {/* courses — same card the homepage rows use, so launching behaves alike.
+            Video keeps its dedicated player; SCORM and games browse on their own
+            detail page first, which is where "Enroll Now" leads into the player. */}
         <div className="grid gap-6 pt-11 pb-11 sm:grid-cols-2 sm:pb-14 lg:grid-cols-3 lg:pb-16">
           {filteredCourses.length > 0 ? (
             filteredCourses.map((course) => (
-              <HomeCourseCard key={course.id} course={course} />
+              <HomeCourseCard
+                key={course.id}
+                course={course}
+                href={
+                  course.type === "video" ? undefined : `/courses/${course.id}`
+                }
+              />
             ))
           ) : (
             <div className="col-span-full py-10 text-center">
