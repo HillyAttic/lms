@@ -21,10 +21,16 @@ interface Course {
 
 interface ScormPlayerProps {
   course: Course;
-  onClose: () => void;
+  onClose?: () => void;
+  /** Saved CMI values to resume from, and to keep the SCORM API's data model in sync. */
+  initialData?: Record<string, any>;
+  /** Fired when the content reports completion, so a page can offer "next". */
+  onComplete?: () => void;
+  /** Fill the parent box instead of taking over the viewport, and drop the modal chrome. */
+  embedded?: boolean;
 }
 
-export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
+export default function ScormPlayer({ course, onClose, initialData, onComplete, embedded }: ScormPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -37,7 +43,7 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
   });
 
   useEffect(() => {
-    if (course && user) {
+    if (course) {
       loadScormContent();
     }
   }, [course, user]);
@@ -46,16 +52,36 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
     try {
       setLoading(true);
 
-      // Get the entry point file URL from Firebase Storage
-      const entryPointPath = `${course.scormStructure.storagePath}/${course.scormStructure.entryPoint}`;
-      const fileRef = ref(storage, entryPointPath);
-      const url = await getDownloadURL(fileRef);
+      // Signing the entry point directly only works for a single file: the SCORM
+      // content loads its own assets *relative to the iframe URL*, and signed
+      // URLs carry query params that break that resolution. The launch proxy
+      // serves every file from one same-origin path instead, so embedded players
+      // use it; the modal keeps the signed URL it has always used.
+      let url = "";
+      if (course.scormStructure.storagePath) {
+        const entryPointPath = `${course.scormStructure.storagePath}/${course.scormStructure.entryPoint}`;
+        url = await getDownloadURL(ref(storage, entryPointPath));
+      } else {
+        url = `/api/repository/launch/${course.id}/${course.scormStructure.entryPoint}`;
+      }
 
       setIframeUrl(url);
 
-      // Load existing progress
+      // Load existing progress. Signed-in learners read their own record; an
+      // anonymous visitor falls back to whatever the hosting page handed down.
+      if (!user) {
+        if (initialData) {
+          setProgress({
+            status: initialData["cmi.core.lesson_status"] || "incomplete",
+            score: initialData["cmi.core.score.raw"] ?? null,
+            sessionTime: Number(initialData["cmi.core.session_time"]) || 0,
+          });
+        }
+        return;
+      }
+
       const { getProgress } = await import("@/app/actions/progress-actions");
-      const result = await getProgress(user!.uid, course.id);
+      const result = await getProgress(user.uid, course.id);
       if (result.data) {
         setProgress({
           status: result.data.status || "incomplete",
@@ -72,23 +98,30 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
   };
 
   const handleSaveProgress = async (data: any) => {
+    const status = data.status || "incomplete";
+
+    if (status === "completed" || status === "passed") {
+      onComplete?.();
+    }
+
     try {
-      await saveProgress({
-        courseId: course.id,
-        userId: user!.uid,
-        status: data.status || "incomplete",
-        score: data.score || null,
-        sessionTime: data.sessionTime || 0,
-        suspendData: data.suspendData || "",
-      });
+      // Anonymous visitors still get the in-page status, just nothing persisted.
+      if (user) {
+        await saveProgress({
+          courseId: course.id,
+          userId: user.uid,
+          status,
+          score: data.score || null,
+          sessionTime: data.sessionTime || 0,
+          suspendData: data.suspendData || "",
+        });
+      }
 
       setProgress({
-        status: data.status || "incomplete",
+        status,
         score: data.score || null,
         sessionTime: data.sessionTime || 0,
       });
-
-      toast.success("Progress saved");
     } catch (error) {
       console.error("Failed to save progress:", error);
     }
@@ -96,11 +129,11 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
 
   // Inject SCORM API when iframe loads
   useEffect(() => {
-    if (iframeRef.current && iframeUrl && user) {
+    if (iframeRef.current && iframeUrl) {
       injectScormApi(
         iframeRef.current,
         course.id,
-        user.uid,
+        user?.uid || "guest",
         course.scormVersion as "1.2" | "2004",
         handleSaveProgress,
         {
@@ -110,6 +143,7 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
           "cmi.score.raw": progress.score?.toString() || "",
           "cmi.core.session_time": progress.sessionTime.toString(),
           "cmi.session_time": formatTimeForScorm2004(progress.sessionTime),
+          ...initialData,
         }
       );
     }
@@ -149,9 +183,19 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/80 z-50 flex flex-col">
+    <div
+      className={
+        embedded
+          ? "flex h-full w-full flex-col bg-white"
+          : "fixed inset-0 bg-black/80 z-50 flex flex-col"
+      }
+    >
       {/* Header */}
-      <div className="bg-gray-900 text-white px-6 py-3 flex items-center justify-between">
+      <div
+        className={`bg-gray-900 text-white px-6 py-3 flex items-center justify-between ${
+          embedded ? "rounded-t-3xl" : ""
+        }`}
+      >
         <div className="flex items-center gap-4">
           <h3 className="font-medium">{course.title}</h3>
           {getStatusBadge()}
@@ -173,13 +217,15 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
               <Maximize2 className="w-5 h-5" />
             )}
           </button>
-          <button
-            onClick={onClose}
-            className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
-            title="Close player"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {onClose && (
+            <button
+              onClick={onClose}
+              className="p-2 hover:bg-gray-800 rounded-lg transition-colors"
+              title="Close player"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
       </div>
 
@@ -204,7 +250,11 @@ export default function ScormPlayer({ course, onClose }: ScormPlayerProps) {
       </div>
 
       {/* Footer */}
-      <div className="bg-gray-900 text-white px-6 py-2 flex items-center justify-between text-sm">
+      <div
+        className={`bg-gray-900 text-white px-6 py-2 flex items-center justify-between text-sm ${
+          embedded ? "rounded-b-3xl" : ""
+        }`}
+      >
         <div className="flex items-center gap-4">
           <span className="text-gray-400">SCORM {course.scormVersion}</span>
           <span className="text-gray-400">

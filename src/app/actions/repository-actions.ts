@@ -254,7 +254,37 @@ export async function getRepositoryItemById(itemId: string) {
   }
 }
 
-// Update repository item
+/**
+ * The one repository item a course launches, normalised like `loadRepositoryContent`
+ * does, so the public detail page and player can treat all three types alike.
+ */
+export async function getLaunchableItemById(itemId: string) {
+  try {
+    const items = await loadRepositoryContent();
+    const item = items.find((candidate) => candidate.id === itemId);
+    if (!item) {
+      return { success: false as const, error: "Repository item not found" };
+    }
+    return { success: true as const, data: serializeTimestamps(item) };
+  } catch (error: any) {
+    console.error("Get launchable item error:", error);
+    return { success: false as const, error: error.message };
+  }
+}
+
+/** Everything the admin "Linked content" picker lists. */
+export async function getLaunchableItems() {
+  try {
+    return {
+      success: true as const,
+      data: serializeTimestamps(await loadRepositoryContent()),
+    };
+  } catch (error: any) {
+    console.error("Get launchable items error:", error);
+    return { success: false as const, error: error.message };
+  }
+}
+
 /**
  * Get list of extracted files from a SCORM package
  */
@@ -340,6 +370,7 @@ export async function updateEntryPoint(itemId: string, userId: string, entryPoin
   }
 }
 
+// Update repository item
 export async function updateRepositoryItem(
   itemId: string,
   userId: string,

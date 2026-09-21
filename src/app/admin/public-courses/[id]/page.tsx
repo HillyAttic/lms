@@ -15,6 +15,10 @@ import PageHeader from "@/components/admin/page-header";
 import LoadingSpinner from "@/components/admin/loading-spinner";
 import ConfirmDialog from "@/components/admin/confirm-dialog";
 import { categoryData } from "@/components/categories/categoryData";
+import {
+  getLaunchableItems,
+  type RepositoryContentItem,
+} from "@/app/actions/repository-actions";
 import type { CategorySlug } from "@/types/CategoryType";
 
 interface PublicCourse {
@@ -29,6 +33,7 @@ interface PublicCourse {
   slug: string;
   level: string;
   category: string;
+  contentId?: string;
   overview: string[];
   duration: number;
   lessonsCount: number;
@@ -59,6 +64,10 @@ export default function EditPublicCoursePage() {
   const [slug, setSlug] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [category, setCategory] = useState<CategorySlug | "">("");
+  const [contentId, setContentId] = useState("");
+  const [launchableItems, setLaunchableItems] = useState<
+    RepositoryContentItem[]
+  >([]);
 
   const [overview, setOverview] = useState("");
   const [duration, setDuration] = useState<number>(0);
@@ -72,6 +81,11 @@ export default function EditPublicCoursePage() {
 
   useEffect(() => {
     loadCourse();
+    void getLaunchableItems().then((result) => {
+      if (result.success) {
+        setLaunchableItems(result.data as RepositoryContentItem[]);
+      }
+    });
   }, [courseId]);
 
   const loadCourse = async () => {
@@ -89,6 +103,7 @@ export default function EditPublicCoursePage() {
         setSlug(courseData.slug || "");
         setLevel(courseData.level || "Beginner");
         setCategory((courseData.category as CategorySlug) || "");
+        setContentId(courseData.contentId || "");
         setOverview(
           Array.isArray(courseData.overview) ? courseData.overview.join("\n") : ""
         );
@@ -173,6 +188,7 @@ export default function EditPublicCoursePage() {
           isCertificationProvide,
           totalLearners,
           category,
+          contentId,
         },
         user.uid
       );
@@ -462,6 +478,33 @@ export default function EditPublicCoursePage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Linked content — the repository item this course launches */}
+          <div>
+            <label
+              htmlFor="contentId"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Linked Content
+            </label>
+            <select
+              id="contentId"
+              value={contentId}
+              onChange={(e) => setContentId(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            >
+              <option value="">Not linked yet</option>
+              {launchableItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  [{item.type.toUpperCase()}] {item.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-gray-500">
+              Pick the uploaded SCORM, video or game package that &ldquo;Enroll
+              Now&rdquo; should launch.
+            </p>
           </div>
 
           {/* Duration and Lessons Count */}

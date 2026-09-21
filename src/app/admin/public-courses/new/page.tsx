@@ -1,11 +1,15 @@
 "use client";
 
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import {
   createPublicCourse,
   uploadPublicCourseThumbnail,
 } from "@/app/actions/public-course-actions";
+import {
+  getLaunchableItems,
+  type RepositoryContentItem,
+} from "@/app/actions/repository-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
 import { Upload, X, Image, PlusIcon } from "@/lib/icons";
@@ -27,6 +31,10 @@ export default function NewPublicCoursePage() {
   const [slug, setSlug] = useState("");
   const [level, setLevel] = useState("Beginner");
   const [category, setCategory] = useState<CategorySlug | "">("");
+  const [contentId, setContentId] = useState("");
+  const [launchableItems, setLaunchableItems] = useState<
+    RepositoryContentItem[]
+  >([]);
 
   const [overview, setOverview] = useState("");
   const [duration, setDuration] = useState<number>(0);
@@ -40,6 +48,14 @@ export default function NewPublicCoursePage() {
 
   // Submission state
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    void getLaunchableItems().then((result) => {
+      if (result.success) {
+        setLaunchableItems(result.data as RepositoryContentItem[]);
+      }
+    });
+  }, []);
 
   // Auto-generate slug from title
   const handleTitleChange = (value: string) => {
@@ -113,6 +129,7 @@ export default function NewPublicCoursePage() {
           isCertificationProvide,
           totalLearners,
           category,
+          contentId,
         },
         user.uid
       );
@@ -382,6 +399,33 @@ export default function NewPublicCoursePage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          {/* Linked content — the repository item this course launches */}
+          <div>
+            <label
+              htmlFor="contentId"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Linked Content
+            </label>
+            <select
+              id="contentId"
+              value={contentId}
+              onChange={(e) => setContentId(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            >
+              <option value="">Not linked yet</option>
+              {launchableItems.map((item) => (
+                <option key={item.id} value={item.id}>
+                  [{item.type.toUpperCase()}] {item.name}
+                </option>
+              ))}
+            </select>
+            <p className="mt-2 text-xs text-gray-500">
+              Pick the uploaded SCORM, video or game package that &ldquo;Enroll
+              Now&rdquo; should launch.
+            </p>
           </div>
 
           {/* Duration and Lessons Count */}

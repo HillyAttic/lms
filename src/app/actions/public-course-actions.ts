@@ -7,6 +7,23 @@ import type { CategorySlug } from "@/types/CategoryType";
 const COLLECTION = "public_courses";
 const THUMBNAIL_PATH = "public-courses/thumbnails";
 
+/** Shape of a `public_courses` document as the public site consumes it. */
+export type PublicCourse = {
+  id: string;
+  title: string;
+  slug: string;
+  thumbnailUrl: string | null;
+  shortDescription?: string;
+  instructor?: { name?: string };
+  price?: number;
+  discountPrice?: number;
+  totalLearners?: number;
+  category?: CategorySlug | "";
+  rating?: number;
+  /** Repository item this course launches. */
+  contentId?: string;
+};
+
 export async function getPublicCourses() {
   const snapshot = await adminDb.collection(COLLECTION).get();
   return serializeTimestamps(
@@ -121,6 +138,25 @@ export async function getPublicCourseById(courseId: string) {
   }
 }
 
+/** The public detail page is keyed by slug — see `/courses/[slug]`. */
+export async function getPublicCourseBySlug(slug: string) {
+  try {
+    const snapshot = await adminDb
+      .collection(COLLECTION)
+      .where("slug", "==", slug)
+      .limit(1)
+      .get();
+    if (snapshot.empty) {
+      return { success: false, error: "Course not found" };
+    }
+    const doc = snapshot.docs[0];
+    return { success: true, data: serializeTimestamps({ id: doc.id, ...doc.data() }) };
+  } catch (error: any) {
+    console.error("Get public course by slug error:", error);
+    return { success: false, error: error.message };
+  }
+}
+
 export async function createPublicCourse(
   data: {
     title: string;
@@ -137,6 +173,8 @@ export async function createPublicCourse(
     isCertificationProvide?: boolean;
     totalLearners?: number;
     category?: CategorySlug | "";
+    /** Repository item this course launches — see `contentId` on the doc. */
+    contentId?: string;
   },
   userId: string
 ) {
@@ -171,6 +209,7 @@ export async function createPublicCourse(
       duration: data.duration || 0,
       lessonsCount: data.lessonsCount || 0,
       category: data.category || "",
+      contentId: data.contentId || "",
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -201,6 +240,8 @@ export async function updatePublicCourse(
     isCertificationProvide?: boolean;
     totalLearners?: number;
     category?: CategorySlug | "";
+    /** Repository item this course launches — see `contentId` on the doc. */
+    contentId?: string;
   },
   userId: string
 ) {
@@ -230,6 +271,7 @@ export async function updatePublicCourse(
     if (data.isCertificationProvide !== undefined) updateData.isCertificationProvide = data.isCertificationProvide;
     if (data.totalLearners !== undefined) updateData.totalLearners = data.totalLearners;
     if (data.category !== undefined) updateData.category = data.category;
+    if (data.contentId !== undefined) updateData.contentId = data.contentId;
 
     await adminDb.doc(`${COLLECTION}/${courseId}`).update(updateData);
 
