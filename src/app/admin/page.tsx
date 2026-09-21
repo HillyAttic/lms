@@ -79,11 +79,11 @@ export default function AdminDashboard() {
         subtitle="Welcome to the admin panel"
         actions={
           <Link
-            href="/admin/upload"
+            href="/admin/courses/new"
             className="flex items-center gap-2 bg-purple-600 text-white px-4 py-2.5 rounded-lg hover:bg-purple-700 transition-colors"
           >
             <Upload className="w-5 h-5" />
-            Upload SCORM
+            Create Course
           </Link>
         }
       />
@@ -143,14 +143,14 @@ export default function AdminDashboard() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Link
-          href="/admin/upload"
+          href="/admin/courses/new"
           className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 rounded-lg">
               <Upload className="w-5 h-5 text-purple-600" />
             </div>
-            <span className="font-medium text-gray-900">Upload SCORM</span>
+            <span className="font-medium text-gray-900">Create Course</span>
           </div>
           <ArrowRight className="w-5 h-5 text-gray-400" />
         </Link>

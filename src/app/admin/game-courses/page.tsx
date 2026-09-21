@@ -338,7 +338,7 @@ export default function GameCoursesPage() {
                     Created{" "}
                     {sortBy === "createdAt" && (sortOrder === "asc" ? "↑" : "↓")}
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">
                     Actions
                   </th>
                 </tr>
@@ -403,20 +403,20 @@ export default function GameCoursesPage() {
                       {formatDate(course.createdAt)}
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center justify-end gap-2">
                         <Link
                           href={`/admin/game-courses/${course.id}`}
                           title="View"
-                          className="text-gray-500 hover:text-purple-700"
+                          className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
                         >
-                          <Eye className="h-5 w-5" />
+                          <Eye className="h-4 w-4" />
                         </Link>
                         <Link
                           href={`/admin/game-courses/${course.id}`}
                           title="Edit"
-                          className="text-purple-600 hover:text-purple-700"
+                          className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 hover:text-purple-700"
                         >
-                          <Pencil className="h-5 w-5" />
+                          <Pencil className="h-4 w-4" />
                         </Link>
                         <button
                           onClick={() => {
@@ -424,9 +424,9 @@ export default function GameCoursesPage() {
                             setShowDeleteDialog(true);
                           }}
                           title="Delete"
-                          className="text-gray-500 hover:text-red-600"
+                          className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600"
                         >
-                          <Trash2 className="h-5 w-5" />
+                          <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                     </td>

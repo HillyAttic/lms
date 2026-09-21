@@ -1,3 +1,4 @@
+import type { CategorySlug } from "./CategoryType";
 
 export type CourseType = {
   _id: string;
@@ -19,5 +20,5 @@ export type CourseType = {
   overview: [];
   duration?: number; // in minutes
   lessonsCount?: number;
-  courseType?: "SCORM" | "VIDEO" | "GAMES";
+  category?: CategorySlug | "";
 };

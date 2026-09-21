@@ -56,9 +56,15 @@ const sorting = [
   },
 ];
 
-const CoursesDsiplay = ({ courses }: { courses: CourseType[] }) => {
+const CoursesDsiplay = ({
+  courses,
+  initialCategory = "",
+}: {
+  courses: CourseType[];
+  initialCategory?: string;
+}) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
   const [selectedPrice, setSelectedPrice] = useState<string>("");
   const [selectedSorting, setSelectedSorting] = useState<string>("");
 
@@ -78,19 +84,7 @@ const CoursesDsiplay = ({ courses }: { courses: CourseType[] }) => {
 
     // Category filter
     if (selectedCategory) {
-      result = result.filter((course) => {
-        // Match by course type (SCORM, VIDEO, GAMES)
-        if (selectedCategory === "SCORM Courses") {
-          return course.courseType === "SCORM";
-        }
-        if (selectedCategory === "Video Courses") {
-          return course.courseType === "VIDEO";
-        }
-        if (selectedCategory === "Game Courses") {
-          return course.courseType === "GAMES";
-        }
-        return false;
-      });
+      result = result.filter((course) => course.category === selectedCategory);
     }
 
     // Price filter
@@ -158,7 +152,7 @@ const CoursesDsiplay = ({ courses }: { courses: CourseType[] }) => {
               </SelectTrigger>
               <SelectContent>
                 {categoryData.map((item) => (
-                  <SelectItem key={item._id} value={item.title}>
+                  <SelectItem key={item._id} value={item.slug.current}>
                     {item.title}
                   </SelectItem>
                 ))}

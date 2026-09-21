@@ -7,9 +7,9 @@ import { CourseType } from "@/types/CourseType";
 import { calculateMinutes, formatViews } from "@/lib/utils";
 
 const courseTypeColors: Record<string, { bg: string; text: string }> = {
-  SCORM: { bg: "bg-blue-500", text: "text-white" },
-  VIDEO: { bg: "bg-green-500", text: "text-white" },
-  GAMES: { bg: "bg-orange-500", text: "text-white" },
+  scorm: { bg: "bg-blue-500", text: "text-white" },
+  video: { bg: "bg-green-500", text: "text-white" },
+  game: { bg: "bg-orange-500", text: "text-white" },
 };
 
 const CourseCard = ({ course }: { course: CourseType }) => {
@@ -33,9 +33,9 @@ const CourseCard = ({ course }: { course: CourseType }) => {
               {'5.0'}
             </small>
           </div>
-        {course.courseType && (
-          <div className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold ${courseTypeColors[course.courseType]?.bg} ${courseTypeColors[course.courseType]?.text}`}>
-            {course.courseType}
+        {course.category && (
+          <div className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold uppercase ${courseTypeColors[course.category]?.bg} ${courseTypeColors[course.category]?.text}`}>
+            {course.category}
           </div>
         )}
       </div>

@@ -10,6 +10,8 @@ import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
 import { Upload, X, Image, PlusIcon } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
+import { categoryData } from "@/components/categories/categoryData";
+import type { CategorySlug } from "@/types/CategoryType";
 
 export default function NewPublicCoursePage() {
   const { user } = useAuth();
@@ -24,6 +26,8 @@ export default function NewPublicCoursePage() {
   const [status, setStatus] = useState<"Ongoing" | "Completed">("Ongoing");
   const [slug, setSlug] = useState("");
   const [level, setLevel] = useState("Beginner");
+  const [category, setCategory] = useState<CategorySlug | "">("");
+
   const [overview, setOverview] = useState("");
   const [duration, setDuration] = useState<number>(0);
   const [lessonsCount, setLessonsCount] = useState<number>(0);
@@ -108,6 +112,7 @@ export default function NewPublicCoursePage() {
           lessonsCount,
           isCertificationProvide,
           totalLearners,
+          category,
         },
         user.uid
       );
@@ -352,6 +357,31 @@ export default function NewPublicCoursePage() {
                 </option>
               </select>
             </div>
+          </div>
+
+          {/* Category — drives the homepage "Explore Category" links */}
+          <div>
+            <label
+              htmlFor="category"
+              className="block text-sm font-medium text-gray-700 mb-2"
+            >
+              Category
+            </label>
+            <select
+              id="category"
+              value={category}
+              onChange={(e) =>
+                setCategory(e.target.value as CategorySlug | "")
+              }
+              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+            >
+              <option value="">Uncategorised</option>
+              {categoryData.map((item) => (
+                <option key={item._id} value={item.slug.current}>
+                  {item.title}
+                </option>
+              ))}
+            </select>
           </div>
 
           {/* Duration and Lessons Count */}

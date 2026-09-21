@@ -1,11 +1,22 @@
 import { CategoryType } from "@/types/CategoryType";
+import { CourseType } from "@/types/CourseType";
 import SectionTitle from "../sectionTitle";
+import { getPublicCourses } from "@/app/actions/public-course-actions";
 
 import CategoryCard from "./categoryCard";
 import { categoryData } from "./categoryData";
 
 const Categories = async () => {
-  const categories: CategoryType[] = categoryData;
+  // Counts come from `public_courses.category` so a card can never advertise
+  // more courses than clicking through actually shows.
+  const courses: CourseType[] = await getPublicCourses().catch(() => []);
+
+  const categories: CategoryType[] = categoryData.map((category) => ({
+    ...category,
+    courseCount: courses.filter(
+      (course) => course.category === category.slug.current,
+    ).length,
+  }));
 
   return (
     <section className="bg-gray-50 py-16 sm:py-20 lg:py-28">

@@ -6,7 +6,6 @@ import { useAuth } from "@/lib/auth-context";
 import { cn } from "@/lib/utils";
 import {
   LayoutDashboard,
-  Upload,
   BookOpen,
   Users,
   Settings,
@@ -21,7 +20,6 @@ import {
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
-  { label: "Upload SCORM", href: "/admin/upload", icon: Upload },
   { label: "SCORM Courses", href: "/admin/courses", icon: BookOpen },
   { label: "Video Courses", href: "/admin/video-courses", icon: Video },
   { label: "Game Courses", href: "/admin/game-courses", icon: Sparkles },

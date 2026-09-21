@@ -9,7 +9,12 @@ export const metadata: Metadata = {
   description: "EdventureHub Online Learning Platform",
 };
 
-const Courses = async () => {
+const Courses = async ({
+  searchParams,
+}: {
+  searchParams: Promise<{ category?: string }>;
+}) => {
+  const { category } = await searchParams;
   let courses = [];
 
   try {
@@ -31,7 +36,7 @@ const Courses = async () => {
       >
         Our Popular Courses
       </PageHeader>
-      <CoursesDsiplay courses={courses} />
+      <CoursesDsiplay courses={courses} initialCategory={category ?? ""} />
     </main>
   );
 };

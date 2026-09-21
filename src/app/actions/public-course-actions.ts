@@ -2,6 +2,7 @@
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
 import { canAccessAdminPanel } from "@/lib/roles";
+import type { CategorySlug } from "@/types/CategoryType";
 
 const COLLECTION = "public_courses";
 const THUMBNAIL_PATH = "public-courses/thumbnails";
@@ -27,6 +28,7 @@ export async function getPublicCourses() {
         overview: data.overview || [],
         duration: data.duration || 0,
         lessonsCount: data.lessonsCount || 0,
+        category: data.category || "",
       };
     })
   );
@@ -134,6 +136,7 @@ export async function createPublicCourse(
     lessonsCount?: number;
     isCertificationProvide?: boolean;
     totalLearners?: number;
+    category?: CategorySlug | "";
   },
   userId: string
 ) {
@@ -167,6 +170,7 @@ export async function createPublicCourse(
       overview: data.overview || [],
       duration: data.duration || 0,
       lessonsCount: data.lessonsCount || 0,
+      category: data.category || "",
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
     };
@@ -196,6 +200,7 @@ export async function updatePublicCourse(
     lessonsCount?: number;
     isCertificationProvide?: boolean;
     totalLearners?: number;
+    category?: CategorySlug | "";
   },
   userId: string
 ) {
@@ -224,6 +229,7 @@ export async function updatePublicCourse(
     if (data.lessonsCount !== undefined) updateData.lessonsCount = data.lessonsCount;
     if (data.isCertificationProvide !== undefined) updateData.isCertificationProvide = data.isCertificationProvide;
     if (data.totalLearners !== undefined) updateData.totalLearners = data.totalLearners;
+    if (data.category !== undefined) updateData.category = data.category;
 
     await adminDb.doc(`${COLLECTION}/${courseId}`).update(updateData);
 
