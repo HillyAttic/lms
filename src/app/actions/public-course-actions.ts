@@ -498,7 +498,6 @@ export async function submitRating(
 }
 
 export type CourseReview = {
-  userId: string;
   userName: string;
   value: number;
   comment?: string;
@@ -522,8 +521,9 @@ export async function getCourseReviews(slug: string) {
     const data = snapshot.docs
       .map((doc) => {
         const rating = doc.data();
+        // The author's uid stays server-side; it is not needed to render a
+        // review and should not ride along in the page payload.
         return {
-          userId: rating.userId || "",
           userName: rating.userName || "Learner",
           value: rating.value || 0,
           // Legacy docs predate `userName`; a blank review still counts as a star.

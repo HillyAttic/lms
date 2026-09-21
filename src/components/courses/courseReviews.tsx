@@ -16,7 +16,7 @@ export function CourseReviews({ reviews }: { reviews: CourseReview[] }) {
       <ul className="mt-6 grid gap-4 lg:grid-cols-2">
         {reviews.map((review) => (
           <li
-            key={review.userId}
+            key={`${review.userName}-${review.updatedAt?.seconds ?? 0}`}
             className="rounded-2xl bg-white p-6 shadow-xs"
           >
             <div className="flex items-center gap-3">

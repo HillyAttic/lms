@@ -11,8 +11,8 @@ import {
   signOut as firebaseSignOut,
   updateProfile,
 } from "firebase/auth";
-import { doc, getDoc, setDoc, serverTimestamp, collection, getDocs } from "firebase/firestore";
-import { auth, db } from "@/lib/firebase";
+import { auth } from "@/lib/firebase";
+import { ensureUserProfile } from "@/app/actions/auth-actions";
 import type { UserRole } from "@/lib/roles";
 
 type Role = UserRole | null;
@@ -38,25 +38,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
         setUser(firebaseUser);
-        // Get role from Firestore
-        const userDoc = await getDoc(doc(db, "users", firebaseUser.uid));
-        if (userDoc.exists()) {
-          setRole(userDoc.data().role);
-        } else {
-          // If user doc doesn't exist, check if this is the first user (make them admin)
-          const usersSnapshot = await getDocs(collection(db, "users"));
-          const isFirstUser = usersSnapshot.empty;
-          const newRole = isFirstUser ? "admin" : "learner";
-
-          await setDoc(doc(db, "users", firebaseUser.uid), {
-            uid: firebaseUser.uid,
-            email: firebaseUser.email,
-            displayName: firebaseUser.displayName || firebaseUser.email?.split("@")[0],
-            role: newRole,
-            createdAt: serverTimestamp(),
-          });
-          setRole(newRole);
-        }
+        // The profile and its role live behind a server action; the client has
+        // no write access to `users`, so it cannot assign itself a role.
+        const result = await ensureUserProfile(
+          await firebaseUser.getIdToken(),
+          firebaseUser.displayName || undefined,
+        );
+        setRole(result.success && result.data ? result.data.role : null);
       } else {
         setUser(null);
         setRole(null);
@@ -75,39 +63,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
 
-    // Check if first user (admin bootstrap)
-    const usersSnapshot = await getDocs(collection(db, "users"));
-    const isFirstUser = usersSnapshot.empty;
-    const newRole = isFirstUser ? "admin" : "learner";
-
-    await setDoc(doc(db, "users", userCredential.user.uid), {
-      uid: userCredential.user.uid,
-      email,
-      displayName: name,
-      role: newRole,
-      createdAt: serverTimestamp(),
-    });
+    // `onAuthStateChanged` also fires and calls this with the account's own
+    // name; the action only fills a blank displayName, so the stated name wins.
+    await ensureUserProfile(await userCredential.user.getIdToken(), name);
   };
 
   const signInWithGoogle = async () => {
     const provider = new GoogleAuthProvider();
     const userCredential = await signInWithPopup(auth, provider);
 
-    // Check if user exists in Firestore
-    const userDoc = await getDoc(doc(db, "users", userCredential.user.uid));
-    if (!userDoc.exists()) {
-      const usersSnapshot = await getDocs(collection(db, "users"));
-      const isFirstUser = usersSnapshot.empty;
-      const newRole = isFirstUser ? "admin" : "learner";
-
-      await setDoc(doc(db, "users", userCredential.user.uid), {
-        uid: userCredential.user.uid,
-        email: userCredential.user.email,
-        displayName: userCredential.user.displayName || userCredential.user.email?.split("@")[0],
-        role: newRole,
-        createdAt: serverTimestamp(),
-      });
-    }
+    await ensureUserProfile(
+      await userCredential.user.getIdToken(),
+      userCredential.user.displayName || undefined,
+    );
   };
 
   const signOutUser = async () => {
