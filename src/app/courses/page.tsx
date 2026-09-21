@@ -2,7 +2,10 @@ import PageHeader from "@/components/pageHeader";
 import CoursesDsiplay from "./coursesDsiplay";
 import { siteName } from "@/utils/envExport";
 import { Metadata } from "next";
-import { getPublicCourses } from "@/app/actions/public-course-actions";
+import {
+  getRepositoryItems,
+  type RepositoryContentItem,
+} from "@/app/actions/repository-actions";
 
 export const metadata: Metadata = {
   title: `Courses | ${siteName}`,
@@ -15,18 +18,12 @@ const Courses = async ({
   searchParams: Promise<{ category?: string }>;
 }) => {
   const { category } = await searchParams;
-  let courses = [];
 
-  try {
-    const result = await getPublicCourses();
-    if (Array.isArray(result)) {
-      courses = result;
-    }
-  } catch (error) {
-    console.error("Failed to fetch courses:", error);
-    // Fallback to empty array on error
-    courses = [];
-  }
+  // The catalogue is whatever has actually been uploaded in the admin panel —
+  // SCORM, video and game content all arrive through this one call.
+  const result = await getRepositoryItems().catch(() => null);
+  const courses =
+    result?.success ? (result.data as RepositoryContentItem[]) : [];
 
   return (
     <main>

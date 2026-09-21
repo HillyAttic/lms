@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { getVideoCourseById } from "@/app/actions/video-course-actions";
+import Breadcrumb from "@/components/breadcrumb";
 import VideoPlayer from "@/components/admin/video-player";
 
 function formatDuration(minutes: number) {
@@ -36,12 +37,22 @@ export default async function WatchVideoPage({
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white">
+    <div className="min-h-screen bg-white text-gray-900">
       <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+        <Breadcrumb
+          className="mb-6"
+          items={[
+            { label: "Home", href: "/" },
+            { label: "Courses", href: "/courses" },
+            { label: course.title || "Video course" },
+          ]}
+        />
+
         <VideoPlayer
           videoUrl={course.videoUrl}
           thumbnailUrl={course.thumbnailUrl}
           title={course.title || "Video course"}
+          className="mx-auto max-w-3xl"
         />
 
         <h1 className="mt-6 text-2xl font-bold sm:text-3xl">
@@ -49,13 +60,13 @@ export default async function WatchVideoPage({
         </h1>
 
         {course.duration ? (
-          <p className="mt-2 text-sm text-gray-400">
+          <p className="mt-2 text-sm text-gray-500">
             {formatDuration(course.duration)}
           </p>
         ) : null}
 
         {course.description ? (
-          <p className="mt-4 whitespace-pre-line text-gray-300">
+          <p className="mt-4 whitespace-pre-line text-gray-700">
             {course.description}
           </p>
         ) : null}

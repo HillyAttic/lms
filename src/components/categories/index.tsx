@@ -1,21 +1,23 @@
 import { CategoryType } from "@/types/CategoryType";
-import { CourseType } from "@/types/CourseType";
 import SectionTitle from "../sectionTitle";
-import { getPublicCourses } from "@/app/actions/public-course-actions";
+import {
+  getRepositoryItems,
+  type RepositoryContentItem,
+} from "@/app/actions/repository-actions";
 
 import CategoryCard from "./categoryCard";
 import { categoryData } from "./categoryData";
 
 const Categories = async () => {
-  // Counts come from `public_courses.category` so a card can never advertise
-  // more courses than clicking through actually shows.
-  const courses: CourseType[] = await getPublicCourses().catch(() => []);
+  // Counts come from the repository so a card can never advertise more courses
+  // than `/courses?category=` actually shows — both read the same three collections.
+  const result = await getRepositoryItems().catch(() => null);
+  const items = result?.success ? (result.data as RepositoryContentItem[]) : [];
 
   const categories: CategoryType[] = categoryData.map((category) => ({
     ...category,
-    courseCount: courses.filter(
-      (course) => course.category === category.slug.current,
-    ).length,
+    courseCount: items.filter((item) => item.type === category.slug.current)
+      .length,
   }));
 
   return (

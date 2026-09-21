@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { categoryData } from "@/components/categories/categoryData";
-import CourseCard from "@/components/courses/courseCard";
+import HomeCourseCard from "@/components/courses/homeCourseCard";
 import Input from "@/components/ui/input";
 import {
   Select,
@@ -12,121 +12,37 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { SearchIcon } from "@/lib/icons";
-import { CourseType } from "@/types/CourseType";
-
-const priceFilter = [
-  {
-    label: "$0-$50",
-    value: "0-50",
-  },
-  {
-    label: "$50-$100",
-    value: "50-100",
-  },
-  {
-    label: "$100-$200",
-    value: "100-200",
-  },
-  {
-    label: "$200-$500",
-    value: "200-500",
-  },
-  {
-    label: "$500-$1000",
-    value: "500-1000",
-  },
-];
-
-const sorting = [
-  {
-    label: "Top Rated",
-    value: "top-rated",
-  },
-  {
-    label: "Newly Added",
-    value: "newly-added",
-  },
-  {
-    label: "Price Low to high",
-    value: "price-low-to-high",
-  },
-  {
-    label: "Price High to low",
-    value: "price-high-to-low",
-  },
-];
+import type { RepositoryContentItem } from "@/app/actions/repository-actions";
 
 const CoursesDsiplay = ({
   courses,
   initialCategory = "",
 }: {
-  courses: CourseType[];
+  courses: RepositoryContentItem[];
   initialCategory?: string;
 }) => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>(initialCategory);
-  const [selectedPrice, setSelectedPrice] = useState<string>("");
-  const [selectedSorting, setSelectedSorting] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] =
+    useState<string>(initialCategory);
 
   const filteredCourses = useMemo(() => {
-    let result = [...courses];
+    const query = searchQuery.toLowerCase();
 
-    // Search filter
-    if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(
-        (course) =>
-          course.title.toLowerCase().includes(query) ||
-          course.shortDescription.toLowerCase().includes(query) ||
-          course.instructor.name.toLowerCase().includes(query)
+    return courses.filter((course) => {
+      if (selectedCategory && course.type !== selectedCategory) return false;
+      if (!query) return true;
+      return (
+        course.name.toLowerCase().includes(query) ||
+        course.description.toLowerCase().includes(query) ||
+        course.features.toLowerCase().includes(query)
       );
-    }
-
-    // Category filter
-    if (selectedCategory) {
-      result = result.filter((course) => course.category === selectedCategory);
-    }
-
-    // Price filter
-    if (selectedPrice) {
-      const [min, max] = selectedPrice.split("-").map(Number);
-      result = result.filter((course) => {
-        const price = course.discountPrice || course.price;
-        return price >= min && price <= max;
-      });
-    }
-
-    // Sorting
-    if (selectedSorting) {
-      switch (selectedSorting) {
-        case "top-rated":
-          result.sort((a, b) => b.totalLearners - a.totalLearners);
-          break;
-        case "newly-added":
-          result.sort((a, b) => (a._id > b._id ? -1 : 1));
-          break;
-        case "price-low-to-high":
-          result.sort(
-            (a, b) =>
-              (a.discountPrice || a.price) - (b.discountPrice || b.price)
-          );
-          break;
-        case "price-high-to-low":
-          result.sort(
-            (a, b) =>
-              (b.discountPrice || b.price) - (a.discountPrice || a.price)
-          );
-          break;
-      }
-    }
-
-    return result;
-  }, [courses, searchQuery, selectedCategory, selectedPrice, selectedSorting]);
+    });
+  }, [courses, searchQuery, selectedCategory]);
 
   return (
     <div className="bg-gray-50 pt-11 pb-16 sm:pt-14 sm:pb-20 lg:pt-16 lg:pb-28">
       <div className="container">
-        {/* search and sorting  */}
+        {/* search and category */}
         <div className="flex flex-wrap items-center justify-between gap-x-5 gap-y-4">
           <div className="relative h-11 w-full sm:h-12 sm:max-w-85">
             <span className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400">
@@ -139,69 +55,34 @@ const CoursesDsiplay = ({
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-3">
-            <Select
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Category"
-                  placeholderClass="text-secondary"
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {categoryData.map((item) => (
-                  <SelectItem key={item._id} value={item.slug.current}>
-                    {item.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select value={selectedPrice} onValueChange={setSelectedPrice}>
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Price"
-                  placeholderClass="text-secondary"
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {priceFilter.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Select
-              value={selectedSorting}
-              onValueChange={setSelectedSorting}
-            >
-              <SelectTrigger>
-                <SelectValue
-                  placeholder="Sorting"
-                  placeholderClass="text-secondary"
-                />
-              </SelectTrigger>
-              <SelectContent>
-                {sorting.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+            <SelectTrigger>
+              <SelectValue
+                placeholder="Category"
+                placeholderClass="text-secondary"
+              />
+            </SelectTrigger>
+            <SelectContent>
+              {categoryData.map((item) => (
+                <SelectItem key={item._id} value={item.slug.current}>
+                  {item.title}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-        {/* courses  */}
+
+        {/* courses — same card the homepage rows use, so launching behaves alike */}
         <div className="grid gap-6 pt-11 pb-11 sm:grid-cols-2 sm:pb-14 lg:grid-cols-3 lg:pb-16">
           {filteredCourses.length > 0 ? (
             filteredCourses.map((course) => (
-              <CourseCard key={course._id} course={course} />
+              <HomeCourseCard key={course.id} course={course} />
             ))
           ) : (
-            <div className="col-span-full text-center py-10">
-              <p className="text-secondary text-lg">No courses found matching your filters.</p>
+            <div className="col-span-full py-10 text-center">
+              <p className="text-lg text-secondary">
+                No courses found matching your filters.
+              </p>
             </div>
           )}
         </div>
