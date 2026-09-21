@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
-import { useRouter, useParams } from "next/navigation";
+import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
 import { Sparkles, X, Save, Trash2, ArrowLeft, Globe } from "@/lib/icons";
@@ -15,13 +15,16 @@ import PageHeader from "@/components/admin/page-header";
 import LoadingSpinner from "@/components/admin/loading-spinner";
 import ConfirmDialog from "@/components/admin/confirm-dialog";
 import Badge from "@/components/admin/badge";
+import { uploadThumbnail } from "@/lib/upload-utils";
 
 export default function GameCourseDetailPage() {
   const router = useRouter();
   const params = useParams();
+  const searchParams = useSearchParams();
   const courseId = params.id as string;
   const { user } = useAuth();
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const titleInputRef = useRef<HTMLInputElement>(null);
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -63,7 +66,7 @@ export default function GameCourseDetailPage() {
         setGameUrl(course.gameUrl || null);
         setGameStoragePath(course.gameStoragePath || "");
         setGameEntryFile(course.gameEntryFile || "index.html");
-        setThumbnailUrl(course.thumbnailUrl || null);
+        setThumbnailUrl(course.thumbnailUrl ?? null);
         setCreatedAt(course.createdAt);
       } else {
         toast.error("Course not found");
@@ -103,7 +106,16 @@ export default function GameCourseDetailPage() {
 
     setSaving(true);
     try {
+      // Cleared (X) stores null so the thumbnail can be removed; untouched
+      // leaves the field out of the update entirely.
+      const nextThumbnail = thumbnail
+        ? await uploadThumbnail(thumbnail, courseId, user.uid)
+        : thumbnailUrl === null
+          ? null
+          : undefined;
+
       const result = await updateGameCourse(courseId, user.uid, {
+        thumbnailUrl: nextThumbnail,
         title: title.trim(),
         description: description.trim(),
         duration: parseInt(duration) || 0,
@@ -119,6 +131,10 @@ export default function GameCourseDetailPage() {
       });
 
       if (result.success) {
+        // Adopt what was just saved so a second save doesn't re-upload it.
+        setThumbnailUrl(nextThumbnail ?? null);
+        setThumbnail(null);
+        setThumbnailPreview(null);
         toast.success("Course updated successfully!");
       } else {
         toast.error(result.error || "Failed to update course");

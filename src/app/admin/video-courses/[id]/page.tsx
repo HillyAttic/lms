@@ -14,6 +14,7 @@ import VideoPlayer from "@/components/admin/video-player";
 import PageHeader from "@/components/admin/page-header";
 import LoadingSpinner from "@/components/admin/loading-spinner";
 import ConfirmDialog from "@/components/admin/confirm-dialog";
+import { uploadThumbnail } from "@/lib/upload-utils";
 
 export default function VideoCourseDetailPage() {
   const router = useRouter();
@@ -96,13 +97,16 @@ export default function VideoCourseDetailPage() {
 
     setSaving(true);
     try {
-      // Upload new thumbnail if selected
-      if (thumbnail) {
-        const thumbExt = thumbnail.name.split(".").pop() || "jpg";
-        // We'll handle thumbnail upload through a separate call if needed
-      }
+      // Cleared (X) stores null so the thumbnail can be removed; untouched
+      // leaves the field out of the update entirely.
+      const nextThumbnail = thumbnail
+        ? await uploadThumbnail(thumbnail, courseId, user.uid)
+        : thumbnailUrl === null
+          ? null
+          : undefined;
 
       const result = await updateVideoCourse(courseId, user.uid, {
+        thumbnailUrl: nextThumbnail,
         title: title.trim(),
         description: description.trim(),
         duration: parseInt(duration) || 0,
@@ -118,6 +122,10 @@ export default function VideoCourseDetailPage() {
       });
 
       if (result.success) {
+        // Adopt what was just saved so a second save doesn't re-upload it.
+        setThumbnailUrl(nextThumbnail ?? null);
+        setThumbnail(null);
+        setThumbnailPreview(null);
         toast.success("Course updated successfully!");
       } else {
         toast.error(result.error || "Failed to update course");

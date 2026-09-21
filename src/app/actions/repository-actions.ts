@@ -159,6 +159,20 @@ export async function getRepositoryItems() {
   }
 }
 
+// Get repository content filtered by type — the homepage rows read one type each.
+export async function getRepositoryItemsByType(type: RepositoryContentType) {
+  try {
+    const items = await loadRepositoryContent();
+    return {
+      success: true as const,
+      data: serializeTimestamps(items.filter((item) => item.type === type)),
+    };
+  } catch (error: any) {
+    console.error("Get repository items by type error:", error);
+    return { success: false as const, error: error.message };
+  }
+}
+
 // Get repository content with pagination
 export async function getRepositoryItemsPaginated(
   page: number = 1,

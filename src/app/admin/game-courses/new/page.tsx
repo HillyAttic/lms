@@ -7,7 +7,11 @@ import { toast } from "react-toastify";
 import { Sparkles, X, Upload, Globe } from "@/lib/icons";
 import { processGameCourse } from "@/app/actions/game-course-actions";
 import PageHeader from "@/components/admin/page-header";
-import { getSignedUploadUrl, uploadFileDirect } from "@/lib/upload-utils";
+import {
+  getSignedUploadUrl,
+  uploadFileDirect,
+  uploadThumbnail,
+} from "@/lib/upload-utils";
 
 const ACCEPTED_GAME_TYPES = [".zip"];
 const MAX_FILE_SIZE = 500 * 1024 * 1024; // 500MB
@@ -113,12 +117,14 @@ export default function CreateGameCoursePage() {
     setUploadProgress(0);
 
     let gameZipPath: string | null = null;
+    // Thumbnails live under the same id as the game's other storage files, so
+    // it has to be minted here rather than inside the branch that uploads a ZIP.
+    const courseId = `game_${Date.now()}`;
 
     try {
       if (gameType === "uploaded" && gameFile) {
         // Step 1: Get signed upload URL for ZIP
         setUploadProgress(5);
-        const courseId = `game_${Date.now()}`;
         gameZipPath = `games/${courseId}/source.zip`;
         const { uploadUrl } = await getSignedUploadUrl(
           gameZipPath,
@@ -134,8 +140,10 @@ export default function CreateGameCoursePage() {
         });
       }
 
-      // Step 3: Process the uploaded game (or just metadata for URL type)
+      // Step 3: Upload the optional thumbnail, then process the game (or just
+      // metadata for URL type)
       setUploadProgress(75);
+      const thumbnailUrl = await uploadThumbnail(thumbnail, courseId, user.uid);
       const catsArr = categories.split(",").map((c) => c.trim()).filter(Boolean);
       const tagsArr = tags.split(",").map((t) => t.trim()).filter(Boolean);
 
@@ -149,7 +157,8 @@ export default function CreateGameCoursePage() {
         parseInt(duration) || 0,
         catsArr,
         tagsArr,
-        null
+        thumbnailUrl,
+        courseId
       );
 
       setUploadProgress(100);

@@ -119,6 +119,8 @@ export default function CourseEditPage() {
           setSaving(false);
           return;
         }
+        setThumbnailPreview(thumbResult.thumbnailUrl ?? null);
+        setThumbnail(null);
       }
 
       // Update course
@@ -224,8 +226,10 @@ export default function CourseEditPage() {
                   <button
                     type="button"
                     onClick={() => {
+                      // Keep the preview off the stale `course` snapshot so a
+                      // removal doesn't just re-upload it on the next save.
                       setThumbnail(null);
-                      setThumbnailPreview(course.thumbnailUrl);
+                      setThumbnailPreview(null);
                     }}
                     className="absolute -top-2 -right-2 p-1 bg-red-500 text-white rounded-full hover:bg-red-600"
                   >

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getCoursesPaginated, batchDeleteCourses } from "@/app/actions/course-actions";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
-import { Trash2, Eye, Upload, CheckSquare } from "@/lib/icons";
+import { Trash2, Eye, Pencil, Upload, CheckSquare } from "@/lib/icons";
 import PageHeader from "@/components/admin/page-header";
 import SearchFilterBar from "@/components/admin/search-filter-bar";
 import Pagination from "@/components/admin/pagination";
@@ -38,6 +38,7 @@ export default function CoursesPage() {
   const [totalPages, setTotalPages] = useState(0);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteIds, setDeleteIds] = useState<string[]>([]);
   const [sortBy, setSortBy] = useState("createdAt");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -71,15 +72,16 @@ export default function CoursesPage() {
     }
   };
 
-  const handleBatchDelete = async () => {
-    if (!user || selectedIds.length === 0) return;
+  const handleDelete = async () => {
+    if (!user || deleteIds.length === 0) return;
 
     try {
-      const result = await batchDeleteCourses(selectedIds, user.uid);
+      const result = await batchDeleteCourses(deleteIds, user.uid);
       if (result.success) {
-        toast.success(`${selectedIds.length} course(s) deleted successfully`);
+        toast.success(`${deleteIds.length} course(s) deleted successfully`);
         setSelectedIds([]);
         setShowDeleteConfirm(false);
+        setDeleteIds([]);
         loadCourses();
       } else {
         toast.error(result.error || "Failed to delete courses");
@@ -141,7 +143,10 @@ export default function CoursesPage() {
           <div className="flex items-center gap-3">
             {selectedIds.length > 0 && (
               <button
-                onClick={() => setShowDeleteConfirm(true)}
+                onClick={() => {
+                  setDeleteIds(selectedIds);
+                  setShowDeleteConfirm(true);
+                }}
                 className="flex items-center gap-2 bg-red-600 text-white px-4 py-2.5 rounded-lg hover:bg-red-700 transition-colors"
               >
                 <Trash2 className="w-5 h-5" />
@@ -236,12 +241,32 @@ export default function CoursesPage() {
                       <div className="truncate text-sm text-gray-500">{course.description}</div>
                     </div>
                   </div>
-                  <Link
-                    href={`/admin/courses/${course.id}`}
-                    className="shrink-0 rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
-                  >
-                    <Eye className="h-4 w-4" />
-                  </Link>
+                  <div className="flex shrink-0 items-center">
+                    <Link
+                      href={`/admin/courses/${course.id}`}
+                      title="View"
+                      className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
+                    >
+                      <Eye className="h-4 w-4" />
+                    </Link>
+                    <Link
+                      href={`/admin/courses/${course.id}`}
+                      title="Edit"
+                      className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                    <button
+                      onClick={() => {
+                        setDeleteIds([course.id]);
+                        setShowDeleteConfirm(true);
+                      }}
+                      title="Delete"
+                      className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
                 </div>
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Badge
@@ -372,10 +397,28 @@ export default function CoursesPage() {
                         <div className="flex items-center justify-end gap-2">
                           <Link
                             href={`/admin/courses/${course.id}`}
+                            title="View"
                             className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-purple-50 hover:text-purple-600"
                           >
                             <Eye className="h-4 w-4" />
                           </Link>
+                          <Link
+                            href={`/admin/courses/${course.id}`}
+                            title="Edit"
+                            className="rounded-lg p-2 text-purple-600 transition-colors hover:bg-purple-50 hover:text-purple-700"
+                          >
+                            <Pencil className="h-4 w-4" />
+                          </Link>
+                          <button
+                            onClick={() => {
+                              setDeleteIds([course.id]);
+                              setShowDeleteConfirm(true);
+                            }}
+                            title="Delete"
+                            className="rounded-lg p-2 text-gray-600 transition-colors hover:bg-red-50 hover:text-red-600"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -402,8 +445,8 @@ export default function CoursesPage() {
       {showDeleteConfirm && (
         <ConfirmDialog
           title="Delete Courses"
-          message={`Are you sure you want to delete ${selectedIds.length} course(s)? This will also remove all uploaded files. This action cannot be undone.`}
-          onConfirm={handleBatchDelete}
+          message={`Are you sure you want to delete ${deleteIds.length} course(s)? This will also remove all uploaded files. This action cannot be undone.`}
+          onConfirm={handleDelete}
           onCancel={() => setShowDeleteConfirm(false)}
           confirmText="Delete"
           variant="danger"

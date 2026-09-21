@@ -8,6 +8,7 @@ import {
   Video,
   PlusIcon,
   Eye,
+  Pencil,
   Trash2,
   CheckSquare,
   Search,
@@ -49,6 +50,7 @@ export default function VideoCoursesPage() {
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [deleteIds, setDeleteIds] = useState<string[]>([]);
 
   useEffect(() => {
     loadCourses();
@@ -104,15 +106,16 @@ export default function VideoCoursesPage() {
     );
   };
 
-  const handleBatchDelete = async () => {
-    if (!user) return;
+  const handleDelete = async () => {
+    if (!user || deleteIds.length === 0) return;
     setDeleting(true);
     try {
-      const result = await batchDeleteVideoCourses(selectedIds, user.uid);
+      const result = await batchDeleteVideoCourses(deleteIds, user.uid);
       if (result.success) {
-        toast.success(`${selectedIds.length} course(s) deleted successfully`);
+        toast.success(`${deleteIds.length} course(s) deleted successfully`);
         setSelectedIds([]);
         setShowDeleteDialog(false);
+        setDeleteIds([]);
         loadCourses();
       } else {
         toast.error(result.error || "Failed to delete courses");
@@ -184,7 +187,10 @@ export default function VideoCoursesPage() {
             {selectedIds.length} selected
           </span>
           <button
-            onClick={() => setShowDeleteDialog(true)}
+            onClick={() => {
+              setDeleteIds(selectedIds);
+              setShowDeleteDialog(true);
+            }}
             className="flex items-center gap-2 text-sm text-red-600 hover:text-red-700"
           >
             <Trash2 className="w-4 h-4" />
@@ -248,8 +254,23 @@ export default function VideoCoursesPage() {
                     >
                       {course.title}
                     </Link>
-                    <div className="mt-1 text-sm text-gray-500">
+                    <div className="mt-1 flex items-center gap-2 text-sm text-gray-500">
                       {formatDuration(course.duration)}
+                      <Link
+                        href={`/admin/video-courses/${course.id}`}
+                        className="text-purple-600 hover:text-purple-700"
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                      <button
+                        onClick={() => {
+                          setDeleteIds([course.id]);
+                          setShowDeleteDialog(true);
+                        }}
+                        className="text-gray-500 hover:text-red-600"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -365,12 +386,32 @@ export default function VideoCoursesPage() {
                       {formatDate(course.createdAt)}
                     </td>
                     <td className="px-6 py-4">
-                      <Link
-                        href={`/admin/video-courses/${course.id}`}
-                        className="text-purple-600 hover:text-purple-700"
-                      >
-                        <Eye className="h-5 w-5" />
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/video-courses/${course.id}`}
+                          title="View"
+                          className="text-gray-500 hover:text-purple-700"
+                        >
+                          <Eye className="h-5 w-5" />
+                        </Link>
+                        <Link
+                          href={`/admin/video-courses/${course.id}`}
+                          title="Edit"
+                          className="text-purple-600 hover:text-purple-700"
+                        >
+                          <Pencil className="h-5 w-5" />
+                        </Link>
+                        <button
+                          onClick={() => {
+                            setDeleteIds([course.id]);
+                            setShowDeleteDialog(true);
+                          }}
+                          title="Delete"
+                          className="text-gray-500 hover:text-red-600"
+                        >
+                          <Trash2 className="h-5 w-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -395,9 +436,9 @@ export default function VideoCoursesPage() {
       {showDeleteDialog && (
         <ConfirmDialog
           onClose={() => setShowDeleteDialog(false)}
-          onConfirm={handleBatchDelete}
+          onConfirm={handleDelete}
           title="Delete Video Courses"
-          message={`Are you sure you want to delete ${selectedIds.length} course(s)? This action cannot be undone.`}
+          message={`Are you sure you want to delete ${deleteIds.length} course(s)? This action cannot be undone.`}
           confirmText="Delete"
           variant="danger"
           loading={deleting}

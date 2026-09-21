@@ -72,9 +72,11 @@ export default function RootLayout({
           <AdminLayoutGuard>
             {children}
           </AdminLayoutGuard>
+          {/* Only one container may be mounted: two both render and animate the
+              same toast, so the duplicate never auto-closes and stays stuck. */}
           <ToastContainer
             position="top-right"
-            autoClose={3000}
+            autoClose={2000}
             hideProgressBar={false}
             newestOnTop
             closeOnClick

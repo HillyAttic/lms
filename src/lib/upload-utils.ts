@@ -2,6 +2,7 @@
  * Client-side utility for uploading files directly to Firebase Storage
  * via signed URLs. Bypasses Vercel's body size limit.
  */
+import { getSignedThumbnailUrl } from "@/app/actions/repository-actions";
 
 export interface UploadProgress {
   loaded: number;
@@ -98,4 +99,31 @@ export async function getSignedUploadUrl(
     uploadUrl: result.uploadUrl,
     storagePath: result.storagePath,
   };
+}
+
+/**
+ * Upload a course thumbnail and return a URL the browser can actually load.
+ * Storage objects are private, so the signed read URL is what gets stored on
+ * the course document — a plain `storage.googleapis.com` URL would 403.
+ *
+ * Returns null when no thumbnail was picked, so callers can pass the result
+ * straight through as `thumbnailUrl`.
+ */
+export async function uploadThumbnail(
+  file: File | null,
+  ownerId: string,
+  userId: string
+): Promise<string | null> {
+  if (!file) return null;
+
+  const ext = file.name.split(".").pop() || "jpg";
+  const storagePath = `thumbnails/${ownerId}/thumbnail.${ext}`;
+  const { uploadUrl } = await getSignedUploadUrl(storagePath, file.type, userId);
+  await uploadFileDirect(file, uploadUrl, file.type);
+
+  const signed = await getSignedThumbnailUrl(storagePath);
+  if (!signed.success || !signed.url) {
+    throw new Error(signed.error || "Uploaded thumbnail could not be made viewable");
+  }
+  return signed.url;
 }

@@ -7,7 +7,11 @@ import { toast } from "react-toastify";
 import { Video, X, Upload } from "@/lib/icons";
 import { processVideoCourse } from "@/app/actions/video-course-actions";
 import PageHeader from "@/components/admin/page-header";
-import { getSignedUploadUrl, uploadFileDirect } from "@/lib/upload-utils";
+import {
+  getSignedUploadUrl,
+  uploadFileDirect,
+  uploadThumbnail,
+} from "@/lib/upload-utils";
 
 const ACCEPTED_VIDEO_TYPES = [".mp4", ".webm", ".ogg", ".mov"];
 const MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024; // 2GB
@@ -117,7 +121,11 @@ export default function UploadVideoCoursePage() {
         setUploadProgress(10 + Math.round(progress.percent * 0.8));
       });
 
-      // Step 3: Process the uploaded video
+      // Step 3: Upload the optional thumbnail (null when none was picked)
+      setUploadProgress(91);
+      const thumbnailUrl = await uploadThumbnail(thumbnail, courseId, user.uid);
+
+      // Step 4: Process the uploaded video
       setUploadProgress(92);
       const catsArr = categories
         .split(",")
@@ -138,7 +146,7 @@ export default function UploadVideoCoursePage() {
         tagsArr,
         contentType,
         videoFile.size,
-        null
+        thumbnailUrl
       );
 
       setUploadProgress(100);
