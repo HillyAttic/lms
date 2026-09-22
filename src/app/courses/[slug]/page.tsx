@@ -1,10 +1,8 @@
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import Link from "next/link";
 import Breadcrumb from "@/components/breadcrumb";
-import Button from "@/components/ui/button";
-import ButtonArrow from "@/components/ui/buttonArrow";
 import { StarRating } from "@/components/ui/starRating";
+import CourseActions from "./courseActions";
 import { BookOpen, Clock, FileStack, GamepadIcon, Star, Video } from "@/lib/icons";
 import { CourseReviews } from "@/components/courses/courseReviews";
 import {
@@ -185,20 +183,7 @@ export default async function CourseDetailPage({
             </div>
 
             <div className="mt-8">
-              {content ? (
-                <Button asChild size="lg" className="rounded-full px-8 py-1.5">
-                  <Link href={`/courses/${slug}/launch`}>
-                    <span className="text-base font-semibold">Enroll Now</span>
-                    <ButtonArrow />
-                  </Link>
-                </Button>
-              ) : (
-                <Button size="lg" disabled className="rounded-full px-8 py-1.5">
-                  <span className="text-base font-semibold">
-                    Content coming soon
-                  </span>
-                </Button>
-              )}
+              <CourseActions slug={slug} launchable={!!content} />
             </div>
           </div>
         </div>

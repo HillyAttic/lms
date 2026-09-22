@@ -2356,3 +2356,44 @@ export const FileStack = ({ className }: { className?: string }) => {
     </svg>
   );
 };
+
+export const Heart = ({ className }: { className?: string }) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M12 20.25C12 20.25 2.75 15.5 2.75 9.25C2.75 6.35 5.05 4.75 7.25 4.75C9 4.75 10.75 5.75 12 7.75C13.25 5.75 15 4.75 16.75 4.75C18.95 4.75 21.25 6.35 21.25 9.25C21.25 15.5 12 20.25 12 20.25Z" />
+    </svg>
+  );
+};
+
+export const Trophy = ({ className }: { className?: string }) => {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      width={24}
+      height={24}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth={1.5}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M7.75 3.75H16.25V9.5C16.25 12.05 14.35 14.25 12 14.25C9.65 14.25 7.75 12.05 7.75 9.5V3.75Z" />
+      <path d="M7.75 5.75H5C4.31 5.75 3.75 6.31 3.75 7V7.75C3.75 9.55 5.2 11 7 11H7.75" />
+      <path d="M16.25 5.75H19C19.69 5.75 20.25 6.31 20.25 7V7.75C20.25 9.55 18.8 11 17 11H16.25" />
+      <path d="M12 14.25V17.25M8.75 20.25H15.25M10 17.25H14L14.5 20.25H9.5L10 17.25Z" />
+    </svg>
+  );
+};

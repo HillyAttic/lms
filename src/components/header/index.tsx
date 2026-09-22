@@ -32,11 +32,16 @@ const menuList: MenuType[] = [
   },
   {
     id: 4,
+    label: "Leaderboard",
+    href: "/leaderboard",
+  },
+  {
+    id: 5,
     label: "About",
     href: "#",
   },
   {
-    id: 5,
+    id: 6,
     label: "All Pages",
     href: "#",
     subMenu: [

@@ -30,5 +30,16 @@ service cloud.firestore {
     match /ratings/{ratingId} {
       allow read, write: if false;
     }
+
+    // A learner's enrollments and wishlist are written by the `setEnrollment`
+    // and `setWishlist` server actions, which take the uid from the verified ID
+    // token — so neither list can be edited on someone else's behalf. Reads go
+    // the same way (getLearnerDashboard), so no client needs direct access.
+    match /enrollments/{enrollmentId} {
+      allow read, write: if false;
+    }
+    match /wishlists/{wishlistId} {
+      allow read, write: if false;
+    }
   }
 }

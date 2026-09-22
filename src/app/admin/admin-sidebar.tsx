@@ -16,6 +16,7 @@ import {
   Video,
   Sparkles,
   FileText,
+  Trophy,
 } from "@/lib/icons";
 
 const navItems = [
@@ -27,6 +28,7 @@ const navItems = [
   { label: "Blogs", href: "/admin/blogs", icon: FileText },
   { label: "Repository", href: "/admin/repository", icon: FileArchive },
   { label: "Users", href: "/admin/users", icon: Users },
+  { label: "Leaderboard", href: "/admin/leaderboard", icon: Trophy },
   { label: "External Users", href: "/admin/external-users", icon: Users },
   { label: "Settings", href: "/admin/settings", icon: Settings },
 ];
