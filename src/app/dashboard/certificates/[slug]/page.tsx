@@ -17,7 +17,7 @@ export default function CertificatePage({
 }) {
   const { slug } = use(params);
   const { user, loading } = useAuth();
-  const [course, setCourse] = useState<{ name: string; score: number } | null>(null);
+  const [course, setCourse] = useState<{ name: string; score: number | null } | null>(null);
   const [checked, setChecked] = useState(false);
 
   useEffect(() => {
@@ -37,7 +37,7 @@ export default function CertificatePage({
       // Posting a slug by hand must not mint an award, so the record is looked
       // up among the learner's completed courses rather than rendered on faith.
       const match = result.data.certificates.find((item) => item.slug === slug);
-      if (match) setCourse({ name: match.name, score: match.score ?? 0 });
+      if (match) setCourse({ name: match.name, score: match.progress?.score ?? null });
       setChecked(true);
     })();
 
@@ -77,7 +77,7 @@ export default function CertificatePage({
         <p className="mt-6 text-secondary">has successfully completed</p>
         <p className="mt-2 text-2xl font-semibold">{course.name}</p>
         <div className="mt-8 flex flex-wrap items-center justify-center gap-x-10 gap-y-3 text-sm text-gray-500">
-          {course.score > 0 && <span>Score: {course.score}</span>}
+          {course.score !== null && <span>Score: {course.score.toFixed(2)}</span>}
           <span>Issued: {issued}</span>
           <span>{siteName}</span>
         </div>

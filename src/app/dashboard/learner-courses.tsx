@@ -12,6 +12,56 @@ import type { LearnerCourse } from "@/app/actions/learner-actions";
 
 export type DashboardData = Awaited<ReturnType<typeof getLearnerDashboard>>["data"];
 
+/** Paging for the dashboard's lists; each button disables at its end. */
+export function LearnerPager({
+  page,
+  onPageChange,
+  hasMore,
+}: {
+  page: number;
+  onPageChange: (page: number) => void;
+  hasMore: boolean;
+}) {
+  return (
+    <div className="mt-6 flex items-center justify-center gap-3">
+      <button
+        type="button"
+        onClick={() => onPageChange(page - 1)}
+        disabled={page === 1}
+        className="rounded-lg border border-gray-300 px-5 py-2 text-sm font-semibold tracking-wide uppercase transition-colors hover:bg-gray-50 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Previous
+      </button>
+      <button
+        type="button"
+        onClick={() => onPageChange(page + 1)}
+        disabled={!hasMore}
+        className="rounded-lg bg-purple-500 px-5 py-2 text-sm font-semibold tracking-wide text-primary uppercase transition-colors hover:bg-purple-600 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        Next
+      </button>
+    </div>
+  );
+}
+
+/**
+ * Slices a list to one page and reports whether another follows. Derived from
+ * the items rather than stored, so a list that shrinks under the current page
+ * falls back to a page that still has rows instead of rendering empty.
+ */
+export function usePage<T>(items: T[], pageSize = 9) {
+  const [page, setPage] = useState(1);
+  const totalPages = Math.max(1, Math.ceil(items.length / pageSize));
+  const current = Math.min(page, totalPages);
+
+  return {
+    page: current,
+    setPage,
+    hasMore: current < totalPages,
+    visible: items.slice((current - 1) * pageSize, current * pageSize),
+  };
+}
+
 /**
  * Every page under /dashboard reads the same payload — the three lists and the
  * three counts — so the fetch lives here once and each page picks its slice.
@@ -67,6 +117,57 @@ function Thumbnail({ course }: { course: LearnerCourse }) {
   );
 }
 
+/** Short type label for the detail rows. */
+const TYPE_LABELS: Record<LearnerCourse["type"], string> = {
+  scorm: "SCORM",
+  video: "video",
+  game: "game",
+};
+
+/**
+ * The detail rows the enrolled list shows. A course that was never launched has
+ * no progress record, so its status reads as not started and both the score and
+ * the timestamp stay blank rather than claiming a zero.
+ */
+export function CourseProgressDetails({ course }: { course: LearnerCourse }) {
+  const { progress } = course;
+  const lastUpdated = progress?.lastUpdated?.seconds
+    ? new Date(progress.lastUpdated.seconds * 1000).toLocaleString("en-GB", {
+        day: "2-digit",
+        month: "2-digit",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+        hour12: false,
+      })
+    : null;
+
+  return (
+    <dl className="mt-3 space-y-1 text-sm text-secondary">
+      <div>
+        <dt className="inline">Type: </dt>
+        <dd className="inline">{TYPE_LABELS[course.type]}</dd>
+      </div>
+      <div>
+        <dt className="inline">Status: </dt>
+        <dd className="inline">
+          <span className="capitalize">{progress?.status || "not started"}</span>
+          {/* The separator only appears when there is a record to score. */}
+          {progress &&
+            ` | Score: ${progress.score !== null ? progress.score.toFixed(2) : "—"}`}
+        </dd>
+      </div>
+      {lastUpdated && (
+        <div>
+          <dt className="inline">Last Updated: </dt>
+          <dd className="inline tabular-nums">{lastUpdated}</dd>
+        </div>
+      )}
+    </dl>
+  );
+}
+
 /**
  * The one card all three lists render. `action` is the button the list calls
  * for — "Continue" while a course is in flight, "Download" once it is finished.
@@ -85,11 +186,15 @@ export function LearnerCourseCard({
         <span className="self-start rounded-full bg-purple-50 px-3 py-1 text-xs font-semibold text-purple-700 uppercase">
           {course.type}
         </span>
-        <h3 className="mt-3 grow font-medium md:text-lg">
+        <h3 className="mt-3 font-medium md:text-lg">
           <Link href={`/courses/${course.slug}`} className="transition-colors hover:text-purple-500">
             {course.name}
           </Link>
         </h3>
+
+        <div className="grow">
+          <CourseProgressDetails course={course} />
+        </div>
         <Button asChild variant="outline" size="lg" className="mt-5 w-full">
           {action === "View" ? (
             <Link href={`/courses/${course.slug}`}>

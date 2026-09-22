@@ -5,11 +5,15 @@ import {
   LearnerCourseCard,
   LearnerEmptyState,
   LearnerPageHeading,
+  LearnerPager,
   useLearnerDashboard,
+  usePage,
 } from "../learner-courses";
 
 export default function WishlistPage() {
   const { data, loading } = useLearnerDashboard();
+  const wishlist = data?.wishlist || [];
+  const { page, setPage, hasMore, visible } = usePage(wishlist);
 
   if (loading) {
     return (
@@ -19,19 +23,26 @@ export default function WishlistPage() {
     );
   }
 
+  if (wishlist.length === 0) {
+    return (
+      <div>
+        <LearnerPageHeading title="Wishlist" count={0} icon={Heart} />
+        <LearnerEmptyState message="Courses you save land here." />
+      </div>
+    );
+  }
+
   return (
     <div>
-      <LearnerPageHeading title="Wishlist" count={data?.wishlist.length} icon={Heart} />
+      <LearnerPageHeading title="Wishlist" count={wishlist.length} icon={Heart} />
 
-      {data?.wishlist.length ? (
-        <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {data.wishlist.map((course) => (
-            <LearnerCourseCard key={course.slug} course={course} action="View" />
-          ))}
-        </ul>
-      ) : (
-        <LearnerEmptyState message="Courses you save land here." />
-      )}
+      <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {visible.map((course) => (
+          <LearnerCourseCard key={course.slug} course={course} action="View" />
+        ))}
+      </ul>
+
+      <LearnerPager page={page} onPageChange={setPage} hasMore={hasMore} />
     </div>
   );
 }

@@ -5,7 +5,9 @@ import {
   LearnerCourseCard,
   LearnerEmptyState,
   LearnerPageHeading,
+  LearnerPager,
   useLearnerDashboard,
+  usePage,
 } from "../learner-courses";
 
 /**
@@ -15,6 +17,8 @@ import {
  */
 export default function CertificatesPage() {
   const { data, loading } = useLearnerDashboard();
+  const certificates = data?.certificates || [];
+  const { page, setPage, hasMore, visible } = usePage(certificates);
 
   if (loading) {
     return (
@@ -24,23 +28,30 @@ export default function CertificatesPage() {
     );
   }
 
+  if (certificates.length === 0) {
+    return (
+      <div>
+        <LearnerPageHeading title="Certificates" count={0} icon={Certificate} />
+        <LearnerEmptyState message="Finish a course to earn your first certificate." />
+      </div>
+    );
+  }
+
   return (
     <div>
       <LearnerPageHeading
         title="Certificates"
-        count={data?.certificates.length}
+        count={certificates.length}
         icon={Certificate}
       />
 
-      {data?.certificates.length ? (
-        <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
-          {data.certificates.map((course) => (
-            <LearnerCourseCard key={course.slug} course={course} action="Download" />
-          ))}
-        </ul>
-      ) : (
-        <LearnerEmptyState message="Finish a course to earn your first certificate." />
-      )}
+      <ul className="mt-6 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+        {visible.map((course) => (
+          <LearnerCourseCard key={course.slug} course={course} action="Download" />
+        ))}
+      </ul>
+
+      <LearnerPager page={page} onPageChange={setPage} hasMore={hasMore} />
     </div>
   );
 }

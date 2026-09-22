@@ -93,8 +93,14 @@ export type LearnerCourse = {
   thumbnailUrl: string | null;
   type: RepositoryContentItem["type"];
   savedAt: number;
-  /** Highest SCORM score recorded, if the course has been launched. */
+  /** The `progress` record for this course, or null if it was never launched. */
+  progress: CourseProgress | null;
+};
+
+export type CourseProgress = {
+  status: string;
   score: number | null;
+  lastUpdated: { seconds: number; nanoseconds: number } | null;
 };
 
 type SavedSlug = { slug: string; savedAt: number };
@@ -144,7 +150,7 @@ export async function getLearnerLists(idToken: string) {
  */
 async function loadCourses(
   saved: SavedSlug[],
-  scoreByCourseId: Map<string, number | null>
+  progressByCourseId: Map<string, CourseProgress>
 ): Promise<LearnerCourse[]> {
   const result = await getLaunchableItems();
   if (!result.success) return [];
@@ -164,7 +170,7 @@ async function loadCourses(
         thumbnailUrl: item.thumbnailUrl,
         type: item.type,
         savedAt,
-        score: scoreByCourseId.get(item.id) ?? null,
+        progress: progressByCourseId.get(item.id) ?? null,
       } satisfies LearnerCourse,
     ];
   });
@@ -203,26 +209,23 @@ export async function getLearnerDashboard(idToken: string) {
         return [
           data.courseId as string,
           {
-            status: data.status as string,
+            status: (data.status as string) || "incomplete",
             score: typeof data.score === "number" ? data.score : null,
-          },
+            lastUpdated: serializeTimestamps(data.lastUpdated),
+          } satisfies CourseProgress,
         ];
       })
     );
-    const scoreByCourseId = new Map(
-      [...progressByCourseId].map(([courseId, record]) => [courseId, record.score])
-    );
 
     const [enrolled, wishlist] = await Promise.all([
-      loadCourses(lists.enrolled, scoreByCourseId),
-      loadCourses(lists.wishlist, scoreByCourseId),
+      loadCourses(lists.enrolled, progressByCourseId),
+      loadCourses(lists.wishlist, progressByCourseId),
     ]);
     // The progress record is the certificate: a launch abandoned halfway has a
     // status but is neither a finished course nor an award.
     const certificates = enrolled.filter(
       (course) =>
-        course.type === "scorm" &&
-        COMPLETED.includes(progressByCourseId.get(course.id)?.status || "")
+        course.type === "scorm" && COMPLETED.includes(course.progress?.status || "")
     );
 
     return {
