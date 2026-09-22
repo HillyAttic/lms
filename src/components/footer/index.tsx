@@ -12,7 +12,7 @@ const footerData = [
       { text: "Home", url: "#" },
       { text: "All Courses", url: "#" },
       { text: "Categories", url: "#" },
-      { text: "Contact", url: "#" },
+      { text: "Contact", url: "/contact" },
       { text: "FAQ's", url: "#" },
     ],
   },
