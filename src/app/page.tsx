@@ -54,7 +54,7 @@ const Home = () => {
       <Courses />
       <Features />
       <Testimonial />
-      <Cta />
+      <Cta className="pb-16 sm:pb-20 lg:pb-28" />
       <Blogs />
     </main>
   );
