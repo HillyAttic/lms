@@ -1,13 +1,18 @@
+"use client";
+import { useState } from "react";
 import SectionTitle from "../sectionTitle";
 import TestimonialSlider from "./testimonialSlider";
-import { ChevronLeft, ChevronRight } from "@/lib/icons";
+import { PauseIcon, Play } from "@/lib/icons";
 
 /*
- * Keeps the Swiper carousel the page already used — the arrows drive it through
- * the `.testimonial-prev/next-arrow` hooks in testimonialSlider, so no rewrite
- * was needed to change the look.
+ * The arrows that used to sit here drove Swiper's Navigation module. A marquee
+ * has no next/previous, so they're replaced by a single pause control — which
+ * WCAG 2.2.2 requires anyway for content that moves on its own for more than
+ * five seconds. Hovering the track pauses it too, via the group.
  */
 const Testimonial = () => {
+  const [paused, setPaused] = useState(false);
+
   return (
     <section className="border-t-[1.5px] border-ink bg-dark py-16 text-white sm:py-20 lg:py-28">
       <div className="container">
@@ -22,27 +27,25 @@ const Testimonial = () => {
             What our learners <span className="marker">say</span>
           </SectionTitle>
 
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              aria-label="Previous testimonial"
-              className="testimonial-prev-arrow grid size-12 place-items-center rounded-full border-[1.5px] border-white/25 text-white transition-colors hover:bg-accent hover:text-ink"
-            >
-              <ChevronLeft />
-            </button>
-            <button
-              type="button"
-              aria-label="Next testimonial"
-              className="testimonial-next-arrow grid size-12 place-items-center rounded-full border-[1.5px] border-white/25 text-white transition-colors hover:bg-accent hover:text-ink"
-            >
-              <ChevronRight />
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setPaused((p) => !p)}
+            aria-pressed={paused}
+            className="grid size-12 place-items-center rounded-full border-[1.5px] border-white/25 text-white transition-colors hover:bg-accent hover:text-ink"
+          >
+            {paused ? <Play className="size-5" /> : <PauseIcon className="size-5" />}
+            <span className="sr-only">
+              {paused ? "Resume testimonials" : "Pause testimonials"}
+            </span>
+          </button>
         </div>
       </div>
 
-      <div className="container mt-12 overflow-visible pb-2 sm:mt-14">
-        <TestimonialSlider />
+      {/* No `overflow-visible` here or on the track: the cards sit in one long
+          row and the overflow-hidden wrapper is what keeps the off-screen ones
+          from widening the document. */}
+      <div className="group container mt-12 pb-2 sm:mt-14">
+        <TestimonialSlider paused={paused} />
       </div>
     </section>
   );

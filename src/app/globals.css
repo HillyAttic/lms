@@ -322,24 +322,21 @@ button {
   }
 }
 
-/* The lime marker behind a highlighted word. `clone` keeps the box intact
-   when the phrase wraps across lines. */
+/* The lime marker behind a highlighted word.
+   `inline-block` is doing the real work. An inline span paints its background
+   over the font's *content area* — Poppins ascender + descender ≈ 1.4em — which
+   at the headings' `line-height: 0.98` swamps the line above and below that
+   slab. An inline-block paints over its own border box instead, so the height
+   is ours to pick: `line-height` sizes the box, the asymmetric bottom padding
+   keeps descenders (y, q) inside the lime, and 1.06em lands the box snug on the
+   ink. Every usage is a single word, so mid-phrase wrapping isn't a concern. */
 @utility marker {
+  display: inline-block;
   background: var(--accent);
   color: var(--accent-ink);
-  padding-inline: 0.12em;
+  line-height: 0.92;
+  padding: 0 0.12em 0.14em;
   border-radius: 4px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-}
-
-@utility marker-dark {
-  background: var(--accent);
-  color: var(--ink);
-  padding-inline: 0.12em;
-  border-radius: 4px;
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
 }
 
 /* Editorial display type: tight, big, optical. */
