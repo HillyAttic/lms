@@ -1,14 +1,14 @@
 import Button from "../ui/button";
 import Link from "next/link";
+import Image from "next/image";
 import ButtonArrow from "../ui/buttonArrow";
-import { HeroIllustration } from "../illustrations";
 
 const Hero = () => {
   return (
     <section className="overflow-x-clip pt-10 pb-12 sm:pt-14 lg:pt-16 lg:pb-20">
       <div className="container">
         <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-6">
-          <div className="lg:col-span-7">
+          <div className="lg:col-span-6">
             <p className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-ink bg-white py-1 pr-3.5 pl-1.5">
               <span className="grid size-6 place-items-center rounded-full bg-accent text-[0.6875rem] font-bold text-ink">
                 ★
@@ -75,13 +75,27 @@ const Hero = () => {
             </ul>
           </div>
 
-          {/* Hand-drawn scene. Hidden from AT: it carries no information the
-              headline and list above don't already state. */}
+          {/* Decorative, so alt is empty and the wrapper is aria-hidden. `eager`
+              because it sits above the fold — lazy would leave the right column
+              blank until hydration. Deliberately not `priority`: that preloads
+              this raster ahead of the h1, which is the actual LCP element.
+              The negative right margin lets the art bleed past the container
+              toward the viewport edge — without it the 1320px container cap
+              strands ~240px of empty gutter on a wide screen and the art reads
+              small. `overflow-x-clip` on the section absorbs the overhang. */}
           <div
             aria-hidden="true"
-            className="animate-float lg:col-span-5 lg:-mr-6 xl:-mr-12"
+            className="animate-float lg:col-span-6 lg:-mr-12 xl:-mr-32 2xl:-mr-56"
           >
-            <HeroIllustration />
+            <Image
+              src="/images/hero-section.png"
+              alt=""
+              width={1616}
+              height={973}
+              loading="eager"
+              sizes="(max-width: 1024px) 100vw, (max-width: 1280px) 720px, (max-width: 1536px) 820px, 980px"
+              className="h-auto w-full"
+            />
           </div>
         </div>
       </div>
