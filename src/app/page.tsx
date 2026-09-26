@@ -1,8 +1,9 @@
 import Hero from "@/components/hero";
 import Categories from "@/components/categories";
-import OurAchievements from "@/components/ourAchievements";
+import TrustStrip from "@/components/ourAchievements";
 import Courses from "@/components/courses";
 import Features from "@/components/features";
+import LearningProcess from "@/components/learningProcess";
 import Testimonial from "@/components/testimonial";
 import Cta from "@/components/cta";
 import Blogs from "@/components/blogs";
@@ -49,10 +50,11 @@ const Home = () => {
   return (
     <main>
       <Hero />
+      <TrustStrip />
       <Categories />
-      <OurAchievements />
       <Courses />
       <Features />
+      <LearningProcess />
       <Testimonial />
       <Cta className="pb-16 sm:pb-20 lg:pb-28" />
       <Blogs />

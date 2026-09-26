@@ -80,7 +80,7 @@ export default function LeaderboardTable({
 
   return (
     <div className={className}>
-      <div className="flex flex-col gap-3 rounded-2xl border border-gray-100 bg-white p-4 shadow-card sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 rounded-[24px] border-[1.5px] border-ink bg-white p-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-secondary">
           {filtered.length} {filtered.length === 1 ? "entry" : "entries"}
           {search ? " match your search" : " on the board"}
@@ -97,7 +97,7 @@ export default function LeaderboardTable({
         </div>
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-card">
+      <div className="mt-5 overflow-hidden rounded-[24px] border-[1.5px] border-ink bg-white">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>

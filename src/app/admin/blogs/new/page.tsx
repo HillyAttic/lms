@@ -89,7 +89,7 @@ export default function NewBlogPage() {
         subtitle="Write a new blog post"
       />
 
-      <div className="max-w-3xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+      <div className="max-w-3xl rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6 lg:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Feature Image URL */}
           <div>
@@ -115,7 +115,7 @@ export default function NewBlogPage() {
               ) : (
                 <div className="flex items-center gap-3">
                   <Image className="w-8 h-8 text-gray-400" />
-                  <span className="text-sm text-gray-500">
+                  <span className="text-sm text-gray-600">
                     Enter an image URL below
                   </span>
                 </div>

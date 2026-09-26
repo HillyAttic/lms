@@ -13,12 +13,12 @@ const Breadcrumb = ({ items, className }: { items: Crumb[]; className?: string }
           {item.href ? (
             <Link
               href={item.href}
-              className="font-medium text-blue-500 transition-colors hover:text-purple-500"
+              className="font-medium text-secondary underline-offset-4 transition-colors hover:text-ink hover:underline"
             >
               {item.label}
             </Link>
           ) : (
-            <span className="font-medium text-secondary">{item.label}</span>
+            <span className="font-medium text-ink">{item.label}</span>
           )}
         </li>
       ))}

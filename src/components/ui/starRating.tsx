@@ -80,7 +80,7 @@ export function StarRating({ slug, rating, count, className }: StarRatingProps) 
     <form
       onSubmit={handleSubmit}
       className={cn(
-        "w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-4 shadow-xs",
+        "w-full max-w-xl rounded-2xl border-[1.5px] border-ink bg-white p-4",
         className,
       )}
     >

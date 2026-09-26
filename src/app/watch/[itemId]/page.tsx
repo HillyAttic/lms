@@ -37,10 +37,9 @@ export default async function WatchVideoPage({
   }
 
   return (
-    <div className="min-h-screen bg-white text-gray-900">
-      <div className="mx-auto w-full max-w-5xl px-4 py-8 sm:px-6">
+    <main className="bg-background pb-20 pt-8 sm:pt-10">
+      <div className="container">
         <Breadcrumb
-          className="mb-6"
           items={[
             { label: "Home", href: "/" },
             { label: "Courses", href: "/courses" },
@@ -48,29 +47,31 @@ export default async function WatchVideoPage({
           ]}
         />
 
-        <VideoPlayer
-          videoUrl={course.videoUrl}
-          thumbnailUrl={course.thumbnailUrl}
-          title={course.title || "Video course"}
-          className="mx-auto max-w-3xl"
-        />
+        <div className="mx-auto mt-8 max-w-4xl">
+          <VideoPlayer
+            videoUrl={course.videoUrl}
+            thumbnailUrl={course.thumbnailUrl}
+            title={course.title || "Video course"}
+            className="border-[1.5px] border-ink"
+          />
 
-        <h1 className="mt-6 text-2xl font-bold sm:text-3xl">
-          {course.title || "Untitled course"}
-        </h1>
+          <h1 className="display-2 mt-8 text-balance">
+            {course.title || "Untitled course"}
+          </h1>
 
-        {course.duration ? (
-          <p className="mt-2 text-sm text-gray-500">
-            {formatDuration(course.duration)}
-          </p>
-        ) : null}
+          {course.duration ? (
+            <p className="mt-3 text-sm font-semibold tracking-[0.08em] text-secondary uppercase">
+              {formatDuration(course.duration)}
+            </p>
+          ) : null}
 
-        {course.description ? (
-          <p className="mt-4 whitespace-pre-line text-gray-700">
-            {course.description}
-          </p>
-        ) : null}
+          {course.description ? (
+            <p className="mt-6 max-w-2xl leading-8 whitespace-pre-line text-secondary text-pretty">
+              {course.description}
+            </p>
+          ) : null}
+        </div>
       </div>
-    </div>
+    </main>
   );
 }

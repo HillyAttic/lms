@@ -14,65 +14,40 @@ export type MenuType = {
     href: string;
   }[];
 };
+
+/*
+ * Only routes that exist. The old menu carried an "All Pages" dropdown of
+ * `#` placeholders and a second link to /admin/login labelled "Sign Up";
+ * both are gone rather than restyled. `Blog` from the brief is absent because
+ * there is no public /blog route yet — see /admin/blogs for the editorial side.
+ */
 const menuList: MenuType[] = [
-  {
-    id: 1,
-    label: "Home",
-    href: "/",
-  },
-  {
-    id: 2,
-    label: "Courses",
-    href: "/courses",
-  },
-  {
-    id: 3,
-    label: "Repository",
-    href: "/repository",
-  },
-  {
-    id: 4,
-    label: "Leaderboard",
-    href: "/leaderboard",
-  },
-  {
-    id: 5,
-    label: "About",
-    href: "#",
-  },
-  {
-    id: 6,
-    label: "All Pages",
-    href: "#",
-    subMenu: [
-      { id: 1, label: "Contact", href: "/contact" },
-      { id: 2, label: "Blog", href: "#" },
-      { id: 4, label: "Admin Login", href: "/admin/login" },
-      { id: 5, label: "Sign Up", href: "/admin/login" },
-      { id: 6, label: "Login", href: "/admin/login" },
-      { id: 7, label: "Reset password", href: "#" },
-      { id: 8, label: "Terms and Conditions", href: "#" },
-      { id: 9, label: "Privacy Policy", href: "#" },
-      { id: 10, label: "404 Error", href: "/not-found" },
-    ],
-  },
+  { id: 1, label: "Home", href: "/" },
+  { id: 2, label: "Courses", href: "/courses" },
+  { id: 3, label: "Repository", href: "/repository" },
+  { id: 4, label: "Leaderboard", href: "/leaderboard" },
+  { id: 5, label: "About", href: "/about" },
+  { id: 6, label: "Contact", href: "/contact" },
 ];
 
 const Header = () => {
-
   return (
-    <header className="sticky top-0 left-0 z-50 w-full overflow-x-clip bg-primary py-4">
+    <header className="sticky top-0 left-0 z-50 w-full overflow-x-clip border-b-[1.5px] border-ink bg-background">
       <div className="container">
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-4 sm:gap-10">
-            <Link href={"/"} className="inline-block shrink-0 py-1.75">
-              <Logo className="text-purple-500 max-w-[120px] sm:max-w-none" />
+        <div className="flex h-16 items-center justify-between gap-3 lg:h-20">
+          <div className="flex items-center gap-8">
+            <Link
+              href="/"
+              aria-label="EdventureHub home"
+              className="shrink-0 py-1 transition-opacity hover:opacity-70"
+            >
+              <Logo />
             </Link>
             <Navigation data={menuList} />
           </div>
-          <div className="flex items-center gap-4 sm:gap-7">
-            <HeaderExtraInfo  />
-            <MobileNavigation data={menuList}  />
+          <div className="flex items-center gap-3 lg:gap-5">
+            <HeaderExtraInfo />
+            <MobileNavigation data={menuList} />
           </div>
         </div>
       </div>

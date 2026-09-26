@@ -222,7 +222,7 @@ export default function GameCourseDetailPage() {
       <div className="max-w-3xl space-y-6">
         {/* Game Preview */}
         {gamePreviewUrl && (
-          <div className="rounded-xl bg-white p-4 shadow-sm">
+          <div className="rounded-2xl border-[1.5px] border-ink bg-white p-4">
             <h3 className="mb-3 text-sm font-medium text-gray-700">
               Game Preview
             </h3>
@@ -231,7 +231,7 @@ export default function GameCourseDetailPage() {
         )}
 
         {/* Edit Form */}
-        <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+        <div className="rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6 lg:p-8">
           <form
             onSubmit={(e) => {
               e.preventDefault();

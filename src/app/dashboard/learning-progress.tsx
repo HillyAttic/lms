@@ -50,7 +50,7 @@ const LearningProgress = ({ stats }: { stats: Stats }) => {
           >
             {/* Only the ring turns; the count in the middle stays upright. */}
             <g fill="none" strokeWidth={THICKNESS} transform="rotate(-90 100 100)">
-              <circle cx="100" cy="100" r={RADIUS} stroke="#e1e4ea" />
+              <circle cx="100" cy="100" r={RADIUS} stroke="#e3e3df" />
               {arcs.map((arc) =>
                 arc.value === 0 ? null : (
                   <circle

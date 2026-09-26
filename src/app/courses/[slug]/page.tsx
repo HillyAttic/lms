@@ -104,8 +104,23 @@ export default async function CourseDetailPage({
   const instructor = publicCourse?.instructor?.name || siteName;
   const TypeIcon = content ? typeIcons[content.type] : null;
 
+  /* Narrow facts, read off the real record. Everything listed here is present
+     on the doc — nothing is invented to fill the panel out. */
+  const facts = [
+    { label: "Format", value: typeLabels[category as RepositoryContentType] || category },
+    duration ? { label: "Duration", value: calculateMinutes(duration) } : null,
+    content?.scormVersion
+      ? { label: "SCORM", value: content.scormVersion }
+      : null,
+    content?.interactivityLevel
+      ? { label: "Level", value: String(content.interactivityLevel) }
+      : null,
+    { label: "Instructor", value: instructor },
+    { label: "Price", value: price > 0 ? `$${price.toFixed(2)}` : "Free" },
+  ].filter(Boolean) as { label: string; value: string }[];
+
   return (
-    <main className="bg-gray-50 pt-16 pb-16 sm:pt-20 sm:pb-20 lg:pb-28">
+    <main className="bg-background pt-8 pb-16 sm:pt-10 sm:pb-20 lg:pb-28">
       <div className="container">
         <Breadcrumb
           items={[
@@ -115,9 +130,9 @@ export default async function CourseDetailPage({
           ]}
         />
 
-        <div className="mt-8 flex flex-col items-start gap-x-16 gap-y-10 lg:flex-row">
+        <div className="mt-8 grid items-start gap-10 lg:grid-cols-12 lg:gap-14">
           {/* Thumbnail */}
-          <div className="relative w-full shrink-0 lg:w-[46%]">
+          <div className="lg:col-span-7">
             {thumbnail ? (
               // Thumbnails are signed URLs from storage, which next/image is not
               // configured for.
@@ -125,32 +140,35 @@ export default async function CourseDetailPage({
               <img
                 src={thumbnail}
                 alt={title}
-                className="aspect-760/430 w-full rounded-[2rem] object-cover"
+                className="aspect-760/430 w-full rounded-[24px] border-[1.5px] border-ink object-cover"
               />
             ) : (
-              <div className="grid aspect-760/430 w-full place-items-center rounded-[2rem] bg-white text-gray-300">
+              <div className="grid aspect-760/430 w-full place-items-center rounded-[24px] border-[1.5px] border-ink bg-white text-gray-300">
                 <Star className="size-12" />
               </div>
             )}
+
+            {description && (
+              <div className="mt-10">
+                <h2 className="display-3">About this course</h2>
+                <p className="mt-4 max-w-2xl text-lg leading-8 text-secondary text-pretty">
+                  {description}
+                </p>
+              </div>
+            )}
+
+            <CourseReviews reviews={reviews} />
           </div>
 
-          {/* Detail */}
-          <div className="w-full lg:flex-1">
-            <h1 className="font-mulish text-[clamp(1.75rem,1.4rem+1.4vw,2.75rem)] leading-tight font-bold">
-              {title}
-            </h1>
-
-            <p className="mt-3 text-lg text-secondary">
-              By{" "}
-              <span className="font-semibold text-foreground">{instructor}</span>
-            </p>
-
+          {/* Sidebar: the facts that decide the click. Sticky on desktop so the
+              Enrol action stays reachable past a long description. */}
+          <aside className="lg:col-span-5 lg:sticky lg:top-28">
             {category && (
-              <span className="mt-4 inline-flex items-center gap-1.5 rounded-full bg-purple-50 px-3.5 py-1.5 text-sm font-semibold text-purple-700">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-accent px-3.5 py-1.5 text-[0.6875rem] font-bold tracking-[0.08em] text-ink uppercase">
                 {TypeIcon ? (
-                  <TypeIcon className="size-4 stroke-[0.75]" />
+                  <TypeIcon className="size-4" />
                 ) : (
-                  <BookOpen className="size-4 stroke-[0.75]" />
+                  <BookOpen className="size-4" />
                 )}
                 {typeLabels[category as RepositoryContentType] ||
                   categoryLabels[category] ||
@@ -158,37 +176,37 @@ export default async function CourseDetailPage({
               </span>
             )}
 
-            {description && (
-              <p className="mt-6 text-[clamp(1rem,0.92rem+0.35vw,1.375rem)] leading-relaxed text-secondary">
-                {description}
-              </p>
-            )}
+            <h1 className="display-2 mt-5 text-balance">{title}</h1>
 
-            <div className="mt-6 flex flex-wrap items-center gap-x-4 gap-y-2">
-              <StarRating
-                slug={slug}
-                rating={rating}
-                count={ratingCount}
-              />
+            <div className="mt-5 flex flex-wrap items-center gap-x-4 gap-y-2">
+              <StarRating slug={slug} rating={rating} count={ratingCount} />
               {duration ? (
-                <span className="inline-flex items-center gap-1 text-sm text-gray-500">
+                <span className="inline-flex items-center gap-1.5 text-sm text-secondary">
                   <Clock className="size-4" />
                   {calculateMinutes(duration)}
                 </span>
               ) : null}
-              <span className="text-gray-300">|</span>
-              <span className="text-sm font-bold tracking-wide text-emerald-500 uppercase">
-                {price > 0 ? `$${price.toFixed(2)}` : "Free"}
-              </span>
             </div>
+
+            <dl className="mt-8 border-t-[1.5px] border-ink">
+              {facts.map((fact) => (
+                <div
+                  key={fact.label}
+                  className="flex items-baseline justify-between gap-4 border-b-[1.5px] border-ink/15 py-3.5"
+                >
+                  <dt className="text-xs font-semibold tracking-[0.08em] text-secondary uppercase">
+                    {fact.label}
+                  </dt>
+                  <dd className="text-right font-semibold">{fact.value}</dd>
+                </div>
+              ))}
+            </dl>
 
             <div className="mt-8">
               <CourseActions slug={slug} launchable={!!content} />
             </div>
-          </div>
+          </aside>
         </div>
-
-        <CourseReviews reviews={reviews} />
       </div>
     </main>
   );

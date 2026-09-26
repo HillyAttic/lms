@@ -1,5 +1,5 @@
 "use client";
-import { ChevronDown } from "@/lib/icons";
+import { PlusIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { createContext, useContext, useState, ReactNode } from "react";
 import { motion, AnimatePresence } from "framer-motion";
@@ -155,7 +155,7 @@ export const AccordionItem = ({
       <div
         data-state={isOpen ? "active" : "inactive"}
         className={cn(
-          `rounded-[20px] bg-gray-50 px-2 transition-all duration-300 data-[state=active]:pb-2`,
+          `border-b-[1.5px] border-ink transition-colors duration-300`,
           className,
         )}
       >
@@ -180,16 +180,20 @@ export const AccordionTrigger = ({
       data-state={isOpen ? "active" : "inactive"}
       type="button"
       className={cn(
-        `flex w-full capitalize items-start justify-between gap-x-3 px-4 pt-6 pb-6 text-start leading-6 font-medium tracking-base transition-all duration-300 data-[state=active]:pb-4`,
+        `flex w-full items-center justify-between gap-4 py-6 text-start text-lg font-semibold transition-colors duration-300 hover:text-secondary sm:py-7 sm:text-xl`,
         className,
       )}
     >
       {children}
-      <ChevronDown
-        className={`shrink-0 text-secondary transition-transform duration-200 ${
-          isOpen ? "rotate-180" : ""
-        }`}
-      />
+      <span
+        aria-hidden="true"
+        className={cn(
+          "grid size-10 shrink-0 place-items-center rounded-full border-[1.5px] border-ink transition-transform duration-300",
+          isOpen ? "rotate-45 bg-accent" : "bg-transparent",
+        )}
+      >
+        <PlusIcon />
+      </span>
     </button>
   );
 };
@@ -228,7 +232,7 @@ export const AccordionContent = ({
           <div
             data-state={isOpen ? "active" : "inactive"}
             className={cn(
-              `overflow-hidden rounded-2xl bg-primary p-4 leading-6 tracking-base text-secondary transition-all duration-200`,
+              `max-w-3xl pb-7 leading-7 text-secondary`,
               className,
             )}
           >

@@ -213,7 +213,7 @@ export default function BlogsPage() {
           {/* Mobile card view */}
           <div className="space-y-3 md:hidden">
             {blogs.map((blog) => (
-              <div key={blog.id} className="rounded-xl bg-white p-4 shadow-sm">
+              <div key={blog.id} className="rounded-2xl border-[1.5px] border-ink bg-white p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
@@ -243,7 +243,7 @@ export default function BlogsPage() {
                       <div className="truncate font-medium text-gray-900">
                         {blog.title}
                       </div>
-                      <div className="truncate text-sm text-gray-500">
+                      <div className="truncate text-sm text-gray-600">
                         {blog.shortDescription}
                       </div>
                     </div>
@@ -267,10 +267,10 @@ export default function BlogsPage() {
                   {blog.topic && (
                     <Badge label={blog.topic} variant="blue" />
                   )}
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-600">
                     {blog.author?.name}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-gray-600">
                     · {formatDate(blog.createdAt)}
                   </span>
                 </div>
@@ -279,7 +279,7 @@ export default function BlogsPage() {
           </div>
 
           {/* Desktop table view */}
-          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+          <div className="hidden overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white md:block">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b bg-gray-50">
@@ -300,7 +300,7 @@ export default function BlogsPage() {
                     </th>
                     <th
                       onClick={() => handleSort("title")}
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-600 hover:text-gray-700"
                     >
                       Title{" "}
                       {sortBy === "title" &&
@@ -308,7 +308,7 @@ export default function BlogsPage() {
                     </th>
                     <th
                       onClick={() => handleSort("topic")}
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-600 hover:text-gray-700"
                     >
                       Topic{" "}
                       {sortBy === "topic" &&
@@ -316,24 +316,24 @@ export default function BlogsPage() {
                     </th>
                     <th
                       onClick={() => handleSort("status")}
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-600 hover:text-gray-700"
                     >
                       Status{" "}
                       {sortBy === "status" &&
                         (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
-                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-600">
                       Author
                     </th>
                     <th
                       onClick={() => handleSort("createdAt")}
-                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
+                      className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-600 hover:text-gray-700"
                     >
                       Created{" "}
                       {sortBy === "createdAt" &&
                         (sortOrder === "asc" ? "↑" : "↓")}
                     </th>
-                    <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-500">
+                    <th className="px-6 py-3 text-right text-xs font-medium uppercase text-gray-600">
                       Actions
                     </th>
                   </tr>
@@ -372,7 +372,7 @@ export default function BlogsPage() {
                             <div className="font-medium text-gray-900">
                               {blog.title}
                             </div>
-                            <div className="max-w-xs truncate text-sm text-gray-500">
+                            <div className="max-w-xs truncate text-sm text-gray-600">
                               {blog.shortDescription}
                             </div>
                           </div>

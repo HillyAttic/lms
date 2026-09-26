@@ -189,7 +189,7 @@ export default function BlogEditPage() {
         }
       />
 
-      <div className="max-w-3xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+      <div className="max-w-3xl rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6 lg:p-8">
         <form onSubmit={handleSave} className="space-y-6">
           {/* Feature Image */}
           <div>
@@ -215,10 +215,10 @@ export default function BlogEditPage() {
               ) : (
                 <label className="w-40 h-28 border-2 border-dashed border-gray-300 rounded-lg flex flex-col items-center justify-center cursor-pointer hover:border-purple-500 transition-colors">
                   <Image className="w-6 h-6 text-gray-400 mb-1" />
-                  <span className="text-xs text-gray-500">Upload</span>
+                  <span className="text-xs text-gray-600">Upload</span>
                 </label>
               )}
-              <div className="text-sm text-gray-500">
+              <div className="text-sm text-gray-600">
                 <p>Enter an image URL</p>
                 <p>Supported formats: JPG, PNG, GIF</p>
               </div>
@@ -391,11 +391,11 @@ export default function BlogEditPage() {
             </h3>
             <div className="grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
               <div>
-                <span className="text-gray-500">Slug:</span>{" "}
+                <span className="text-gray-600">Slug:</span>{" "}
                 <span className="text-gray-900">{blog.slug?.current}</span>
               </div>
               <div>
-                <span className="text-gray-500">Created:</span>{" "}
+                <span className="text-gray-600">Created:</span>{" "}
                 <span className="text-gray-900">
                   {blog.createdAt?.seconds
                     ? new Date(

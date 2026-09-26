@@ -1,24 +1,45 @@
-export const Logo = ({ className }: { className?: string }) => {
-  return (
-    <img
-      src="/images/branding_edVenture-5.png"
-      alt="edVenture Logo"
-      className={className}
-      width={137}
-      height={33}
-    />
-  );
-};
+/*
+ * EdventureHub mark: three growing bars on a lime tile — reads as an "E", as
+ * stacked modules, and as growth. Inline SVG on purpose so it stays crisp and
+ * inherits `currentColor` on both the light and dark surfaces.
+ */
+export const LogoMark = ({ className }: { className?: string }) => (
+  <svg
+    viewBox="0 0 32 32"
+    width={32}
+    height={32}
+    aria-hidden="true"
+    className={className}
+  >
+    <rect width="32" height="32" rx="9" fill="var(--accent)" />
+    <rect x="9" y="8.4" width="8" height="3.6" rx="1" fill="var(--ink)" />
+    <rect x="9" y="14.2" width="11.5" height="3.6" rx="1" fill="var(--ink)" />
+    <rect x="9" y="20" width="14" height="3.6" rx="1" fill="var(--ink)" />
+  </svg>
+);
 
-export const LogoWhite = ({ className }: { className?: string }) => {
-  return (
-    <img
-      src="/images/logo.png"
-      alt="Logo"
-      className={className}
-    />
-  );
-};
+export const Logo = ({ className }: { className?: string }) => (
+  <span
+    className={`inline-flex items-center gap-2 leading-none ${className ?? ""}`}
+  >
+    <LogoMark className="h-8 w-8 shrink-0" />
+    <span className="text-[1.4rem] font-bold tracking-[-0.045em]">
+      edventure<span className="marker">hub</span>
+    </span>
+  </span>
+);
+
+/* Same mark, for the dark footer. */
+export const LogoWhite = ({ className }: { className?: string }) => (
+  <span
+    className={`inline-flex items-center gap-2 leading-none text-white ${className ?? ""}`}
+  >
+    <LogoMark className="h-8 w-8 shrink-0" />
+    <span className="text-[1.4rem] font-bold tracking-[-0.045em]">
+      edventure<span className="marker">hub</span>
+    </span>
+  </span>
+);
 
 export const LogoIcon = () => {
   return (

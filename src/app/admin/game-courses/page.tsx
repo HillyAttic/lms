@@ -221,7 +221,7 @@ export default function GameCoursesPage() {
             {courses.map((course) => (
               <div
                 key={course.id}
-                className="rounded-xl bg-white p-4 shadow-sm"
+                className="rounded-2xl border-[1.5px] border-ink bg-white p-4"
               >
                 <div className="flex items-start gap-3">
                   <button
@@ -292,7 +292,7 @@ export default function GameCoursesPage() {
           </div>
 
           {/* Desktop Table View */}
-          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+          <div className="hidden overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white md:block">
             <table className="w-full">
               <thead className="border-b bg-gray-50">
                 <tr>

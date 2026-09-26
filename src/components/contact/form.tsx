@@ -31,41 +31,41 @@ const ContactForm = () => {
   }, [state]);
 
   return (
-    <section className="bg-gray-50 py-12 sm:py-16">
+    <section className="py-12 sm:py-16">
       <div className="container grid gap-8 lg:grid-cols-[1fr_360px]">
         <form
           ref={formRef}
           action={action}
-          className="rounded-3xl bg-primary p-6 shadow-xs sm:p-8"
+          className="card-brutal bg-white p-6 sm:p-8"
         >
-          <h2 className="text-2xl font-semibold tracking-[-0.48px]">Send us a message</h2>
-          <p className="mt-2 text-sm tracking-sm text-secondary">
+          <h2 className="display-3">Send us a message</h2>
+          <p className="mt-3 text-sm text-secondary">
             Fill in the form and our team will reply within one business day.
           </p>
 
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <label className="block text-sm tracking-sm">
-              <span className="mb-2 block font-medium">Name</span>
+          <div className="mt-7 grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="mb-2 block font-semibold">Name</span>
               <Input name="name" required maxLength={100} placeholder="Your name" />
             </label>
-            <label className="block text-sm tracking-sm">
-              <span className="mb-2 block font-medium">Email</span>
+            <label className="block text-sm">
+              <span className="mb-2 block font-semibold">Email</span>
               <Input name="email" type="email" required maxLength={200} placeholder="you@example.com" />
             </label>
           </div>
 
-          <label className="mt-4 block text-sm tracking-sm">
-            <span className="mb-2 block font-medium">Subject</span>
+          <label className="mt-4 block text-sm">
+            <span className="mb-2 block font-semibold">Subject</span>
             <Input name="subject" maxLength={150} placeholder="How can we help?" />
           </label>
 
-          <label className="mt-4 block text-sm tracking-sm">
-            <span className="mb-2 block font-medium">Message</span>
+          <label className="mt-4 block text-sm">
+            <span className="mb-2 block font-semibold">Message</span>
             <Textarea name="message" required maxLength={5000} placeholder="Tell us a bit more…" />
           </label>
 
-          <Button type="submit" size="lg" disabled={pending} className="mt-6 max-sm:w-full">
-            {pending ? "Sending…" : "Send Message"}
+          <Button type="submit" variant="accent" size="lg" disabled={pending} className="mt-6 max-sm:w-full">
+            {pending ? "Sending…" : "Send message"}
           </Button>
         </form>
 
@@ -73,19 +73,24 @@ const ContactForm = () => {
           {details.map(({ icon, label, value, href }) => (
             <div
               key={label}
-              className="flex items-start gap-4 rounded-3xl bg-primary p-6 shadow-xs"
+              className="card-brutal flex items-start gap-4 bg-white p-6"
             >
-              <span className="flex size-10 shrink-0 items-center justify-center rounded-full bg-purple-50 text-purple-500">
+              <span className="grid size-10 shrink-0 place-items-center rounded-full border-[1.5px] border-ink bg-accent text-ink">
                 {icon}
               </span>
               <div>
-                <p className="text-sm tracking-sm text-secondary">{label}</p>
+                <p className="text-xs font-semibold tracking-[0.08em] text-secondary uppercase">
+                  {label}
+                </p>
                 {href ? (
-                  <a href={href} className="mt-1 block font-medium hover:text-purple-500">
+                  <a
+                    href={href}
+                    className="mt-1 block font-semibold underline-offset-4 hover:underline"
+                  >
                     {value}
                   </a>
                 ) : (
-                  <p className="mt-1 font-medium">{value}</p>
+                  <p className="mt-1 font-semibold">{value}</p>
                 )}
               </div>
             </div>

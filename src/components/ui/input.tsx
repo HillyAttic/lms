@@ -12,7 +12,7 @@ const Input = ({ type, className, ref, dataState, ...props }: InputProps) => {
       type={type}
       ref={ref}
       className={cn(
-        "h-11 w-full rounded-[999px] border border-gray-200 bg-primary px-5 py-2.5 text-sm leading-5 tracking-sm shadow-xs outline-0 placeholder:text-gray-400 focus:border-purple-200 focus:shadow-[0_0_0_4px_rgba(70,95,255,0.12)] data-[state=error]:border-[#FB3748] sm:h-12",
+        "h-11 w-full rounded-full border-[1.5px] border-ink/15 bg-white px-5 py-2.5 text-sm leading-5 outline-0 placeholder:text-gray-400 focus-visible:border-ink focus-visible:outline-none data-[state=error]:border-[#FB3748] sm:h-12",
         className,
       )}
       {...props}

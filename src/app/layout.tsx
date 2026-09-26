@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { siteName, siteUrl } from "@/utils/envExport";
-import { Inter, Inter_Tight, Mulish } from "next/font/google";
+import { Poppins } from "next/font/google";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { AuthProvider } from "@/lib/auth-context";
@@ -10,18 +9,15 @@ import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 import AdminLayoutGuard from "@/components/admin-layout-guard";
 
-const interTight = Inter_Tight({
-  variable: "--font-inter-tight",
+/*
+ * One family for the whole app. The three variable names the template shipped
+ * with are all pointed at Poppins so existing `font-mulish` / `font-inter`
+ * call sites keep working — and we download one font instead of three.
+ */
+const poppins = Poppins({
+  variable: "--font-poppins",
   subsets: ["latin"],
-});
-
-const inter = Inter({
-  variable: "--font-inter",
-  subsets: ["latin"],
-});
-const mulish = Mulish({
-  variable: "--font-mulish",
-  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
 });
 
 export const metadata: Metadata = {
@@ -65,9 +61,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${interTight.variable} ${mulish.variable} ${inter.variable} antialiased`}
-      >
+      <body className={poppins.variable}>
         <AuthProvider>
           <AdminLayoutGuard>
             {children}

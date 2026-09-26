@@ -37,9 +37,8 @@ interface SelectProps {
   defaultValue?: string;
 }
 
-interface SelectTriggerProps {
-  children: ReactNode;
-  className?: string;
+interface SelectTriggerProps
+  extends Omit<React.ComponentProps<"button">, "value"> {
   dataState?: "error" | "default" | "success";
 }
 
@@ -179,6 +178,7 @@ export const SelectTrigger = ({
   children,
   className,
   dataState,
+  ...props
 }: SelectTriggerProps) => {
   const { isOpen, setIsOpen, refs } = useSelectContext();
 
@@ -187,9 +187,12 @@ export const SelectTrigger = ({
       ref={refs.setReference}
       type="button"
       data-state={dataState}
+      aria-expanded={isOpen}
+      aria-haspopup="listbox"
       onClick={() => setIsOpen(!isOpen)}
+      {...props}
       className={cn(
-        "flex h-11 w-full items-center justify-between gap-2.5 rounded-full border border-gray-200 bg-primary px-5 py-2.5 text-secondary transition-all hover:bg-slate-50 focus:border-purple-200 focus:shadow-[0_0_0_4px_rgba(70,95,255,0.12)] data-[state=error]:border-[#FB3748] sm:h-12",
+        "flex h-11 w-full items-center justify-between gap-2.5 rounded-full border-[1.5px] border-ink/15 bg-white px-5 py-2.5 text-secondary transition-colors hover:border-ink focus-visible:border-ink focus-visible:outline-none data-[state=error]:border-[#FB3748] sm:h-12",
         className,
       )}
     >
@@ -238,7 +241,7 @@ export const SelectContent = ({ children, className }: SelectContentProps) => {
       ref={refs.setFloating}
       style={floatingStyles}
       className={cn(
-        "absolute z-50 mt-1 w-full min-w-max overflow-hidden rounded-2xl bg-primary shadow-2xl",
+        "absolute z-50 mt-1 w-full min-w-max overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white shadow-lg",
         className,
       )}
     >
@@ -258,9 +261,9 @@ export const SelectItem = ({ value, children, className }: SelectItemProps) => {
       data-state={isSelected ? "selected" : "default"}
       onClick={() => handleSelect(value)}
       className={cn(
-        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm leading-6 font-medium text-secondary capitalize transition-all hover:bg-gray-50 hover:text-purple-500",
+        "flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm leading-6 font-medium text-secondary capitalize transition-colors hover:bg-muted hover:text-ink",
         className,
-        isSelected ? "bg-gray-50 text-purple-500" : "",
+        isSelected ? "bg-accent text-ink" : "",
       )}
     >
       <span>{children}</span>

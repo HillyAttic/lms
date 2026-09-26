@@ -1,40 +1,37 @@
-import {
-  CertificateCheckFill,
-  ClockFill,
-  GraduationHatFill,
-} from "@/lib/icons";
-import { ReactElement } from "react";
-
+/*
+ * Titles and copy are the template's own; the icon and stock-thumbnail fields
+ * are gone because the new section is typographic — numbering carries the
+ * hierarchy instead of icon tiles.
+ */
 type featureType = {
   id: number;
-  icon: ReactElement;
   title: string;
   description: string;
-  thumbnail: string;
 };
+
 export const featuresData: featureType[] = [
   {
     id: 1,
-    icon: <GraduationHatFill />,
-    title: "Expert Instructors",
+    title: "Learn from experts",
     description:
       "Earn from experienced professionals who bring real-world expertise to every lesson.",
-    thumbnail: "/images/features/img-1.png",
   },
   {
     id: 2,
-    icon: <ClockFill />,
-    title: "Interactive Learning Experience",
+    title: "Learn by doing",
     description:
-      "Engage with video lessons, assignments, and quizzes learning fun and practical.",
-    thumbnail: "/images/features/img-2.png",
+      "Engage with video lessons, assignments and quizzes that make learning practical from the first module.",
   },
   {
     id: 3,
-    icon: <CertificateCheckFill />,
-    title: "Recognized Certificates",
+    title: "Build real skills",
     description:
-      "Boost your portfolio with verified certificates after completing courses.",
-    thumbnail: "/images/features/img-3.png",
+      "Every course is built around work you can show — projects, modules and assessments, not passive watching.",
+  },
+  {
+    id: 4,
+    title: "Earn recognised certificates",
+    description:
+      "Boost your portfolio with verified certificates issued to your dashboard after you complete a course.",
   },
 ];

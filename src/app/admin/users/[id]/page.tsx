@@ -243,7 +243,7 @@ export default function UserDetailPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* User Profile */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6">
             <div className="text-center mb-6">
               <div className="h-20 w-20 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
                 <span className="text-2xl font-bold text-purple-600">
@@ -313,7 +313,7 @@ export default function UserDetailPage() {
         {/* Edit Form & Progress */}
         <div className="lg:col-span-2 space-y-6">
           {/* Edit Form */}
-          <div className="rounded-xl bg-white p-4 shadow-sm sm:p-6">
+          <div className="rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Edit User</h3>
             <form onSubmit={handleSave} className="space-y-4">
               <div>
@@ -371,7 +371,7 @@ export default function UserDetailPage() {
           </div>
 
           {/* Course Progress */}
-          <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white">
             <div className="border-b px-4 py-4 sm:px-6">
               <h3 className="text-lg font-semibold text-gray-900">Course Progress</h3>
             </div>

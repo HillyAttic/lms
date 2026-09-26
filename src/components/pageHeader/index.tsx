@@ -6,21 +6,16 @@ type PropsType = {
   subTitle: string;
   description: string;
 };
+
+/*
+ * Inner-page masthead. Left-aligned and rule-bounded on the page ground — the
+ * old version centred a background photograph behind the copy.
+ */
 const PageHeader = ({ children, subTitle, description }: PropsType) => {
   return (
-    <section
-      className="overflow-hidden bg-contain bg-bottom bg-no-repeat pt-20 pb-17"
-      style={{
-        backgroundImage: `url('/images/page-header/page-header-bg.png')`,
-      }}
-    >
+    <section className="border-b-[1.5px] border-ink bg-background pt-14 pb-12 sm:pt-20 sm:pb-16">
       <div className="container">
-        <SectionTitle
-          className="flex flex-col items-center text-center"
-          subTitle={subTitle}
-          description={description}
-          descriptionClass="max-w-[570px]"
-        >
+        <SectionTitle subTitle={subTitle} description={description}>
           {children}
         </SectionTitle>
       </div>

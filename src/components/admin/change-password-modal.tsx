@@ -63,7 +63,7 @@ export default function ChangePasswordModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-xl bg-white">
+      <div className="w-full max-w-md rounded-2xl border-[1.5px] border-ink bg-white">
         <div className="flex items-center justify-between border-b p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-purple-100">

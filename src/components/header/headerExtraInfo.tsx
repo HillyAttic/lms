@@ -1,170 +1,133 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Button from "../ui/button";
-import { CloseIcon, SearchIcon } from "@/lib/icons";
-import Input from "../ui/input";
-import { cn } from "@/lib/utils";
-import Link from "next/link";
 import ButtonArrow from "../ui/buttonArrow";
+import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { canAccessAdminPanel } from "@/lib/roles";
+import { ChevronDown } from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
+/*
+ * Auth-aware header actions. Unauthenticated: Login (quiet) + Start Learning
+ * (lime). Authenticated: the avatar menu, which keeps every destination the
+ * previous purple dropdown offered.
+ *
+ * The template's decorative search box is gone — it had no value/onChange and
+ * filtered nothing; real search lives on /courses.
+ */
 const HeaderExtraInfo = () => {
-  const [searchBarShow, setSearchBarShow] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
   const { user, role, signOut } = useAuth();
 
-  const handleSignOut = async () => {
-    await signOut();
-    setDropdownOpen(false);
-  };
+  useEffect(() => {
+    if (!dropdownOpen) return;
+    const onPointerDown = (e: MouseEvent) => {
+      if (!menuRef.current?.contains(e.target as Node)) setDropdownOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setDropdownOpen(false);
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, [dropdownOpen]);
 
-  return (
-    <div className="flex items-center gap-x-4">
-      <div>
-        {/* search input field */}
-        <div
-          className={cn(
-            "relative z-50 h-12 w-full max-lg:absolute max-lg:top-0 max-lg:left-0 max-lg:z-999 lg:max-w-60",
-            searchBarShow ? "max-lg:block" : "max-lg:hidden",
-          )}
+  if (!user) {
+    return (
+      <div className="flex items-center gap-2 lg:gap-4">
+        <Link
+          href="/admin/login"
+          className="hidden text-sm font-medium text-secondary underline-offset-4 transition-colors hover:text-ink hover:underline lg:block"
         >
-          <span className="absolute top-1/2 left-4 -translate-y-1/2 text-gray-400">
-            <SearchIcon />
-          </span>
-          <button
-            onClick={() => setSearchBarShow(false)}
-            className="absolute top-1/2 right-3 z-30 flex h-6 w-6 -translate-y-1/2 items-center justify-center text-gray-600 lg:hidden"
-          >
-            <CloseIcon />
-          </button>
-          <Input
-            placeholder="Search course here..."
-            className="h-full bg-gray-50 pr-7 pl-11 max-lg:rounded-none shadow-none"
-          />
-        </div>
-        {searchBarShow && (
-          <div className="absolute top-0 left-0 z-30 h-full min-h-screen w-full bg-gray-50"></div>
-        )}
-        {/* the search icon show less than larger devices */}
-        <button
-          onClick={() => setSearchBarShow(true)}
-          className="flex h-4 w-4 items-center justify-center lg:hidden"
-        >
-          <SearchIcon />
-        </button>
-      </div>
-
-      {/* Auth UI */}
-      {user ? (
-        <div className="flex items-center gap-x-3">
-          {/* Admin button - shown next to profile when user is admin */}
-          {canAccessAdminPanel(role) && (
-            <Link
-              href="/admin"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-2 h-12 px-4 rounded-lg border-2 border-purple-600 text-purple-600 hover:bg-purple-50 transition-colors"
-            >
-              <svg
-                className="w-5 h-5"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"
-                />
-              </svg>
-              <span className="hidden lg:block text-sm font-medium">
-                Admin Panel
-              </span>
-            </Link>
-          )}
-
-          {/* Profile button + dropdown wrapper */}
-          <div className="relative">
-            <button
-              onClick={() => setDropdownOpen(!dropdownOpen)}
-              className="flex items-center gap-2 h-12 px-4 rounded-lg bg-purple-600 text-white hover:bg-purple-700 transition-colors"
-            >
-              <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center text-sm font-medium">
-                {user.email?.[0].toUpperCase() || "U"}
-              </div>
-              <span className="hidden lg:block text-sm font-medium">
-                {user.displayName || user.email?.split("@")[0] || "User"}
-              </span>
-            </button>
-
-            {dropdownOpen && (
-              <>
-                <div
-                  className="fixed inset-0 z-40"
-                  onClick={() => setDropdownOpen(false)}
-                />
-                <div className="absolute right-0 top-full mt-2 w-56 rounded-xl bg-white shadow-xl border border-gray-100 py-3 z-50">
-                  <div className="px-4 py-3 border-b border-gray-100">
-                    <p className="text-sm font-medium text-gray-900 truncate">
-                      {user.email}
-                    </p>
-                    <p className="text-xs text-gray-500 capitalize mt-0.5">
-                      {role || "learner"}
-                    </p>
-                  </div>
-
-                  <Link
-                    href="/dashboard"
-                    onClick={() => setDropdownOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Profile
-                  </Link>
-
-                  <Link
-                    href="/repository"
-                    onClick={() => setDropdownOpen(false)}
-                    className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                  >
-                    Repository
-                  </Link>
-
-                  {canAccessAdminPanel(role) && (
-                    <Link
-                      href="/admin"
-                      onClick={() => setDropdownOpen(false)}
-                      className="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50 transition-colors"
-                    >
-                      Admin Panel
-                    </Link>
-                  )}
-
-                  <button
-                    onClick={handleSignOut}
-                    className="w-full text-left px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
-                  >
-                    Sign Out
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      ) : (
-        <Button
-          asChild
-          className="hidden h-12 justify-between gap-2.5 py-1.5 pr-1.5 pl-6 text-base tracking-base lg:flex"
-        >
-          <Link href={"/admin/login"}>
-            Login / Sign up
+          Login
+        </Link>
+        <Button asChild variant="accent" className="hidden lg:inline-flex">
+          <Link href="/admin/login">
+            Start Learning
             <ButtonArrow />
           </Link>
         </Button>
-      )}
+      </div>
+    );
+  }
+
+  const initial = (user.displayName || user.email || "U").charAt(0).toUpperCase();
+
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative" ref={menuRef}>
+        <button
+          type="button"
+          onClick={() => setDropdownOpen((v) => !v)}
+          aria-expanded={dropdownOpen}
+          aria-haspopup="menu"
+          className="flex items-center gap-2 rounded-full border-[1.5px] border-ink bg-white py-1 pr-3 pl-1 transition-colors hover:bg-muted"
+        >
+          <span className="grid size-8 shrink-0 place-items-center rounded-full bg-accent text-sm font-bold text-ink">
+            {initial}
+          </span>
+          <span className="hidden max-w-32 truncate text-sm font-medium lg:block">
+            {user.displayName || user.email?.split("@")[0] || "Account"}
+          </span>
+          <ChevronDown
+            className={cn(
+              "hidden size-4 transition-transform duration-200 lg:block",
+              dropdownOpen && "rotate-180",
+            )}
+          />
+        </button>
+
+        {dropdownOpen && (
+          <div
+            role="menu"
+            className="absolute right-0 top-full z-50 mt-3 w-60 overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white shadow-lg"
+          >
+            <div className="border-b-[1.5px] border-ink/10 px-4 py-3">
+              <p className="truncate text-sm font-semibold">{user.email}</p>
+              <p className="mt-0.5 text-xs text-secondary capitalize">
+                {role || "learner"}
+              </p>
+            </div>
+
+            <div className="p-1.5">
+              {[
+                { label: "Dashboard", href: "/dashboard" },
+                { label: "Repository", href: "/repository" },
+                { label: "Leaderboard", href: "/leaderboard" },
+                ...(canAccessAdminPanel(role)
+                  ? [{ label: "Admin Panel", href: "/admin" }]
+                  : []),
+              ].map(({ label, href }) => (
+                <Link
+                  key={href}
+                  href={href}
+                  role="menuitem"
+                  onClick={() => setDropdownOpen(false)}
+                  className="block rounded-xl px-3 py-2.5 text-sm font-medium text-secondary transition-colors hover:bg-muted hover:text-ink"
+                >
+                  {label}
+                </Link>
+              ))}
+
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setDropdownOpen(false);
+                  void signOut();
+                }}
+                className="mt-1 block w-full rounded-xl border-t-[1.5px] border-ink/10 px-3 py-2.5 text-left text-sm font-medium text-red-600 transition-colors hover:bg-red-50"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 };

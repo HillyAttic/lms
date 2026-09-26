@@ -39,7 +39,7 @@ export default function ConfirmDialog({
 
   return (
     <div className={cn("fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4", className)}>
-      <div className="w-full max-w-md rounded-xl bg-white">
+      <div className="w-full max-w-md rounded-2xl border-[1.5px] border-ink bg-white">
         <div className="flex items-center justify-between border-b p-4 sm:p-6">
           <h2 className="text-lg font-bold text-gray-900 sm:text-xl">{title}</h2>
           <button

@@ -1,4 +1,3 @@
-import { CircleStop } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { ReactNode } from "react";
 
@@ -11,6 +10,12 @@ type SectionTitleProps = {
   descriptionClass?: string;
   subTitleClass?: string;
 };
+
+/*
+ * Editorial section header. `subTitle` renders as a numbered-looking badge
+ * rather than the old pill-with-gradient-border, and the heading takes the
+ * display scale.
+ */
 const SectionTitle = ({
   children,
   subTitle,
@@ -25,30 +30,23 @@ const SectionTitle = ({
       {subTitle ? (
         <div
           className={cn(
-            "btn-gradient-border mb-4 inline-flex max-h-7 items-center gap-[4.5px] rounded-full py-1 pr-3 pl-1.5 text-secondary",
+            "mb-5 inline-flex items-center gap-2 rounded-full border-[1.5px] border-ink px-3 py-1",
             subTitleClass,
           )}
         >
-          <div className="flex h-4 w-4 items-center justify-center">
-            <CircleStop />
-          </div>
-          <p className="text-sm leading-5 font-medium tracking-sm">
+          <span className="size-1.5 rounded-full bg-accent" aria-hidden="true" />
+          <p className="text-[0.6875rem] leading-4 font-semibold tracking-[0.08em] text-ink uppercase">
             {subTitle}
           </p>
         </div>
       ) : null}
-      <h2
-        className={cn(
-          "text-[clamp(2rem,1.6087rem+1.7391vw,3rem)] `leading-tight font-semibold tracking-[-0.96px]",
-          titleClassName,
-        )}
-      >
+      <h2 className={cn("display-2 text-balance", titleClassName)}>
         {children}
       </h2>
       {description ? (
         <p
           className={cn(
-            "mt-4 max-w-119.5 leading-6 tracking-base text-secondary",
+            "mt-5 max-w-140 text-base leading-7 text-secondary text-pretty",
             descriptionClass,
           )}
         >

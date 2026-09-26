@@ -2,47 +2,66 @@ import Button from "../ui/button";
 import Link from "next/link";
 import ButtonArrow from "../ui/buttonArrow";
 import { cn } from "@/lib/utils";
+import { CtaIllustration } from "../illustrations";
+import Reveal from "../ui/reveal";
 
+/*
+ * Ink panel on the off-white ground, with the drawn artwork bleeding off the
+ * right edge. Same section is reused at the foot of most inner pages, so it
+ * takes a `className` for spacing only.
+ */
 const Cta = ({ className }: { className?: string }) => {
   return (
-    <section className={cn("pt-16 sm:pt-20 lg:pt-[112px]", className)}>
+    <section className={cn("pt-16 sm:pt-20 lg:pt-28", className)}>
       <div className="container">
-        <div
-          className="rounded-[36px] bg-cover bg-center bg-no-repeat px-4 py-16 sm:py-24 lg:py-[120px]"
-          style={{ backgroundImage: `url('/images/cta/bg-img.png')` }}
-        >
-          <div className="flex flex-col items-center text-center">
-            <h2 className="text-[clamp(2rem,1.6087rem+1.7391vw,3rem)] leading-[1.25] font-semibold tracking-[-0.96px]">
-              Start Your Learning Journey Today
-            </h2>
-            <p className="mt-3 max-w-[426px] tracking-sm text-secondary sm:text-lg sm:leading-7">
-              Gain new skills, explore creative fields, and achieve your career
-              goals — all in one platform.
-            </p>
-            <div className="mt-12 flex flex-col items-center gap-4 max-sm:w-full sm:flex-row">
-              <Button
-                asChild
-                size="lg"
-                className="py-1.5 pr-1.5 pl-6 max-lg:w-full"
+        <Reveal>
+          <div className="card-brutal relative overflow-hidden bg-dark text-white">
+            <div className="relative z-10 grid items-center lg:grid-cols-12">
+              <div className="p-8 sm:p-12 lg:col-span-7 lg:p-14">
+                <h2 className="display-2 text-balance">
+                  Ready to build your{" "}
+                  <span className="marker">future</span>?
+                </h2>
+                <p className="mt-5 max-w-lg text-lg leading-8 text-white/65 text-pretty">
+                  Start learning practical skills today and take your career to
+                  the next level.
+                </p>
+                <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <Button
+                    asChild
+                    variant="accent"
+                    size="lg"
+                    className="max-sm:w-full"
+                  >
+                    <Link
+                      href="/courses"
+                      className="[&_span:last-child]:bg-ink [&_span:last-child]:text-accent"
+                    >
+                      <span>Explore Courses</span>
+                      <ButtonArrow />
+                    </Link>
+                  </Button>
+                  <Button
+                    asChild
+                    size="lg"
+                    className="border-[1.5px] border-white/30 bg-transparent text-white shadow-none hover:bg-white hover:text-ink max-sm:w-full"
+                  >
+                    <Link href="/contact">Talk to us</Link>
+                  </Button>
+                </div>
+              </div>
+
+              <div
+                aria-hidden="true"
+                className="hidden px-6 pb-6 lg:col-span-5 lg:block lg:pr-0 lg:pb-0"
               >
-                <Link href={"/courses"}>
-                  <span className="w-full"> Browse Course</span>
-                  <ButtonArrow />
-                </Link>
-              </Button>
-              <Button
-                asChild
-                variant="outline"
-                size="lg"
-                className="w-full bg-primary sm:max-w-[133px]"
-              >
-                <Link href={"/sign-up"}>
-                  <span>Get Started</span>
-                </Link>
-              </Button>
+                <div className="translate-y-4 lg:translate-x-6">
+                  <CtaIllustration />
+                </div>
+              </div>
             </div>
           </div>
-        </div>
+        </Reveal>
       </div>
     </section>
   );

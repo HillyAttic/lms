@@ -23,7 +23,7 @@ export default function SettingsPage() {
   // Platform settings
   const [siteName, setSiteName] = useState("");
   const [siteDescription, setSiteDescription] = useState("");
-  const [primaryColor, setPrimaryColor] = useState("#7D52F4");
+  const [primaryColor, setPrimaryColor] = useState("#17181F");
   const [allowSelfRegistration, setAllowSelfRegistration] = useState(true);
   const [logoUrl, setLogoUrl] = useState<string | null>(null);
   const [logoFile, setLogoFile] = useState<File | null>(null);
@@ -40,7 +40,7 @@ export default function SettingsPage() {
         const data = result.data as any;
         setSiteName(data.siteName || "");
         setSiteDescription(data.siteDescription || "");
-        setPrimaryColor(data.primaryColor || "#7D52F4");
+        setPrimaryColor(data.primaryColor || "#17181F");
         setAllowSelfRegistration(data.allowSelfRegistration !== false);
         setLogoUrl(data.logoUrl);
         setLogoPreview(data.logoUrl);
@@ -148,7 +148,7 @@ export default function SettingsPage() {
 
       {/* Platform Settings */}
       {activeTab === "platform" && (
-        <div className="max-w-2xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+        <div className="max-w-2xl rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6 lg:p-8">
           <form onSubmit={handleSavePlatform} className="space-y-6">
             {/* Logo */}
             <div>
@@ -240,7 +240,7 @@ export default function SettingsPage() {
                   value={primaryColor}
                   onChange={(e) => setPrimaryColor(e.target.value)}
                   className="w-32 rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-                  placeholder="#7D52F4"
+                  placeholder="#17181F"
                 />
               </div>
             </div>
@@ -294,7 +294,7 @@ export default function SettingsPage() {
 
       {/* Profile Settings */}
       {activeTab === "profile" && (
-        <div className="max-w-2xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+        <div className="max-w-2xl rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6 lg:p-8">
           <div className="space-y-6">
             <div className="flex items-center gap-4 p-4 bg-gray-50 rounded-lg">
               <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center">

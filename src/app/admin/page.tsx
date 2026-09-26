@@ -144,7 +144,7 @@ export default function AdminDashboard() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
         <Link
           href="/admin/courses/new"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-purple-100 rounded-lg">
@@ -156,7 +156,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/courses"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-100 rounded-lg">
@@ -168,7 +168,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/video-courses"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-indigo-100 rounded-lg">
@@ -180,7 +180,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/game-courses"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-amber-100 rounded-lg">
@@ -192,7 +192,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/users"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-green-100 rounded-lg">
@@ -204,7 +204,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/blogs"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-teal-100 rounded-lg">
@@ -216,7 +216,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/repository"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-slate-100 rounded-lg">
@@ -228,7 +228,7 @@ export default function AdminDashboard() {
         </Link>
         <Link
           href="/admin/external-users"
-          className="flex items-center justify-between p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow"
+          className="flex items-center justify-between p-4 rounded-2xl border-[1.5px] border-ink bg-white transition-transform hover:-translate-y-0.5"
         >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-pink-100 rounded-lg">
@@ -241,7 +241,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* Recent Uploads */}
-      <div className="overflow-hidden rounded-xl bg-white shadow-sm">
+      <div className="overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white">
         <div className="border-b px-4 py-4 sm:px-6">
           <h2 className="text-lg font-semibold text-gray-900">Recent Uploads</h2>
         </div>
@@ -306,7 +306,7 @@ export default function AdminDashboard() {
       </div>
 
       {/* User Role Breakdown */}
-      <div className="mt-8 rounded-xl bg-white p-4 shadow-sm sm:p-6">
+      <div className="mt-8 rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">User Roles</h2>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           <div className="text-center p-4 bg-purple-50 rounded-lg">

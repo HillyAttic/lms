@@ -18,7 +18,6 @@
     "jszip": "^3.10.1",
     "next": "^16.2.7",
     "react": "^19.2.7",
-    "react-countup": "^6.5.3",
     "react-dom": "^19.2.7",
     "react-hook-form": "^7.71.1",
     "react-intersection-observer": "^10.0.2",

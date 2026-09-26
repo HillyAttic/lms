@@ -7,6 +7,7 @@ import {
 
 import CategoryCard from "./categoryCard";
 import { categoryData } from "./categoryData";
+import Reveal from "../ui/reveal";
 
 const Categories = async () => {
   // Counts come from the repository so a card can never advertise more courses
@@ -21,14 +22,25 @@ const Categories = async () => {
   }));
 
   return (
-    <section className="bg-gray-50 py-16 sm:py-20 lg:py-28">
+    <section className="py-16 sm:py-20 lg:py-28">
       <div className="container">
-        <SectionTitle subTitle="Categories">Explore Category</SectionTitle>
-        <div className="grid gap-4 pt-11 sm:grid-cols-2 sm:pt-14 lg:grid-cols-3 lg:pt-16">
-          {categories.map((category) => (
-            <CategoryCard key={category._id} category={category} />
-          ))}
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <SectionTitle
+            subTitle="Categories"
+            description="Three formats, one library — pick the way you learn best."
+          >
+            Explore what you
+            <br className="hidden sm:block" /> can <span className="marker">learn</span>
+          </SectionTitle>
         </div>
+
+        <ul className="mt-12 grid gap-5 sm:mt-14 sm:grid-cols-2 lg:grid-cols-3">
+          {categories.map((category, index) => (
+            <Reveal as="li" key={category._id} delay={index * 80}>
+              <CategoryCard category={category} index={index} />
+            </Reveal>
+          ))}
+        </ul>
       </div>
     </section>
   );

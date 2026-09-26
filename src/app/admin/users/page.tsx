@@ -286,7 +286,7 @@ export default function UsersPage() {
           {/* Mobile card view */}
           <div className="space-y-3 md:hidden">
             {users.map((userItem) => (
-              <div key={userItem.id} className="rounded-xl bg-white p-4 shadow-sm">
+              <div key={userItem.id} className="rounded-2xl border-[1.5px] border-ink bg-white p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3 min-w-0">
                     <button
@@ -341,7 +341,7 @@ export default function UsersPage() {
           </div>
 
           {/* Desktop table view */}
-          <div className="hidden overflow-hidden rounded-xl bg-white shadow-sm md:block">
+          <div className="hidden overflow-hidden rounded-2xl border-[1.5px] border-ink bg-white md:block">
             <div className="overflow-x-auto">
               <table className="w-full">
                 <thead className="border-b bg-gray-50">

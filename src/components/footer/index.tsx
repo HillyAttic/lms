@@ -1,117 +1,131 @@
 "use client";
 
-import { Facebook, Instagram, LinkedinFill, Twitter } from "@/lib/icons";
+import { useState } from "react";
+import { Facebook, Instagram, LinkedinFill, Twitter, LogoWhite } from "@/lib/icons";
 import Link from "next/link";
 import Copyright from "./copyright";
-import Image from "next/image";
+import Button from "../ui/button";
+import { toast } from "react-toastify";
 
+/* Only routes that exist — the old footer was mostly `#` placeholders. */
 const footerData = [
   {
-    title: "Quick Link",
+    title: "Quick Links",
     links: [
-      { text: "Home", url: "#" },
-      { text: "All Courses", url: "#" },
-      { text: "Categories", url: "#" },
+      { text: "Home", url: "/" },
+      { text: "Courses", url: "/courses" },
+      { text: "Repository", url: "/repository" },
+      { text: "Leaderboard", url: "/leaderboard" },
+      { text: "About", url: "/about" },
       { text: "Contact", url: "/contact" },
-      { text: "FAQ's", url: "#" },
     ],
   },
   {
     title: "Categories",
     links: [
-      { text: "Web Development", url: "#" },
-      { text: "UI/UX Design", url: "#" },
-      { text: "Digital Marketing", url: "#" },
-      { text: "Artificial Intelligence", url: "#" },
-      { text: "Cyber Security", url: "#" },
+      { text: "SCORM Courses", url: "/courses?category=scorm" },
+      { text: "Video Courses", url: "/courses?category=video" },
+      { text: "Game Courses", url: "/courses?category=game" },
+      { text: "All Courses", url: "/courses" },
     ],
   },
   {
-    title: "Help & Legal",
+    title: "Legal",
     links: [
-      { text: "Help Center", url: "#" },
-      { text: "Terms & Conditions", url: "#" },
-      { text: "Privacy Policy", url: "#" },
-      { text: "Refund Policy", url: "#" },
-      { text: "Affiliate Program", url: "#" },
+      { text: "Privacy Policy", url: "/" },
+      { text: "Terms", url: "/" },
+      { text: "Refund Policy", url: "/" },
     ],
   },
 ];
 
+const socials = [
+  { label: "Facebook", icon: <Facebook /> },
+  { label: "Twitter", icon: <Twitter /> },
+  { label: "Instagram", icon: <Instagram /> },
+  { label: "LinkedIn", icon: <LinkedinFill /> },
+];
+
 const Footer = () => {
+  const [email, setEmail] = useState("");
+
+  /*
+   * There is no newsletter backend yet. Rather than POST nowhere, the form
+   * says so plainly — swap the body for the real action when one exists.
+   */
+  const handleSubscribe = (e: React.FormEvent) => {
+    e.preventDefault();
+    toast.info("Newsletter signup isn't wired up yet — check back soon.");
+  };
+
   return (
-    <footer className="relative z-10 overflow-hidden bg-gray-950">
-      <Image
-        width={1440}
-        height={652}
-        src={"/images/footer/bg-img.svg"}
-        alt="img"
-        sizes="100vw"
-        loading="eager"
-        className="absolute top-[119.438px] -left-[578px] z-[-1] h-full w-full"
-      />
-      <div className="container py-11 sm:py-14 lg:py-20">
-        {/* logo and link */}
-        <div className="flex flex-col justify-between gap-x-12 gap-y-10 lg:flex-row">
-          <div className="max-w-[297px] flex-1">
-            <p className="mt-4 text-sm leading-5 tracking-sm text-gray-400">
+    <footer className="border-t-[1.5px] border-ink bg-dark text-white">
+      <div className="container">
+        <div className="grid gap-12 py-14 lg:grid-cols-12 lg:gap-8 lg:py-20">
+          <div className="lg:col-span-5">
+            <LogoWhite />
+            <p className="mt-6 max-w-sm leading-7 text-white/55 text-pretty">
               Empowering learners worldwide to master new skills and advance
               their careers through high-quality online education.
             </p>
-            <ul className="mt-10 flex items-center gap-2">
-              <li>
-                <Link
-                  href={"#"}
-                  className="flex size-9 items-center justify-center rounded-full bg-gray-800 text-gray-500 transition-all duration-500 hover:bg-purple-500 hover:text-primary"
-                >
-                  <Facebook />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={"#"}
-                  className="flex size-9 items-center justify-center rounded-full bg-gray-800 text-gray-500 transition-all duration-500 hover:bg-purple-500 hover:text-primary"
-                >
-                  <Twitter />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={"#"}
-                  className="flex size-9 items-center justify-center rounded-full bg-gray-800 text-gray-500 transition-all duration-500 hover:bg-purple-500 hover:text-primary"
-                >
-                  <Instagram />
-                </Link>
-              </li>
-              <li>
-                <Link
-                  href={"#"}
-                  className="flex size-9 items-center justify-center rounded-full bg-gray-800 text-gray-500 transition-all duration-500 hover:bg-purple-500 hover:text-primary"
-                >
-                  <LinkedinFill />
-                </Link>
-              </li>
+
+            <form onSubmit={handleSubscribe} className="mt-9 max-w-sm">
+              <label
+                htmlFor="newsletter-email"
+                className="text-xs font-semibold tracking-[0.1em] text-white/50 uppercase"
+              >
+                Newsletter
+              </label>
+              <div className="mt-3 flex gap-2">
+                <input
+                  id="newsletter-email"
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="you@email.com"
+                  className="h-12 min-w-0 flex-1 rounded-full border-[1.5px] border-white/20 bg-transparent px-5 text-sm text-white placeholder:text-white/35 focus-visible:border-accent focus-visible:outline-none"
+                />
+                <Button type="submit" variant="accent" className="shrink-0">
+                  Subscribe
+                </Button>
+              </div>
+            </form>
+
+            <ul className="mt-9 flex items-center gap-2.5">
+              {socials.map(({ icon, label }) => (
+                <li key={label}>
+                  <Link
+                    href="/"
+                    aria-label={label}
+                    className="grid size-10 place-items-center rounded-full border-[1.5px] border-white/20 text-white/70 transition-colors hover:border-accent hover:bg-accent hover:text-ink"
+                  >
+                    {icon}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
-          <div className="grid max-w-[712px] flex-1 gap-x-20 gap-y-10 sm:grid-cols-3">
-            {footerData.map(({ links, title }, index) => (
-              <div key={index}>
-                <h6 className="leading-7 font-medium tracking-base text-primary">
+
+          <div className="grid gap-8 sm:grid-cols-3 lg:col-span-7">
+            {footerData.map(({ links, title }) => (
+              <nav key={title} aria-label={title}>
+                <h2 className="text-xs font-semibold tracking-[0.1em] text-white/50 uppercase">
                   {title}
-                </h6>
+                </h2>
                 <ul className="mt-5 space-y-3">
-                  {links.map(({ text, url }, index) => (
-                    <li key={index} className="leading-5">
+                  {links.map(({ text, url }) => (
+                    <li key={text}>
                       <Link
                         href={url}
-                        className="text-sm leading-5 tracking-sm text-gray-400 transition-all duration-500 hover:text-purple-500"
+                        className="text-sm text-white/70 transition-colors hover:text-accent"
                       >
                         {text}
                       </Link>
                     </li>
                   ))}
                 </ul>
-              </div>
+              </nav>
             ))}
           </div>
         </div>

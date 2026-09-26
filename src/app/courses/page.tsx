@@ -28,10 +28,10 @@ const Courses = async ({
   return (
     <main>
       <PageHeader
-        description="Grow your skills with expert-led lessons designed to help you achieve your goals — anytime, anywhere."
-        subTitle="Our Courses"
+        description="Learn practical skills from industry experts — self-paced, project-based, and built around work you can show."
+        subTitle="Courses"
       >
-        Our Popular Courses
+        Courses to <span className="marker">start</span> today
       </PageHeader>
       <CoursesDsiplay courses={courses} initialCategory={category ?? ""} />
     </main>

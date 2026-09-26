@@ -37,44 +37,28 @@ interface ShareData {
 
 type ContentType = "scorm" | "video" | "game";
 
+/*
+ * The three formats are told apart by their icon and label, not by hue — one
+ * lime accent carries the whole page.
+ */
 const contentMeta: Record<
   ContentType,
-  {
-    label: string;
-    eyebrow: string;
-    description: string;
-    action: string;
-    gradient: string;
-    accent: string;
-    softAccent: string;
-  }
+  { label: string; description: string; action: string }
 > = {
   scorm: {
     label: "SCORM courses",
-    eyebrow: "Interactive learning",
-    description: "Explore structured lessons and interactive training modules.",
+    description: "Structured lessons and interactive training modules.",
     action: "Launch course",
-    gradient: "from-[#7651ef] via-[#6339d8] to-[#4d26b7]",
-    accent: "text-purple-300",
-    softAccent: "bg-purple-400/10 text-purple-300 ring-purple-400/20",
   },
   video: {
     label: "Video courses",
-    eyebrow: "Learn on demand",
-    description: "Watch expert-led lessons at your own pace, wherever you are.",
+    description: "Expert-led lessons you can watch at your own pace.",
     action: "Watch video",
-    gradient: "from-[#38bdf8] via-[#168bd4] to-[#1765b5]",
-    accent: "text-sky-300",
-    softAccent: "bg-sky-400/10 text-sky-300 ring-sky-400/20",
   },
   game: {
     label: "Game courses",
-    eyebrow: "Learn by doing",
-    description: "Put your skills into practice with engaging challenges and games.",
+    description: "Put your skills into practice with interactive challenges.",
     action: "Play game",
-    gradient: "from-[#45c98d] via-[#20a875] to-[#13815f]",
-    accent: "text-emerald-300",
-    softAccent: "bg-emerald-400/10 text-emerald-300 ring-emerald-400/20",
   },
 };
 
@@ -174,12 +158,12 @@ export default function SharedPage() {
 
   if (loading) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center bg-[#0f0d1a]">
+      <main className="grid min-h-[60vh] place-items-center bg-dark">
         <div className="flex flex-col items-center gap-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-white/[0.06] ring-1 ring-white/10">
+          <div className="grid size-14 place-items-center rounded-2xl border-[1.5px] border-white/20">
             <LoadingSpinner />
           </div>
-          <p className="text-sm font-medium text-white/50">Preparing your learning space...</p>
+          <p className="text-sm font-medium text-white/50">Preparing your learning space&hellip;</p>
         </div>
       </main>
     );
@@ -187,16 +171,16 @@ export default function SharedPage() {
 
   if (error) {
     return (
-      <main className="flex min-h-[60vh] items-center justify-center bg-[#0f0d1a] px-4 py-20">
-        <div className="w-full max-w-lg rounded-3xl border border-white/10 bg-[#171326] p-8 text-center sm:p-12">
-          <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-2xl bg-red-400/10 text-red-300 ring-1 ring-red-400/20">
+      <main className="grid min-h-[60vh] place-items-center bg-dark px-5 py-20">
+        <div className="w-full max-w-lg rounded-[24px] border-[1.5px] border-white/20 bg-white/[0.04] p-8 text-center sm:p-12">
+          <div className="mx-auto mb-6 grid size-16 place-items-center rounded-2xl border-[1.5px] border-red-400/40 text-red-300">
             <svg className="h-8 w-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 9v3m0 4h.01M10.29 3.86 2.82 17a2 2 0 0 0 1.74 3h14.88a2 2 0 0 0 1.74-3L13.71 3.86a2 2 0 0 0-3.42 0Z" />
             </svg>
           </div>
-          <p className="mb-2 text-xs font-bold uppercase tracking-[0.18em] text-red-300">Unable to continue</p>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">Access unavailable</h1>
-          <p className="mt-3 text-sm leading-6 text-white/55">{error}</p>
+          <p className="mb-2 text-[0.6875rem] font-bold tracking-[0.14em] text-red-300 uppercase">Unable to continue</p>
+          <h1 className="display-3 text-white">Access unavailable</h1>
+          <p className="mt-4 text-sm leading-6 text-white/60">{error}</p>
         </div>
       </main>
     );
@@ -232,40 +216,41 @@ export default function SharedPage() {
   };
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#0f0d1a] text-white">
-      <section className="relative isolate overflow-hidden bg-[#171326]">
-        <div className="absolute -right-32 -top-44 h-[30rem] w-[30rem] rounded-full bg-purple-500/15 blur-3xl" />
-        <div className="absolute -bottom-56 left-1/3 h-[24rem] w-[24rem] rounded-full bg-indigo-500/12 blur-3xl" />
-        <div className="absolute inset-0 opacity-[0.13] [background-image:radial-gradient(#ffffff_1px,transparent_1px)] [background-size:22px_22px]" />
-
-        <div className="container relative py-12 sm:py-16 lg:py-20">
+    <main className="min-h-screen overflow-hidden bg-dark text-white">
+      <section className="border-b-[1.5px] border-white/15 bg-dark">
+        <div className="container py-12 sm:py-16 lg:py-20">
           <div className="mx-auto max-w-7xl">
             <div className="mb-12 flex items-center justify-between gap-4">
-              <div className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-3.5 py-2 text-xs font-semibold tracking-wide text-white/85 backdrop-blur-sm">
-                <span className="h-2 w-2 rounded-full bg-emerald-400 shadow-[0_0_0_4px_rgba(52,211,153,0.12)]" />
+              <div className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-accent px-3.5 py-2 text-xs font-semibold tracking-wide text-accent">
+                <span className="size-2 rounded-full bg-accent" />
                 Secure shared access
               </div>
-              <span className="hidden text-xs font-medium text-white/45 sm:block">EdventureHub learning space</span>
+              <span className="hidden text-xs font-medium text-white/60 sm:block">
+                EdventureHub learning space
+              </span>
             </div>
 
             <div className="flex flex-col gap-8 sm:flex-row sm:items-end sm:justify-between">
               <div className="flex items-start gap-5">
-                <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-purple-300 to-purple-500 text-2xl font-semibold text-white shadow-lg shadow-purple-950/30 ring-1 ring-white/20 sm:h-20 sm:w-20 sm:text-3xl">
+                <div className="grid size-16 shrink-0 place-items-center rounded-2xl bg-accent text-2xl font-bold text-ink sm:size-20 sm:text-3xl">
                   {data.name?.[0]?.toUpperCase() || "?"}
                 </div>
                 <div>
-                  <p className="mb-2 text-sm font-medium text-purple-200">Your curated learning space</p>
-                  <h1 className="max-w-2xl text-3xl font-semibold tracking-tight text-white sm:text-4xl lg:text-5xl">
+                  <p className="mb-2 text-[0.6875rem] font-semibold tracking-[0.12em] text-accent uppercase">
+                    Your curated learning space
+                  </p>
+                  <h1 className="display-2 max-w-2xl text-balance">
                     Welcome, {data.name}
                   </h1>
-                  <p className="mt-3 max-w-xl text-sm leading-6 text-white/65 sm:text-base">
-                    Your invitation is ready. Choose a course below and continue learning at your own pace.
+                  <p className="mt-4 max-w-xl leading-7 text-white/60">
+                    Your invitation is ready. Choose a course below and continue
+                    learning at your own pace.
                   </p>
                 </div>
               </div>
 
-              <div className="flex shrink-0 items-center gap-3 rounded-2xl border border-white/10 bg-white/[0.07] px-4 py-3 text-sm text-white/75 backdrop-blur-sm">
-                <svg className="h-5 w-5 text-purple-300" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <div className="flex shrink-0 items-center gap-3 rounded-2xl border-[1.5px] border-white/20 px-4 py-3 text-sm text-white/75">
+                <svg className="h-5 w-5 text-accent" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 6v6l4 2m5-2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
                 </svg>
                 <span>
@@ -276,20 +261,20 @@ export default function SharedPage() {
 
             <div className="mt-10 flex flex-wrap gap-2.5">
               {accessTypes.includes("scorm") && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/85 ring-1 ring-white/10">
-                  <ContentIcon type="scorm" className="h-4 w-4 text-purple-300" />
+                <span className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-white/20 px-3.5 py-2 text-xs font-semibold text-white/80">
+                  <ContentIcon type="scorm" className="h-4 w-4 text-accent" />
                   SCORM content
                 </span>
               )}
               {accessTypes.includes("video") && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/85 ring-1 ring-white/10">
-                  <ContentIcon type="video" className="h-4 w-4 text-sky-300" />
+                <span className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-white/20 px-3.5 py-2 text-xs font-semibold text-white/80">
+                  <ContentIcon type="video" className="h-4 w-4 text-accent" />
                   Video content
                 </span>
               )}
               {accessTypes.includes("game") && (
-                <span className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3.5 py-2 text-xs font-semibold text-white/85 ring-1 ring-white/10">
-                  <ContentIcon type="game" className="h-4 w-4 text-emerald-300" />
+                <span className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-white/20 px-3.5 py-2 text-xs font-semibold text-white/80">
+                  <ContentIcon type="game" className="h-4 w-4 text-accent" />
                   Game content
                 </span>
               )}
@@ -300,61 +285,65 @@ export default function SharedPage() {
 
       <div className="container relative z-10 -mt-6 pb-16 sm:-mt-8 sm:pb-20">
         <div className="mx-auto grid max-w-7xl grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
-          <div className="rounded-2xl border border-white/10 bg-[#171326] p-5 sm:p-6">
+          <div className="rounded-2xl border-[1.5px] border-white/20 bg-white/[0.04] p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-white/55">Courses available</span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-purple-400/10 text-purple-300">
+              <span className="text-xs font-semibold tracking-[0.08em] text-white/50 uppercase">Courses available</span>
+              <span className="grid size-9 place-items-center rounded-full bg-accent text-ink">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 6.5A2.5 2.5 0 0 1 6.5 4H20v14H6.5A2.5 2.5 0 0 0 4 20.5v-14Zm0 0V20.5A2.5 2.5 0 0 1 6.5 18H20" />
                 </svg>
               </span>
             </div>
-            <p className="text-3xl font-semibold tracking-tight text-white">{totalCourses}</p>
-            <p className="mt-1 text-xs text-white/40">Ready when you are</p>
+            <p className="mt-1 text-3xl font-bold tracking-[-0.03em] tabular-nums text-white">{totalCourses}</p>
+            <p className="mt-2 text-xs text-white/60">Ready when you are</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#171326] p-5 sm:p-6">
+          <div className="rounded-2xl border-[1.5px] border-white/20 bg-white/[0.04] p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-white/55">Learning formats</span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-sky-400/10 text-sky-300">
+              <span className="text-xs font-semibold tracking-[0.08em] text-white/50 uppercase">Learning formats</span>
+              <span className="grid size-9 place-items-center rounded-full bg-accent text-ink">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M4 7.5A2.5 2.5 0 0 1 6.5 5h11A2.5 2.5 0 0 1 20 7.5v9a2.5 2.5 0 0 1-2.5 2.5h-11A2.5 2.5 0 0 1 4 16.5v-9ZM8 9.5h.01M11 9.5h5M8 13.5h.01M11 13.5h5" />
                 </svg>
               </span>
             </div>
-            <p className="text-3xl font-semibold tracking-tight text-white">{availableTypes.length}</p>
-            <p className="mt-1 truncate text-xs text-white/40">{availableTypes.join(" · ") || "No formats available"}</p>
+            <p className="mt-1 text-3xl font-bold tracking-[-0.03em] tabular-nums text-white">{availableTypes.length}</p>
+            <p className="mt-1 truncate text-xs text-white/60">{availableTypes.join(" · ") || "No formats available"}</p>
           </div>
 
-          <div className="rounded-2xl border border-white/10 bg-[#171326] p-5 sm:p-6">
+          <div className="rounded-2xl border-[1.5px] border-white/20 bg-white/[0.04] p-5 sm:p-6">
             <div className="mb-5 flex items-center justify-between">
-              <span className="text-sm font-medium text-white/55">Access status</span>
-              <span className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/10 text-emerald-300">
+              <span className="text-xs font-semibold tracking-[0.08em] text-white/50 uppercase">Access status</span>
+              <span className="grid size-9 place-items-center rounded-full bg-accent text-ink">
                 <svg className="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="m5 12 4 4L19 6" />
                 </svg>
               </span>
             </div>
-            <p className="text-3xl font-semibold tracking-tight text-white">Active</p>
-            <p className="mt-1 text-xs text-white/40">Secure invitation link</p>
+            <p className="mt-1 text-3xl font-bold tracking-[-0.03em] tabular-nums text-white">Active</p>
+            <p className="mt-2 text-xs text-white/60">Secure invitation link</p>
           </div>
         </div>
 
         <div className="mx-auto mt-16 max-w-7xl sm:mt-20">
           <div className="mb-8 flex flex-col justify-between gap-3 sm:flex-row sm:items-end">
             <div>
-              <p className="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-purple-300">Your library</p>
-              <h2 className="text-2xl font-semibold tracking-tight text-white sm:text-3xl">Start learning today</h2>
-              <p className="mt-2 text-sm text-white/55">Pick a course and make progress in a way that works for you.</p>
+              <p className="mb-3 text-[0.6875rem] font-bold tracking-[0.14em] text-accent uppercase">Your library</p>
+              <h2 className="display-2 text-white">
+                Start learning <span className="marker">today</span>
+              </h2>
+              <p className="mt-3 text-sm text-white/55">
+                Pick a course and make progress in a way that works for you.
+              </p>
             </div>
-            <div className="hidden items-center gap-2 text-xs font-medium text-white/40 sm:flex">
-              <span className="h-2 w-2 rounded-full bg-emerald-400" />
+            <div className="hidden items-center gap-2 text-xs font-medium text-white/60 sm:flex">
+              <span className="size-2 rounded-full bg-accent" />
               {totalCourses} {totalCourses === 1 ? "course" : "courses"} shared with you
             </div>
           </div>
 
           {totalCourses === 0 ? (
-            <div className="rounded-3xl border border-dashed border-white/15 bg-white/[0.03] px-6 py-16 text-center">
+            <div className="rounded-[24px] border-[1.5px] border-dashed border-white/20 px-6 py-16 text-center">
               <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-white/10 text-white/50">
                 <ContentIcon type="scorm" className="h-7 w-7" />
               </div>
@@ -370,12 +359,12 @@ export default function SharedPage() {
                 return (
                   <section key={type} aria-labelledby={`${type}-heading`}>
                     <div className="mb-6 flex items-start gap-3">
-                      <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl ${meta.softAccent} ring-1`}>
-                        <ContentIcon type={type} className={`h-5 w-5 ${meta.accent}`} />
+                      <div className="grid size-11 shrink-0 place-items-center rounded-full bg-accent text-ink">
+                        <ContentIcon type={type} className="h-5 w-5" />
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
-                          <h2 id={`${type}-heading`} className="text-xl font-semibold tracking-tight text-white">{meta.label}</h2>
+                          <h2 id={`${type}-heading`} className="text-xl font-bold tracking-[-0.02em] text-white">{meta.label}</h2>
                           <span className="rounded-full bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-white/60">{items.length} {items.length === 1 ? "course" : "courses"}</span>
                         </div>
                         <p className="mt-1 text-sm text-white/55">{meta.description}</p>
@@ -384,8 +373,8 @@ export default function SharedPage() {
 
                     <div className="grid grid-cols-1 gap-5 md:grid-cols-2 xl:grid-cols-3">
                       {items.map((course) => (
-                        <article key={course.id} className="group flex min-h-[25rem] flex-col overflow-hidden rounded-3xl border border-white/10 bg-[#171326] transition-colors duration-300 hover:border-purple-400/40">
-                          <div className={`relative h-48 shrink-0 overflow-hidden bg-gradient-to-br ${meta.gradient}`}>
+                        <article key={course.id} className="group flex min-h-[25rem] flex-col overflow-hidden rounded-[24px] border-[1.5px] border-white/20 bg-white/[0.04] transition-colors duration-300 hover:border-accent">
+                          <div className="relative h-48 shrink-0 overflow-hidden border-b-[1.5px] border-white/15 bg-white/[0.06]">
                             <div className="absolute -right-8 -top-12 h-36 w-36 rounded-full border-[18px] border-white/10" />
                             <div className="absolute -bottom-16 -left-10 h-40 w-40 rounded-full bg-white/10 blur-sm" />
                             {course.thumbnailUrl ? (
@@ -397,14 +386,14 @@ export default function SharedPage() {
                                 <ContentIcon type={type} className="h-16 w-16" />
                               </div>
                             )}
-                            <div className="absolute left-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-full bg-black/20 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.12em] text-white ring-1 ring-white/20 backdrop-blur-md">
+                            <div className="absolute left-4 top-4 z-20 inline-flex items-center gap-1.5 rounded-full bg-accent px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] text-ink uppercase">
                               <ContentIcon type={type} className="h-3.5 w-3.5" />
                               {type}
                             </div>
                           </div>
 
                           <div className="flex flex-1 flex-col p-5">
-                            <h3 className="min-h-14 line-clamp-2 text-lg font-semibold leading-7 tracking-tight text-white">
+                            <h3 className="min-h-14 line-clamp-2 text-lg leading-7 font-bold tracking-[-0.02em] text-white">
                               {course.title || course.name || "Untitled course"}
                             </h3>
                             <div className="mt-3 space-y-2 text-sm leading-5 text-white/60">
@@ -418,7 +407,7 @@ export default function SharedPage() {
                               </p>
                             </div>
                             <div className="mt-auto pt-6">
-                              <button onClick={() => openCourse(type, course)} className={`flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r ${meta.gradient} px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all duration-300 hover:shadow-lg hover:brightness-105 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:ring-offset-2 focus:ring-offset-[#171326]`}>
+                              <button onClick={() => openCourse(type, course)} className="flex w-full items-center justify-center gap-2 rounded-full bg-accent px-4 py-3 text-sm font-bold text-ink transition-transform duration-300 hover:-translate-y-0.5">
                                 <PlayIcon />
                                 {meta.action}
                                 <ExternalLinkIcon />
@@ -435,7 +424,7 @@ export default function SharedPage() {
           )}
         </div>
 
-        <div className="mx-auto mt-16 flex max-w-7xl flex-col gap-4 rounded-2xl border border-white/10 bg-[#171326] px-5 py-4 text-center sm:flex-row sm:items-center sm:justify-center sm:gap-3 sm:px-6">
+        <div className="mx-auto mt-16 flex max-w-7xl flex-col gap-4 rounded-2xl border-[1.5px] border-white/20 px-5 py-4 text-center sm:flex-row sm:items-center sm:justify-center sm:gap-3 sm:px-6">
           <svg className="mx-auto h-5 w-5 shrink-0 text-white/40 sm:mx-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.8} d="M12 15v2m-6 4h12a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2H6a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2Zm3-8V7a3 3 0 1 1 6 0v4" />
           </svg>

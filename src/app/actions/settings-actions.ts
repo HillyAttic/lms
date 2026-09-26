@@ -17,7 +17,7 @@ export async function getPlatformSettings() {
       siteName: "EdventureHub",
       siteDescription: "Online Learning Platform",
       logoUrl: null,
-      primaryColor: "#7D52F4",
+      primaryColor: "#17181F",
       allowSelfRegistration: true,
     };
 

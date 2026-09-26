@@ -94,8 +94,8 @@ export default function CourseActions({
 
   if (!launchable) {
     return (
-      <Button size="lg" disabled className="rounded-full px-8 py-1.5">
-        <span className="text-base font-semibold">Content coming soon</span>
+      <Button size="lg" disabled className="max-sm:w-full">
+        Content coming soon
       </Button>
     );
   }
@@ -103,9 +103,9 @@ export default function CourseActions({
   return (
     <div className="flex flex-wrap items-center gap-3">
       {enrolled ? (
-        <Button asChild size="lg" className="rounded-full px-8 py-1.5">
+        <Button asChild variant="accent" size="lg" className="max-sm:w-full">
           <Link href={`/courses/${slug}/launch`}>
-            <span className="text-base font-semibold">Continue Course</span>
+            <span>Continue course</span>
             <ButtonArrow />
           </Link>
         </Button>
@@ -114,11 +114,9 @@ export default function CourseActions({
           size="lg"
           onClick={handleEnroll}
           disabled={busy}
-          className="rounded-full px-8 py-1.5"
+          className="max-sm:w-full"
         >
-          <span className="text-base font-semibold">
-            {busy ? "Enrolling..." : "Enroll Now"}
-          </span>
+          <span>{busy ? "Enrolling…" : "Enrol now"}</span>
           {!busy && <ButtonArrow />}
         </Button>
       )}
@@ -130,10 +128,10 @@ export default function CourseActions({
         aria-pressed={wishlisted}
         aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
         className={cn(
-          "grid size-11 place-items-center rounded-full border transition-colors sm:size-12",
+          "grid size-12 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors",
           wishlisted
-            ? "border-purple-500 bg-purple-50 text-purple-600"
-            : "border-gray-200 text-gray-500 hover:border-purple-300 hover:text-purple-600",
+            ? "border-ink bg-accent text-ink"
+            : "border-ink/20 text-secondary hover:border-ink hover:text-ink",
         )}
       >
         <Heart className={cn("size-5", wishlisted && "fill-current")} />

@@ -8,16 +8,14 @@ export function CourseReviews({ reviews }: { reviews: CourseReview[] }) {
   if (!reviews.length) return null;
 
   return (
-    <section className="mt-16">
-      <h2 className="font-mulish text-2xl font-bold">
-        Reviews ({reviews.length})
-      </h2>
+    <section className="mt-12">
+      <h2 className="display-3">Reviews ({reviews.length})</h2>
 
       <ul className="mt-6 grid gap-4 lg:grid-cols-2">
         {reviews.map((review) => (
           <li
             key={`${review.userName}-${review.updatedAt?.seconds ?? 0}`}
-            className="rounded-2xl bg-white p-6 shadow-xs"
+            className="card-brutal bg-white p-6"
           >
             <div className="flex items-center gap-3">
               <Avatar img="" name={review.userName} className="size-10" />

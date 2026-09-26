@@ -192,7 +192,7 @@ export default function CreateGameCoursePage() {
         subtitle="Upload a new game course to the platform"
       />
 
-      <div className="max-w-3xl rounded-xl bg-white p-4 shadow-sm sm:p-6 lg:p-8">
+      <div className="max-w-3xl rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6 lg:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Game Type Toggle */}
           <div>

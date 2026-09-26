@@ -1,146 +1,119 @@
 "use client";
-import { MouseEvent, useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { MenuType } from ".";
 import Link from "next/link";
-import {
-  ArrowLeft,
-  ArrowRight,
-  CloseIcon,
-  MenuIcon,
-  PlusIcon,
-} from "@/lib/icons";
+import { CloseIcon, MenuIcon } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import Button from "../ui/button";
+import ButtonArrow from "../ui/buttonArrow";
 import { usePathname } from "next/navigation";
+import { useAuth } from "@/lib/auth-context";
+import { canAccessAdminPanel } from "@/lib/roles";
 
+/*
+ * Slide-down panel that lives inside the sticky header, so it needs no overlay
+ * and no z-index games. Closes on route change and on Escape.
+ */
 const MobileNavigation = ({ data }: { data: MenuType[] }) => {
   const pathName = usePathname();
-  const [navbarShow, setNavbarShow] = useState(false);
-  const [dropdownOpen, setDropdownOpen] = useState<null | number>(null);
-  const [selectLabel, setSelectLabel] = useState("");
+  const { user, role } = useAuth();
+  const [open, setOpen] = useState(false);
+  const lastPath = useRef(pathName);
 
-  const handleDropdownLinkClick = (
-    e: MouseEvent,
-    id: number,
-    label: string,
-    subMenu: any,
-  ) => {
-    if (subMenu.length) {
-      e.preventDefault();
-    }
-    setDropdownOpen(id);
-    setSelectLabel(label);
-  };
-
-  const handleBackClick = () => {
-    setDropdownOpen(null);
-    setSelectLabel("");
-  };
-
+  // Close on navigation. Compared against the previous path rather than run on
+  // mount, so this doesn't fire a no-op state update on first render.
   useEffect(() => {
-    setNavbarShow(false);
+    if (lastPath.current !== pathName) {
+      lastPath.current = pathName;
+      setOpen(false);
+    }
   }, [pathName]);
 
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
   return (
-    <div className="relative z-50 block xl:hidden">
-      <button onClick={() => setNavbarShow(true)} className="cursor-pointer">
-        <MenuIcon />
+    <div className="lg:hidden">
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        aria-controls="mobile-nav"
+        aria-label={open ? "Close menu" : "Open menu"}
+        className="grid size-10 place-items-center rounded-full border-[1.5px] border-ink bg-white"
+      >
+        {open ? <CloseIcon /> : <MenuIcon />}
       </button>
-      {/* navigation overlay */}
+
       <div
-        onClick={() => setNavbarShow(false)}
+        id="mobile-nav"
         className={cn(
-          "fixed top-0 left-0 z-50 h-full min-h-screen w-full min-w-screen bg-gray-700/90 transition-all duration-300",
-          navbarShow ? "visible opacity-100" : "invisible opacity-0",
-        )}
-      ></div>
-      <nav
-        className={cn(
-          "fixed top-0 z-999 flex h-full min-h-screen w-full max-w-85 flex-col justify-between overflow-y-auto bg-primary px-3 pt-7 pb-3 shadow-lg transition-all duration-500",
-          navbarShow ? "right-0" : "-right-full",
+          "absolute inset-x-0 top-full overflow-hidden border-b-[1.5px] border-ink bg-background transition-[max-height,opacity] duration-300 ease-out",
+          open ? "max-h-[80vh] opacity-100" : "max-h-0 opacity-0",
         )}
       >
-        {/* navigation close button */}
-        <button
-          onClick={() => setNavbarShow(false)}
-          className="absolute top-2 right-2 flex h-7 w-7 items-center justify-center transition-all duration-500 hover:text-red-600"
-        >
-          <CloseIcon />
-        </button>
-        {/* menu items */}
-        <ul className="flex flex-col">
-          {data.map(({ href, id, label, subMenu }) => {
-            // Check if current path matches parent or any submenu item
-            const isActive =
-              pathName === href ||
-              subMenu?.some((item) => pathName === item.href);
+        <nav className="container py-6" aria-label="Mobile">
+          <ul className="flex flex-col">
+            {data.map(({ href, id, label }) => {
+              const isActive = pathName === href;
 
-            return (
-              <li key={id}>
-                <Link
-                  href={href}
-                  onClick={(e) =>
-                    handleDropdownLinkClick(e, id, label, subMenu)
-                  }
-                  className={cn(
-                    "flex w-full items-center justify-between rounded-xl px-5 py-2 leading-6 font-medium tracking-base transition-all duration-500 hover:text-purple-500",
-                    isActive ? "text-purple-500" : "text-secondary",
-                  )}
-                >
-                  {label}
-                  {subMenu?.length && (
-                    <span>
-                      <PlusIcon />
-                    </span>
-                  )}
-                </Link>
-
-                {subMenu?.length && (
-                  <ul
+              return (
+                <li key={id}>
+                  <Link
+                    href={href}
+                    aria-current={isActive ? "page" : undefined}
                     className={cn(
-                      "absolute top-0 w-full space-y-1 bg-primary py-3 transition-all duration-300",
-                      dropdownOpen === id ? "left-0" : "-left-full",
+                      "flex items-center gap-3 border-b border-ink/10 py-3.5 text-2xl font-semibold tracking-[-0.02em] transition-colors",
+                      isActive ? "text-ink" : "text-secondary hover:text-ink",
                     )}
                   >
-                    <li className="flex items-center border-b border-b-gray-200 px-5 pb-2 font-medium">
+                    {isActive && (
                       <span
-                        onClick={handleBackClick}
-                        className="flex h-7 w-7 cursor-pointer items-center"
-                      >
-                        <ArrowLeft className="size-5" />
-                      </span>
-                      {selectLabel}
-                    </li>
-                    {subMenu.map(({ href, id, label }) => (
-                      <li key={id}>
-                        <Link
-                          href={href}
-                          className={cn(
-                            "flex rounded-xl px-5 py-2 text-sm leading-6 font-medium tracking-base transition-all duration-500 hover:bg-gray-50 hover:text-purple-500",
-                            pathName === href
-                              ? "bg-gray-50 text-purple-500"
-                              : "text-secondary",
-                          )}
-                        >
-                          {label}
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                        aria-hidden="true"
+                        className="size-2 shrink-0 rounded-full bg-accent"
+                      />
+                    )}
+                    {label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
 
-        {/* login and sign up button the button*/}
-        <Button className="flex h-12 w-full justify-between gap-2.5 py-1.5 pr-1.5 pl-6 text-base tracking-base lg:hidden">
-          Login/ Sign up
-          <span className="flex h-9 w-9 items-center justify-center rounded-full bg-primary text-purple-500">
-            <ArrowRight />
-          </span>
-        </Button>
-      </nav>
+          <div className="mt-6 flex flex-col gap-3">
+            {user ? (
+              <>
+                <Button asChild variant="accent" size="lg" className="w-full">
+                  <Link href="/dashboard">
+                    My Dashboard
+                    <ButtonArrow />
+                  </Link>
+                </Button>
+                {canAccessAdminPanel(role) && (
+                  <Button asChild variant="outline" size="lg" className="w-full">
+                    <Link href="/admin">Admin Panel</Link>
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button asChild variant="accent" size="lg" className="w-full">
+                  <Link href="/admin/login">
+                    Start Learning
+                    <ButtonArrow />
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" size="lg" className="w-full">
+                  <Link href="/admin/login">Login</Link>
+                </Button>
+              </>
+            )}
+          </div>
+        </nav>
+      </div>
     </div>
   );
 };

@@ -6,9 +6,15 @@ import Button from "../ui/button";
 import Link from "next/link";
 import BlogCard from "./blogCard";
 import ButtonArrow from "../ui/buttonArrow";
+import Reveal from "../ui/reveal";
 import { getPublishedBlogs } from "@/app/actions/blog-actions";
 import { BlogType } from "@/types/BlogType";
 
+/*
+ * There is no public /blog route yet — only /admin/blogs. The template linked
+ * here to "/blog" (404) and each card to "#". Both now point at the admin
+ * posts list, which is the only place an article can actually be read today.
+ */
 const Blogs = () => {
   const [blogs, setBlogs] = useState<BlogType[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,29 +42,28 @@ const Blogs = () => {
   return (
     <section className="py-16 sm:py-20 lg:py-28">
       <div className="container">
-        <div className="flex flex-wrap items-end justify-between gap-x-3 gap-y-5">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <SectionTitle
-            subTitle="Blogs"
-            description="Get expert insights, coding tutorials, career advice, and industry deep dives to fuel your learning journey. "
+            subTitle="Blog"
+            description="Expert insights, tutorials, career advice and industry deep dives to fuel your learning."
           >
-            The EdventureHub Knowledge Hub
+            From the <span className="marker">hub</span>
           </SectionTitle>
-          <Button
-            asChild
-            size="lg"
-            className="py-1.5 pr-1.5 pl-6 max-sm:w-full"
-          >
-            <Link href={"/blog"}>
-              <span className="w-full text-center">View All Articles</span>
+          <Button asChild variant="outline" size="lg" className="max-sm:w-full">
+            <Link href="/admin/blogs">
+              <span>All articles</span>
               <ButtonArrow />
             </Link>
           </Button>
         </div>
-        <div className="grid gap-8 pt-11 sm:grid-cols-2 sm:pt-14 lg:grid-cols-3 lg:pt-16">
-          {blogs.slice(0, 3).map((blog) => (
-            <BlogCard key={blog._id} blog={blog} />
+
+        <ul className="mt-12 grid gap-8 sm:mt-14 sm:grid-cols-2 lg:grid-cols-3">
+          {blogs.slice(0, 3).map((blog, i) => (
+            <Reveal as="li" key={blog._id} delay={i * 80}>
+              <BlogCard blog={blog} />
+            </Reveal>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

@@ -65,20 +65,20 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-gray-900 text-white transition-transform duration-300 lg:static lg:translate-x-0",
+          "fixed inset-y-0 left-0 z-50 flex w-64 flex-col bg-dark text-white transition-transform duration-300 lg:static lg:translate-x-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
         <div className="flex items-center justify-between border-b border-gray-800 p-6">
           <div className="min-w-0">
             <h2 className="text-xl font-bold">Admin Panel</h2>
-            <p className="mt-1 truncate text-sm text-gray-400">
+            <p className="mt-1 truncate text-sm text-white/60">
               {user?.email || "Admin"}
             </p>
           </div>
           <button
             onClick={onClose}
-            className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-gray-400 hover:bg-gray-800 hover:text-white lg:hidden"
+            className="ml-2 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
           >
             <CloseIcon />
           </button>
@@ -95,8 +95,8 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
                 className={cn(
                   "flex items-center gap-3 rounded-lg px-4 py-2.5 transition-colors",
                   isActive
-                    ? "bg-purple-600 text-white"
-                    : "text-gray-300 hover:bg-gray-800 hover:text-white"
+                    ? "bg-accent text-ink"
+                    : "text-white/60 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <item.icon className="h-5 w-5" />

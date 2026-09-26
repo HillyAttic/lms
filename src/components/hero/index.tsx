@@ -1,128 +1,87 @@
 import Button from "../ui/button";
 import Link from "next/link";
-import Image from "next/image";
-import { WheatLeavesLeft, WheatLeavesRight } from "@/lib/icons";
 import ButtonArrow from "../ui/buttonArrow";
+import { HeroIllustration } from "../illustrations";
 
 const Hero = () => {
   return (
-    <section
-      className="overflow-x-hidden bg-cover bg-center bg-no-repeat pt-11 pb-[87px] sm:pt-16 lg:pt-20"
-      style={{ backgroundImage: `url('/images/hero/bg-img.png')` }}
-    >
+    <section className="overflow-x-clip pt-10 pb-12 sm:pt-14 lg:pt-16 lg:pb-20">
       <div className="container">
-        <div className="flex flex-col items-center text-center">
-          <div className="mb-3 flex items-center gap-2">
-            <span>
-              <WheatLeavesLeft />
-            </span>
-            <div className="flex items-center -space-x-[7.5px]">
-              <Image
-                width={26}
-                height={26}
-                src={"/images/hero/avatar.png"}
-                alt="avatar"
-                sizes="100vw"
-                className="border border-primary rounded-full size-6.5"
-              />
-              <Image
-                width={26}
-                height={26}
-                src={"/images/hero/avatar-1.png"}
-                alt="avatar"
-                sizes="100vw"
-                className="border border-primary rounded-full size-6.5"
-              />
-              <Image
-                width={26}
-                height={26}
-                src={"/images/hero/avatar-2.png"}
-                alt="avatar"
-                sizes="100vw"
-                className="border border-primary rounded-full size-6.5"
-              />
-            </div>
-            <p className="text-sm leading-5 font-medium text-secondary">
-              85k Happy learner
+        <div className="grid items-center gap-10 lg:grid-cols-12 lg:gap-6">
+          <div className="lg:col-span-7">
+            <p className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-ink bg-white py-1 pr-3.5 pl-1.5">
+              <span className="grid size-6 place-items-center rounded-full bg-accent text-[0.6875rem] font-bold text-ink">
+                ★
+              </span>
+              <span className="text-xs font-semibold tracking-[0.06em] uppercase">
+                Trusted by 85K+ learners
+              </span>
             </p>
-            <span>
-              <WheatLeavesRight />
-            </span>
-          </div>
-          <h1 className="text-[clamp(2.25rem,1.663rem+2.6087vw,3.75rem)] leading-[1.2] font-bold tracking-[-1.2px]">
-            Learn New Skills.{" "}
-            <span className="block text-gray-400">Create Your Future.</span>
-          </h1>
-          <p className="mx-auto mt-4 max-w-[629px] text-center leading-[1.5] text-secondary sm:text-lg lg:text-xl">
-            Discover hundreds of curated lessons to boost your career, all in
-            one place. Learn at your own pace from industry experts
-          </p>
-          <div className="mt-12 flex flex-col gap-4 max-sm:w-full sm:flex-row">
-            <Button
-              asChild
-              size="lg"
-              className="py-1.5 pr-1.5 pl-6 max-sm:w-full"
-            >
-              <Link href={"/courses"}>
-                <span className="w-full">Browse Course</span>
-                <ButtonArrow />
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="outline"
-              size="lg"
-              className="w-full bg-primary sm:max-w-[133px]"
-            >
-              <Link href={"/about"}>
-                <span>Learn More</span>
-              </Link>
-            </Button>
-          </div>
-          {/* image gallery */}
-          <div className="pt-12 sm:pt-20 lg:pt-[154px]">
-            <div className="mx-auto grid max-w-[1048px] grid-cols-2 gap-2 sm:gap-4 lg:grid-cols-4">
-              <div className="relative z-[1] rotate-[7deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl">
-                <Image
-                  width={261}
-                  height={272}
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                  src={"/images/hero/img-1.png"}
-                  alt="img"
-                  className="h-auto w-full"
-                />
-              </div>
-              <div className="-rotate-[15deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl">
-                <Image
-                  width={261}
-                  height={272}
-                  sizes="(max-width: 640px) 50vw, (max-width: 1024px) 50vw, 25vw"
-                  src={"/images/hero/img-2.png"}
-                  alt="img"
-                  className="h-auto w-full rounded-[14.7px]"
-                />
-              </div>
-              <div className="hidden rotate-[7deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl sm:block">
-                <Image
-                  width={261}
-                  height={272}
-                  sizes="(max-width: 1024px) 50vw, 25vw"
-                  src={"/images/hero/img-3.png"}
-                  alt="img"
-                  className="h-auto w-full rounded-[14.7px]"
-                />
-              </div>
-              <div className="hidden -rotate-[7.85deg] overflow-hidden rounded-[14.7px] bg-primary p-1.5 shadow-2xl sm:block">
-                <Image
-                  width={261}
-                  height={272}
-                  sizes="(max-width: 1024px) 50vw, 25vw"
-                  src={"/images/hero/img-4.png"}
-                  alt="img"
-                  className="h-auto w-full rounded-[14.7px]"
-                />
-              </div>
+
+            {/* Above the fold: deliberately not wrapped in <Reveal>. Reveal
+                renders `opacity-0` until hydration, which would hold the LCP
+                element — the h1 — invisible on first paint. */}
+            <h1 className="display-1 mt-6 text-balance">
+              Learn skills.
+              <br />
+              Build your <span className="marker">future</span>.
+            </h1>
+
+            <p className="mt-6 max-w-xl text-lg leading-8 text-secondary text-pretty">
+              Practical courses designed to help you learn, build real projects
+              and grow your career — at your own pace, from people who do the
+              work.
+            </p>
+
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row sm:items-center">
+              <Button
+                asChild
+                variant="accent"
+                size="lg"
+                className="max-sm:w-full"
+              >
+                <Link href="/courses">
+                  <span>Explore Courses</span>
+                  <ButtonArrow />
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="outline"
+                size="lg"
+                className="max-sm:w-full"
+              >
+                <Link href="/about">Learn More</Link>
+              </Button>
             </div>
+
+            <ul className="mt-10 flex flex-wrap items-center gap-x-7 gap-y-3 border-t-[1.5px] border-ink/15 pt-6">
+              {[
+                "Self-paced learning",
+                "Recognised certificates",
+                "Expert instructors",
+              ].map((item) => (
+                <li
+                  key={item}
+                  className="flex items-center gap-2 text-sm font-medium text-secondary"
+                >
+                  <span
+                    aria-hidden="true"
+                    className="size-1.5 rounded-full bg-ink"
+                  />
+                  {item}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Hand-drawn scene. Hidden from AT: it carries no information the
+              headline and list above don't already state. */}
+          <div
+            aria-hidden="true"
+            className="animate-float lg:col-span-5 lg:-mr-6 xl:-mr-12"
+          >
+            <HeroIllustration />
           </div>
         </div>
       </div>

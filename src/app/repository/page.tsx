@@ -3,15 +3,35 @@
 import { useEffect, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
 import { useRouter } from "next/navigation";
+import { toast } from "react-toastify";
 import {
   getRepositoryItems,
   type RepositoryContentItem,
   type RepositoryContentType,
 } from "@/app/actions/repository-actions";
 import { checkRepositoryAccess } from "@/app/actions/user-actions";
-import { Search, Filter, Play, RefreshCw } from "@/lib/icons";
+import Input from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Search,
+  Play,
+  RefreshCw,
+  LayoutDashboard,
+  FileStack,
+  Video,
+  GamepadIcon,
+  Clock,
+  GraduationHat,
+  LongArrowUpRight,
+} from "@/lib/icons";
+import { cn } from "@/lib/utils";
 
-// SCORM, video and game content all surface here.
 type RepositoryItem = RepositoryContentItem;
 
 const TYPE_LABELS: Record<RepositoryContentType, string> = {
@@ -20,11 +40,27 @@ const TYPE_LABELS: Record<RepositoryContentType, string> = {
   game: "Game",
 };
 
-const TYPE_BADGE_STYLES: Record<RepositoryContentType, string> = {
-  scorm: "bg-purple-50 text-purple-700 border-purple-200",
-  video: "bg-blue-50 text-blue-700 border-blue-200",
-  game: "bg-green-50 text-green-700 border-green-200",
+const TYPE_ICONS: Record<RepositoryContentType, typeof FileStack> = {
+  scorm: FileStack,
+  video: Video,
+  game: GamepadIcon,
 };
+
+const LEVELS = [
+  { value: "", label: "All levels" },
+  { value: "1", label: "Level 1 — Read only" },
+  { value: "2", label: "Level 2 — Limited" },
+  { value: "2.5", label: "Level 2.5 — Complex" },
+  { value: "3", label: "Level 3 — Full simulation" },
+];
+
+/*
+ * The repository carries eight fields per item, so both a dense table and a
+ * card grid are useful: cards are the default (the library read), and the table
+ * stays one click away for comparing rows. Both render the same filtered list
+ * and call the same `handleLaunch`, so nothing can drift between them.
+ */
+type View = "grid" | "table";
 
 export default function RepositoryPage() {
   const { user, loading: authLoading } = useAuth();
@@ -33,36 +69,12 @@ export default function RepositoryPage() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [filterLevel, setFilterLevel] = useState<number | null>(null);
+  const [filterType, setFilterType] = useState<RepositoryContentType | "all">(
+    "all",
+  );
+  const [view, setView] = useState<View>("grid");
   const [hasAccess, setHasAccess] = useState<boolean | null>(null);
   const [launchingId, setLaunchingId] = useState<string | null>(null);
-
-  useEffect(() => {
-    if (!authLoading) {
-      if (!user) {
-        // User not logged in, redirect to login
-        router.push("/admin/login");
-      } else {
-        checkAccess();
-      }
-    }
-  }, [user, authLoading]);
-
-  const checkAccess = async () => {
-    if (!user) return;
-
-    const result = await checkRepositoryAccess(user.uid);
-    if (result.success) {
-      setHasAccess(result.hasAccess);
-      if (result.hasAccess) {
-        loadItems();
-      } else {
-        setLoading(false);
-      }
-    } else {
-      setHasAccess(false);
-      setLoading(false);
-    }
-  };
 
   const loadItems = async () => {
     try {
@@ -77,6 +89,39 @@ export default function RepositoryPage() {
     }
   };
 
+  /* `function` declarations, not consts: both are referenced by the effect
+     above, and hoisting keeps it from reading an uninitialised binding. */
+  async function getRepositoryAccess() {
+    if (!user) return;
+
+    const result = await checkRepositoryAccess(user.uid);
+    if (result.success) {
+      setHasAccess(result.hasAccess);
+      if (result.hasAccess) {
+        loadItems();
+      } else {
+        setLoading(false);
+      }
+    } else {
+      setHasAccess(false);
+      setLoading(false);
+    }
+  }
+
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      // User not logged in, redirect to login
+      router.push("/admin/login");
+      return;
+    }
+    // The access check resolves asynchronously — the setState calls inside it
+    // land after the await, not during this effect body.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void getRepositoryAccess();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, authLoading]);
+
   const handleLaunch = async (item: RepositoryItem) => {
     setLaunchingId(item.id);
     try {
@@ -89,12 +134,12 @@ export default function RepositoryPage() {
         // Open via proxy route — hides signed URL, serves all assets cleanly
         window.open(
           `/api/repository/launch/${item.id}/${item.entryPoint || "story.html"}`,
-          "_blank"
+          "_blank",
         );
       }
     } catch (error) {
       console.error("Failed to launch course:", error);
-      alert("Failed to launch course. Please try again.");
+      toast.error("Could not launch that course. Please try again.");
     } finally {
       setLaunchingId(null);
     }
@@ -110,28 +155,9 @@ export default function RepositoryPage() {
       item.features?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLevel =
       filterLevel === null || item.interactivityLevel === filterLevel;
-    return matchesSearch && matchesLevel;
+    const matchesType = filterType === "all" || item.type === filterType;
+    return matchesSearch && matchesLevel && matchesType;
   });
-
-  const getInteractivityBadge = (level?: number) => {
-    if (level === undefined || level === null) {
-      // Video and game rows have no interactivity level.
-      return <span className="text-sm text-gray-400">—</span>;
-    }
-    const colors: Record<number, string> = {
-      1: "bg-gray-100 text-gray-800 border-gray-200",
-      2: "bg-blue-50 text-blue-700 border-blue-200",
-      2.5: "bg-purple-50 text-purple-700 border-purple-200",
-      3: "bg-green-50 text-green-700 border-green-200",
-    };
-    return (
-      <span
-        className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${colors[level] || colors[1]}`}
-      >
-        Level {level}
-      </span>
-    );
-  };
 
   const formatDuration = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
@@ -142,251 +168,400 @@ export default function RepositoryPage() {
     return `${mins}m`;
   };
 
-  // Loading state
   if (authLoading || loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-purple-500 border-t-transparent"></div>
+      <div className="grid min-h-screen place-items-center">
+        <div className="h-8 w-8 animate-spin rounded-full border-[3px] border-ink border-t-transparent" />
       </div>
     );
   }
 
-  // Not logged in state (shouldn't reach here due to redirect, but just in case)
-  if (!user) {
+  if (!user || hasAccess === false) {
+    const denied = hasAccess === false;
     return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Required</h1>
-        <p className="text-gray-600 mb-4">Please log in to access the repository.</p>
-        <button
-          onClick={() => router.push("/admin/login")}
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          Log In
-        </button>
+      <div className="grid min-h-screen place-items-center px-5 text-center">
+        <div className="max-w-md">
+          <h1 className="display-3">
+            {denied ? "Access " : "Sign in "}
+            <span className="marker">{denied ? "denied" : "required"}</span>
+          </h1>
+          <p className="mt-4 leading-7 text-secondary">
+            {denied
+              ? "Your account doesn't have repository access yet. Contact an administrator to get it enabled."
+              : "Please log in to open the repository."}
+          </p>
+          <button
+            type="button"
+            onClick={() => router.push(denied ? "/" : "/admin/login")}
+            className="mt-7 rounded-full border-[1.5px] border-ink bg-accent px-6 py-3 text-sm font-medium shadow-md transition-transform hover:-translate-y-0.5"
+          >
+            {denied ? "Go home" : "Log in"}
+          </button>
+        </div>
       </div>
     );
   }
 
-  // No access state
-  if (hasAccess === false) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen">
-        <svg className="w-16 h-16 text-gray-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-        </svg>
-        <h1 className="text-2xl font-bold text-gray-900 mb-2">Access Denied</h1>
-        <p className="text-gray-600 mb-4">
-          You don't have access to the repository. Please contact an administrator.
-        </p>
-        <button
-          onClick={() => router.push("/")}
-          className="px-6 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          Go Home
-        </button>
-      </div>
-    );
-  }
+  const hasFilters = Boolean(searchTerm || filterLevel !== null || filterType !== "all");
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container mx-auto px-4 py-12">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Course Repository</h1>
-          <p className="text-gray-600 mt-2">
-            Browse and launch SCORM courses, videos and games
+    <main className="bg-background pb-20 pt-12 sm:pt-16">
+      <div className="container">
+        <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border-[1.5px] border-ink px-3 py-1">
+              <span className="size-1.5 rounded-full bg-accent" />
+              <span className="text-[0.6875rem] font-semibold tracking-[0.08em] uppercase">
+                Repository
+              </span>
+            </span>
+            <h1 className="display-2 mt-5 text-balance">
+              Your complete <span className="marker">library</span>
+            </h1>
+            <p className="mt-4 max-w-xl leading-7 text-secondary text-pretty">
+              Every SCORM module, video course and game available to your
+              account. Launch any of them straight from here.
+            </p>
+          </div>
+
+          {/* View switch */}
+          <div
+            role="group"
+            aria-label="Change layout"
+            className="inline-flex shrink-0 self-start rounded-full border-[1.5px] border-ink bg-white p-1 lg:self-auto"
+          >
+            {(["grid", "table"] as View[]).map((v) => (
+              <button
+                key={v}
+                type="button"
+                aria-pressed={view === v}
+                onClick={() => setView(v)}
+                className={cn(
+                  "flex items-center gap-2 rounded-full px-4 py-2 text-sm font-medium capitalize transition-colors",
+                  view === v ? "bg-ink text-white" : "text-secondary hover:text-ink",
+                )}
+              >
+                {v === "table" && <LayoutDashboard className="size-4" />}
+                {v}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Filters */}
+        <div className="mt-10 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <div className="relative w-full lg:max-w-sm">
+            <Search className="absolute top-1/2 left-4 z-10 size-5 -translate-y-1/2 text-gray-400" />
+            <Input
+              type="search"
+              aria-label="Search the repository"
+              placeholder="Search courses…"
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-11"
+            />
+          </div>
+
+          {/* Type chips scroll on narrow screens instead of wrapping to a block. */}
+          <div className="-mx-5 overflow-x-auto px-5 lg:mx-0 lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <div className="flex w-max items-center gap-2">
+              {(["all", "scorm", "video", "game"] as const).map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  aria-pressed={filterType === t}
+                  onClick={() => setFilterType(t)}
+                  className={cn(
+                    "rounded-full border-[1.5px] border-ink px-4 py-2.5 text-sm font-medium capitalize whitespace-nowrap transition-colors",
+                    filterType === t
+                      ? "bg-ink text-white"
+                      : "bg-white hover:bg-accent",
+                  )}
+                >
+                  {t === "all" ? "All" : TYPE_LABELS[t]}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="w-full lg:w-56">
+            <Select
+              value={filterLevel === null ? "" : String(filterLevel)}
+              onValueChange={(v) => setFilterLevel(v === "" ? null : parseFloat(v))}
+            >
+              <SelectTrigger aria-label="Filter by interactivity level">
+                <SelectValue placeholder="All levels" />
+              </SelectTrigger>
+              <SelectContent>
+                {LEVELS.map((l) => (
+                  <SelectItem key={l.value} value={l.value}>
+                    {l.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <p aria-live="polite" className="text-sm font-medium text-secondary lg:ml-auto">
+            {filteredItems.length} of {items.length}
           </p>
         </div>
 
-        {/* Search and Filter */}
-        <div className="bg-white rounded-xl p-4 shadow-sm mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Search courses..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-              />
-            </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-5 h-5 text-gray-400" />
-              <select
-                value={filterLevel === null ? "" : filterLevel}
-                onChange={(e) =>
-                  setFilterLevel(e.target.value === "" ? null : parseFloat(e.target.value))
-                }
-                className="px-4 py-2.5 border border-gray-300 rounded-lg focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-              >
-                <option value="">All Levels</option>
-                <option value="1">Level 1 - Read Only</option>
-                <option value="2">Level 2 - Limited</option>
-                <option value="2.5">Level 2.5 - Complex</option>
-                <option value="3">Level 3 - Full Simulation</option>
-              </select>
-            </div>
-          </div>
-        </div>
-
-        {/* Excel-like Table */}
         {filteredItems.length === 0 ? (
-          <div className="bg-white rounded-xl p-12 text-center">
-            <BookOpen className="w-16 h-16 mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 mb-2">No courses found</h3>
-            <p className="text-gray-600">
-              {searchTerm || filterLevel
-                ? "Try adjusting your search or filters"
-                : "No courses available yet"}
+          <div className="card-brutal mt-10 bg-white px-6 py-16 text-center">
+            <h2 className="text-xl font-bold tracking-[-0.02em]">
+              Nothing matches those filters
+            </h2>
+            <p className="mx-auto mt-3 max-w-md leading-7 text-secondary">
+              {hasFilters
+                ? "Try a different type or level. Level only applies to SCORM modules."
+                : "No courses have been added to the repository yet."}
             </p>
           </div>
+        ) : view === "grid" ? (
+          <ul className="mt-8 grid gap-6 sm:grid-cols-2 xl:grid-cols-3">
+            {filteredItems.map((item) => (
+              <RepositoryCard
+                key={item.id}
+                item={item}
+                launching={launchingId === item.id}
+                onLaunch={() => handleLaunch(item)}
+                formatDuration={formatDuration}
+              />
+            ))}
+          </ul>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse">
-                <thead className="bg-gray-100 border-b-2 border-gray-200">
-                  <tr>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[60px]">
-                      S.No
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[90px]">
-                      Type
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[240px]">
-                      Name
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[120px]">
-                      Interactivity
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[150px]">
-                      Features
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[250px]">
-                      Description
-                    </th>
-                    <th className="px-4 py-3 text-left text-xs font-bold text-gray-700 uppercase tracking-wider border-r border-gray-200 min-w-[100px]">
-                      Duration
-                    </th>
-                    <th className="px-4 py-3 text-center text-xs font-bold text-gray-700 uppercase tracking-wider min-w-[100px]">
-                      Action
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200">
-                  {filteredItems.map((item, index) => (
-                    <tr
-                      key={item.id}
-                      className={`hover:bg-gray-50 transition-colors ${
-                        index % 2 === 0 ? "bg-white" : "bg-gray-50/50"
-                      }`}
-                    >
-                      <td className="px-4 py-3 text-sm font-medium text-gray-900 border-r border-gray-200 text-center">
-                        {item.serialNumber ?? "—"}
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
-                        <span
-                          className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${TYPE_BADGE_STYLES[item.type]}`}
-                        >
-                          {TYPE_LABELS[item.type]}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
-                        <div className="flex items-center gap-3">
-                          {item.thumbnailUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
-                              src={item.thumbnailUrl}
-                              alt=""
-                              className="h-12 w-20 shrink-0 rounded object-cover"
-                            />
-                          ) : null}
-                          <div className="min-w-0">
-                            <div className="font-semibold text-gray-900">{item.name}</div>
-                            <div className="text-xs text-gray-500 mt-0.5">
-                              {item.type === "scorm"
-                                ? `SCORM ${item.scormVersion}`
-                                : item.type === "video"
-                                  ? "Video course"
-                                  : "Game course"}
-                            </div>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
-                        {getInteractivityBadge(item.interactivityLevel)}
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
-                        <div className="text-sm text-gray-600" title={item.features}>
-                          {item.features || "—"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
-                        <div className="text-sm text-gray-600" title={item.description}>
-                          {item.description || "—"}
-                        </div>
-                      </td>
-                      <td className="px-4 py-3 border-r border-gray-200">
-                        <span className="text-sm text-gray-600">
-                          {formatDuration(item.duration)}
-                        </span>
-                      </td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => handleLaunch(item)}
-                          disabled={launchingId === item.id}
-                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {launchingId === item.id ? (
-                            <>
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                              Loading...
-                            </>
-                          ) : (
-                            <>
-                              <Play className="w-4 h-4" />
-                              {launchLabel(item)}
-                            </>
-                          )}
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
+          <RepositoryTable
+            items={filteredItems}
+            launchingId={launchingId}
+            onLaunch={handleLaunch}
+            launchLabel={launchLabel}
+            formatDuration={formatDuration}
+          />
         )}
+      </div>
+    </main>
+  );
+}
 
-        {/* Results count */}
-        <div className="mt-4 text-sm text-gray-600">
-          Showing {filteredItems.length} of {items.length} courses
-        </div>
+const TypeBadge = ({ type }: { type: RepositoryContentType }) => {
+  const Icon = TYPE_ICONS[type];
+  return (
+    <span className="inline-flex items-center gap-1.5 rounded-full bg-ink px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.08em] text-accent uppercase">
+      <Icon className="size-3.5" />
+      {TYPE_LABELS[type]}
+    </span>
+  );
+};
+
+const RepositoryCard = ({
+  item,
+  launching,
+  onLaunch,
+  formatDuration,
+}: {
+  item: RepositoryItem;
+  launching: boolean;
+  onLaunch: () => void;
+  formatDuration: (m: number) => string;
+}) => (
+  <li className="card-brutal card-brutal-hover group flex h-full flex-col overflow-hidden bg-white">
+    <div className="p-2.5 pb-0">
+      <div className="relative overflow-hidden rounded-[18px] border-[1.5px] border-ink/15">
+        {item.thumbnailUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img
+            src={item.thumbnailUrl}
+            alt=""
+            loading="lazy"
+            className="aspect-16/10 w-full object-cover"
+          />
+        ) : (
+          <span className="grid aspect-16/10 w-full place-items-center text-xs text-secondary">
+            No preview
+          </span>
+        )}
+        <span className="absolute top-3 left-3">
+          <TypeBadge type={item.type} />
+        </span>
       </div>
     </div>
-  );
-}
 
-function BookOpen(props: any) {
-  return (
-    <svg
-      {...props}
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-      <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-    </svg>
-  );
-}
+    <div className="flex grow flex-col p-5">
+      <h2 className="text-lg leading-7 font-bold tracking-[-0.02em] text-balance">
+        {item.name}
+      </h2>
+
+      <ul className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium text-secondary">
+        {item.serialNumber !== undefined && (
+          <li>#{item.serialNumber}</li>
+        )}
+        {item.duration ? (
+          <li className="flex items-center gap-1.5">
+            <Clock className="size-3.5" />
+            {formatDuration(item.duration)}
+          </li>
+        ) : null}
+        {item.interactivityLevel ? (
+          <li className="flex items-center gap-1.5">
+            <GraduationHat className="size-3.5" />
+            Level {item.interactivityLevel}
+          </li>
+        ) : null}
+      </ul>
+
+      {item.description ? (
+        <p className="mt-4 grow text-sm leading-6 text-secondary line-clamp-3">
+          {item.description}
+        </p>
+      ) : (
+        <div className="grow" />
+      )}
+
+      {item.features ? (
+        <p className="mt-3 text-xs leading-5 text-gray-500 line-clamp-2">
+          <span className="font-semibold uppercase tracking-[0.06em]">
+            Features:{" "}
+          </span>
+          {item.features}
+        </p>
+      ) : null}
+
+      <button
+        type="button"
+        onClick={onLaunch}
+        disabled={launching}
+        className="mt-5 flex w-full items-center justify-between rounded-full border-[1.5px] border-ink bg-accent py-2.5 pr-2.5 pl-5 text-sm font-semibold transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+      >
+        {launching ? "Opening…" : launchLabelFor(item)}
+        <span className="grid size-8 place-items-center rounded-full bg-ink text-accent">
+          {launching ? (
+            <RefreshCw className="size-4 animate-spin" />
+          ) : (
+            <LongArrowUpRight />
+          )}
+        </span>
+      </button>
+    </div>
+  </li>
+);
+
+const launchLabelFor = (item: RepositoryItem) =>
+  item.type === "video" ? "Watch video" : item.type === "game" ? "Play game" : "Launch module";
+
+const RepositoryTable = ({
+  items,
+  launchingId,
+  onLaunch,
+  launchLabel,
+  formatDuration,
+}: {
+  items: RepositoryItem[];
+  launchingId: string | null;
+  onLaunch: (item: RepositoryItem) => void;
+  launchLabel: (item: RepositoryItem) => string;
+  formatDuration: (m: number) => string;
+}) => (
+  <div className="mt-8 overflow-hidden rounded-[24px] border-[1.5px] border-ink bg-white">
+    <div className="overflow-x-auto">
+      <table className="w-full border-collapse">
+        <thead className="border-b-[1.5px] border-ink bg-muted">
+          <tr>
+            {[
+              "S.No",
+              "Type",
+              "Name",
+              "Level",
+              "Features",
+              "Description",
+              "Duration",
+              "",
+            ].map((heading) => (
+              <th
+                key={heading}
+                scope="col"
+                className="px-4 py-3 text-left text-[0.6875rem] font-bold tracking-[0.08em] whitespace-nowrap uppercase"
+              >
+                {heading}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr
+              key={item.id}
+              className="border-b border-ink/10 last:border-0 hover:bg-muted/60"
+            >
+              <td className="px-4 py-3 text-sm font-semibold tabular-nums">
+                {item.serialNumber ?? "—"}
+              </td>
+              <td className="px-4 py-3">
+                <TypeBadge type={item.type} />
+              </td>
+              <td className="px-4 py-3">
+                <div className="flex items-center gap-3">
+                  {item.thumbnailUrl ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={item.thumbnailUrl}
+                      alt=""
+                      loading="lazy"
+                      className="h-12 w-20 shrink-0 rounded-lg border-[1.5px] border-ink/15 object-cover"
+                    />
+                  ) : null}
+                  <div className="min-w-0">
+                    <p className="font-semibold">{item.name}</p>
+                    <p className="mt-0.5 text-xs text-secondary">
+                      {item.type === "scorm"
+                        ? `SCORM ${item.scormVersion}`
+                        : item.type === "video"
+                          ? "Video course"
+                          : "Game course"}
+                    </p>
+                  </div>
+                </div>
+              </td>
+              <td className="px-4 py-3 text-sm text-secondary">
+                {item.interactivityLevel ?? "—"}
+              </td>
+              <td className="max-w-40 px-4 py-3 text-sm text-secondary">
+                <span className="line-clamp-2" title={item.features}>
+                  {item.features || "—"}
+                </span>
+              </td>
+              <td className="max-w-60 px-4 py-3 text-sm text-secondary">
+                <span className="line-clamp-2" title={item.description}>
+                  {item.description || "—"}
+                </span>
+              </td>
+              <td className="px-4 py-3 text-sm text-secondary whitespace-nowrap">
+                {item.duration ? formatDuration(item.duration) : "—"}
+              </td>
+              <td className="px-4 py-3">
+                <button
+                  type="button"
+                  onClick={() => onLaunch(item)}
+                  disabled={launchingId === item.id}
+                  className="inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-ink bg-accent px-3.5 py-1.5 text-sm font-semibold whitespace-nowrap transition-transform hover:-translate-y-0.5 disabled:opacity-50"
+                >
+                  {launchingId === item.id ? (
+                    <>
+                      <RefreshCw className="size-4 animate-spin" />
+                      Loading…
+                    </>
+                  ) : (
+                    <>
+                      <Play className="size-4" />
+                      {launchLabel(item)}
+                    </>
+                  )}
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  </div>
+);

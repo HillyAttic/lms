@@ -1,48 +1,44 @@
 import Button from "@/components/ui/button";
 import ButtonArrow from "@/components/ui/buttonArrow";
-import Image from "next/image";
 import Link from "next/link";
+import { HeroIllustration } from "@/components/illustrations";
 
 const NotFound = () => {
   return (
-    <main>
-      <section className="bg-gray-50 pt-11 pb-16 sm:pt-14 sm:pb-20 lg:pt-20 lg:pb-28 min-h-screen">
-        <div className="container">
-          <div className="mx-auto mb-6 max-w-142">
-            <Image
-              width={568}
-              height={502}
-              sizes="100vw"
-              src={"/images/not-found.png"}
-              alt="img"
-            />
-          </div>
-          <div className="text-center">
-            <h2
-              className={
-                "text-[clamp(2rem,1.6087rem+1.7391vw,3rem)] leading-tight font-medium tracking-[-0.96px]"
-              }
-            >
-              Page Not Found
-            </h2>
-            <p className="mt-3 block text-sm leading-5 font-medium tracking-sm text-secondary">
-              The page you’re trying to reach isn’t available right now.
+    <main className="pt-10 pb-20 sm:pt-16 lg:pb-28">
+      <div className="container">
+        <div className="grid items-center gap-10 lg:grid-cols-12">
+          <div className="lg:col-span-6">
+            <p className="text-sm font-bold tracking-[0.12em] text-secondary uppercase">
+              Error 404
             </p>
-            <Button
-              asChild
-              size="lg"
-              className="mt-8 py-1.5 pr-6 pl-1.5 max-sm:w-full"
-            >
-              <Link href={"/"}>
-                <span className="rotate-180">
+            <h1 className="display-1 mt-4 text-balance">
+              This page took a
+              <br />
+              wrong <span className="marker">turn</span>.
+            </h1>
+            <p className="mt-6 max-w-lg text-lg leading-8 text-secondary text-pretty">
+              The page you&apos;re looking for isn&apos;t here. It may have moved,
+              or the link that brought you here is out of date.
+            </p>
+            <div className="mt-9 flex flex-col gap-3 sm:flex-row">
+              <Button asChild variant="accent" size="lg" className="max-sm:w-full">
+                <Link href="/courses">
+                  <span>Browse courses</span>
                   <ButtonArrow />
-                </span>
-                <span className="w-full text-center">Back to Home</span>
-              </Link>
-            </Button>
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="lg" className="max-sm:w-full">
+                <Link href="/">Back to home</Link>
+              </Button>
+            </div>
+          </div>
+
+          <div aria-hidden="true" className="lg:col-span-6">
+            <HeroIllustration />
           </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 };

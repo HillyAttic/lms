@@ -206,7 +206,7 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
   if (generatedLink) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-        <div className="w-full max-w-md rounded-xl bg-white">
+        <div className="w-full max-w-md rounded-2xl border-[1.5px] border-ink bg-white">
           <div className="flex items-center justify-between border-b p-4 sm:p-6">
             <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Share Link Generated</h2>
             <button
@@ -297,7 +297,7 @@ export default function CreateExternalUserModal({ onClose, onSuccess }: CreateEx
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-xl bg-white">
+      <div className="w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl border-[1.5px] border-ink bg-white">
         <div className="flex items-center justify-between border-b p-4 sm:p-6">
           <h2 className="text-lg font-bold text-gray-900 sm:text-xl">Add External User</h2>
           <button

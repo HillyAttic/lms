@@ -67,7 +67,7 @@ export default function CourseLaunchPage() {
   }, [slug]);
 
   return (
-    <main className="bg-gray-50 py-10 sm:py-14">
+    <main className="bg-background py-10 sm:py-14">
       <div className="container">
         <Breadcrumb
           items={[
@@ -80,21 +80,24 @@ export default function CourseLaunchPage() {
         <div className="mx-auto mt-8 max-w-5xl">
           {loading ? (
             <div className="flex h-[60vh] items-center justify-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#7D52F4] border-t-transparent" />
+              <div className="h-12 w-12 animate-spin rounded-full border-4 border-[#17181F] border-t-transparent" />
             </div>
           ) : error ? (
-            <div className="rounded-3xl bg-white px-6 py-16 text-center shadow-card">
-              <h2 className="text-xl font-semibold">{error}</h2>
-              <p className="mt-2 text-sm text-secondary">
+            <div className="card-brutal bg-white px-6 py-16 text-center">
+              <h2 className="display-3">{error}</h2>
+              <p className="mx-auto mt-3 max-w-md leading-7 text-secondary">
                 Please check back later or browse the catalogue.
               </p>
-              <Button asChild size="lg" className="mt-6 rounded-full px-8">
-                <Link href="/courses">Browse courses</Link>
+              <Button asChild variant="accent" size="lg" className="mt-7">
+                <Link href="/courses">
+                  Browse courses
+                  <ButtonArrow />
+                </Link>
               </Button>
             </div>
           ) : content?.type === "scorm" ? (
             <>
-              <div className="aspect-16/9 overflow-hidden rounded-[2rem] shadow-card">
+              <div className="aspect-16/9 overflow-hidden rounded-[24px] border-[1.5px] border-ink">
                 <ScormPlayer
                   embedded
                   minimal
@@ -111,7 +114,7 @@ export default function CourseLaunchPage() {
                   }}
                 />
               </div>
-              <h2 className="mt-8 text-center text-2xl font-semibold">
+              <h2 className="display-3 mt-8 text-center">
                 {title || content.name}
               </h2>
             </>
@@ -122,7 +125,7 @@ export default function CourseLaunchPage() {
               title={content.name}
             />
           ) : content?.type === "game" ? (
-            <div className="aspect-16/9 overflow-hidden rounded-[2rem] bg-black shadow-card">
+            <div className="aspect-16/9 overflow-hidden rounded-[24px] border-[1.5px] border-ink bg-black">
               <iframe
                 src={content.gameUrl || `/api/game/launch/${content.id}`}
                 title={content.name}
@@ -136,7 +139,7 @@ export default function CourseLaunchPage() {
             <div className="mt-8 text-center">
               <Link
                 href={`/courses/${slug}`}
-                className="inline-flex items-center gap-2 text-sm font-semibold text-[#7D52F4] transition-colors hover:text-purple-700"
+                className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70"
               >
                 <ButtonArrow />
                 Back to course details

@@ -1,61 +1,49 @@
 import SectionTitle from "../sectionTitle";
-import Image from "next/image";
+import Reveal from "../ui/reveal";
 import { featuresData } from "./featuresData";
 
+/*
+ * No icon tiles and no stock thumbnails: numbered editorial rows on the ink
+ * band, each separated by a hairline. The numbers carry the hierarchy.
+ */
 const Features = () => {
   return (
-    <section className="bg-gray-950 py-16 sm:py-20 lg:py-28">
+    <section className="border-y-[1.5px] border-ink bg-dark py-16 text-white sm:py-20 lg:py-28">
       <div className="container">
-        <SectionTitle
-          className="flex flex-col items-center text-center"
-          titleClassName="text-primary"
-          descriptionClass="text-gray-400"
-          subTitleClass="btn-gradient-border-black text-gray-400"
-          subTitle="Why EdventureHub "
-          description="Experience the difference with a platform engineered to help you actually learn, apply, and succeed."
-        >
-          The Smarter Way to Learn Tech
-        </SectionTitle>
-        <div className="grid gap-6 pt-11 sm:grid-cols-2 sm:pt-14 lg:grid-cols-3 lg:pt-16">
-          {featuresData.map((feature) => (
-            <div
-              key={feature.id}
-              className="rounded-3xl border border-[#202020] bg-[linear-gradient(180deg,_#222530_0%,_#131422_100%)] px-4 pt-6 pb-4"
-            >
-              <div
-                style={{
-                  background:
-                    "linear-gradient(var(--gray-700), var(--gray-800)) padding-box, linear-gradient(to bottom, var(--secondary), var(--gray-800)) border-box",
-                  borderRadius: "999px",
-                  border: "0.75px solid transparent",
-                }}
-                className="flex h-12 w-12 items-center justify-center rounded-full"
-              >
-                {feature.icon}
-              </div>
-              <div className="pt-8">
-                <h5 className="text-xl leading-7.5 font-semibold text-primary">
+        <div className="flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
+          <SectionTitle
+            subTitle="Why EdventureHub"
+            titleClassName="text-white"
+            descriptionClass="text-white/60"
+            subTitleClass="border-white/30 [&_p]:text-white/70 [&_span:first-child]:bg-accent"
+            description="Everything here is built around doing the work — not watching someone else do it."
+          >
+            Why learn with
+            <br className="hidden sm:block" /> <span className="marker">EdventureHub</span>?
+          </SectionTitle>
+
+          <p className="max-w-xs text-sm leading-6 text-white/50">
+            Four things every course on the platform has in common.
+          </p>
+        </div>
+
+        <ul className="mt-12 border-t-[1.5px] border-white/20 sm:mt-16">
+          {featuresData.map((feature, i) => (
+            <Reveal as="li" key={feature.id} delay={i * 70}>
+              <div className="group grid gap-4 border-b-[1.5px] border-white/20 py-7 transition-colors hover:bg-white/[0.04] sm:grid-cols-12 sm:gap-8 sm:py-9">
+                <span className="text-3xl font-bold tracking-[-0.04em] text-accent sm:col-span-2 sm:text-4xl">
+                  {String(i + 1).padStart(2, "0")}
+                </span>
+                <h3 className="text-2xl font-bold tracking-[-0.02em] sm:col-span-4 sm:text-3xl">
                   {feature.title}
-                </h5>
-                <p className="mt-2 tracking-base text-gray-400">
+                </h3>
+                <p className="leading-7 text-white/60 sm:col-span-6">
                   {feature.description}
                 </p>
               </div>
-              <div className="pt-8">
-                <div className="rounded-2xl border-4 border-[#2A2C36]">
-                  <Image
-                    width={364}
-                    height={242}
-                    sizes="100vw"
-                    src={feature.thumbnail}
-                    alt="img"
-                    className="w-full rounded-2xl"
-                  />
-                </div>
-              </div>
-            </div>
+            </Reveal>
           ))}
-        </div>
+        </ul>
       </div>
     </section>
   );

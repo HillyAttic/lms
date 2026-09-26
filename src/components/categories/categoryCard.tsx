@@ -1,7 +1,8 @@
-import { GamepadIcon, Video, FileStack } from "@/lib/icons";
+import { GamepadIcon, LongArrowUpRight, Video, FileStack } from "@/lib/icons";
 import { CategoryType } from "@/types/CategoryType";
 import Link from "next/link";
 import { ReactElement } from "react";
+import { cn } from "@/lib/utils";
 
 function categoryIconFinder(category: string) {
   const icons: Record<string, ReactElement> = {
@@ -12,38 +13,93 @@ function categoryIconFinder(category: string) {
   return icons[category];
 }
 
-const CategoryCard = ({ category }: { category: CategoryType }) => {
+/* One of each surface, so the row reads white → ink → lime. */
+const surfaces = [
+  {
+    card: "bg-white",
+    muted: "text-secondary",
+    rule: "border-ink/15",
+    chip: "border-ink/20 text-secondary",
+    num: "text-ink/25",
+  },
+  {
+    card: "bg-ink text-white",
+    muted: "text-white/60",
+    rule: "border-white/20",
+    chip: "border-white/25 text-white/70",
+    num: "text-white/25",
+  },
+  {
+    card: "bg-accent",
+    muted: "text-ink/70",
+    rule: "border-ink/20",
+    chip: "border-ink/30 text-ink/80",
+    num: "text-ink/25",
+  },
+];
+
+const CategoryCard = ({
+  category,
+  index,
+}: {
+  category: CategoryType;
+  index: number;
+}) => {
+  const s = surfaces[index % surfaces.length];
+
   return (
     <Link
       href={`/courses?category=${category.slug.current}`}
-      className="rounded-3xl border-2 border-transparent bg-primary px-5 pt-5 pb-6 transition-all duration-500 hover:border-purple-500 sm:px-7 sm:pt-7 sm:pb-8"
+      className={cn(
+        "card-brutal card-brutal-hover group flex h-full flex-col",
+        s.card,
+      )}
     >
-      <div className="mb-9 flex items-center justify-between sm:mb-11 lg:mb-15">
-        <div
-          className="flex h-13.5 w-13.5 items-center justify-center rounded-full shadow-lg"
-          style={{
-            background:
-              "linear-gradient(var(--primary), var(--primary)) padding-box, linear-gradient(to bottom, var(--gray-200), var(--primary)) border-box",
-            borderRadius: "999px",
-            border: "1.125px solid transparent",
-          }}
+      <div className="flex items-start justify-between gap-4 p-6 pb-0 sm:p-7 sm:pb-0">
+        <span
+          className={cn(
+            "text-5xl leading-none font-bold tracking-[-0.04em] sm:text-6xl",
+            s.num,
+          )}
+        >
+          {String(index + 1).padStart(2, "0")}
+        </span>
+        <span
+          className={cn(
+            "grid size-11 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors sm:size-12",
+            s.chip,
+          )}
         >
           {categoryIconFinder(category.title)}
-        </div>
-        <div className="inline-flex rounded-full bg-gray-50 px-3 py-1">
-          <p className="text-sm leading-5 font-medium tracking-sm text-secondary">
-            {category.courseCount > 1
-              ? category.courseCount + " Courses"
-              : category.courseCount + " Course"}
-          </p>
+        </span>
+      </div>
+
+      <div className="flex grow flex-col p-6 sm:p-7">
+        <h3 className="display-3">{category.title}</h3>
+        <p className={cn("mt-3 text-sm leading-6", s.muted)}>
+          {category.description}
+        </p>
+
+        <div
+          className={cn(
+            "mt-6 flex items-center justify-between border-t-[1.5px] pt-5",
+            s.rule,
+          )}
+        >
+          <span
+            className={cn(
+              "text-xs font-semibold tracking-[0.08em] uppercase",
+              s.muted,
+            )}
+          >
+            {category.courseCount}{" "}
+            {category.courseCount === 1 ? "course" : "courses"}
+          </span>
+          <span className="grid size-9 place-items-center rounded-full bg-ink text-white transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5">
+            <LongArrowUpRight />
+          </span>
         </div>
       </div>
-      <h5 className="text-lg font-medium sm:text-xl lg:text-2xl lg:leading-8">
-        {category.title}
-      </h5>
-      <p className="mt-3 leading-6 tracking-base text-secondary line-clamp-2">
-        {category.description}
-      </p>
     </Link>
   );
 };

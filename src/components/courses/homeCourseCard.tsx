@@ -1,115 +1,158 @@
-"use client";
-import { BookOpen, Clock, GraduationHat, Star } from "@/lib/icons";
+import { BookOpen, Clock, GraduationHat, Star, LongArrowUpRight } from "@/lib/icons";
 import Link from "next/link";
-import Button from "../ui/button";
-import ButtonArrow from "../ui/buttonArrow";
 import { calculateMinutes } from "@/lib/utils";
+import { cn } from "@/lib/utils";
 import type { RepositoryContentItem } from "@/app/actions/repository-actions";
 
-const typeColors: Record<string, string> = {
-  scorm: "bg-blue-500",
-  video: "bg-green-500",
-  game: "bg-orange-500",
-};
+/*
+ * Repository content has no price, instructor or rating — only a type, so the
+ * badge is the type. `tone` switches the card between the three system
+ * surfaces; the homepage alternates them, listings stay on `light` so a grid
+ * of mixed fills doesn't fight the thumbnails.
+ */
+const tones = {
+  light: {
+    card: "bg-white",
+    muted: "text-secondary",
+    rule: "border-ink/15",
+    badge: "bg-ink text-accent",
+  },
+  lime: {
+    card: "bg-accent",
+    muted: "text-ink/70",
+    rule: "border-ink/20",
+    badge: "bg-ink text-accent",
+  },
+  dark: {
+    card: "bg-ink text-white",
+    muted: "text-white/60",
+    rule: "border-white/20",
+    badge: "bg-accent text-ink",
+  },
+} as const;
 
-/** Real repository content has no price, instructor or rating; just the type badge. */
 const HomeCourseCard = ({
   course,
   href,
+  tone = "light",
 }: {
   course: RepositoryContentItem;
   /** Detail page to browse the course on. Without it the card launches straight away. */
   href?: string;
+  tone?: keyof typeof tones;
 }) => {
-  const thumbnail = course.thumbnailUrl;
+  const t = tones[tone];
+
+  const meta = [
+    course.duration
+      ? { icon: <Clock className="size-4" />, label: calculateMinutes(course.duration) }
+      : null,
+    course.scormVersion
+      ? {
+          icon: <BookOpen className="size-4" />,
+          label: `SCORM ${course.scormVersion}`,
+        }
+      : null,
+    course.interactivityLevel
+      ? {
+          icon: <GraduationHat className="size-4" />,
+          label: `Level ${course.interactivityLevel}`,
+        }
+      : null,
+  ].filter(Boolean) as { icon: React.ReactNode; label: string }[];
 
   return (
-    <div className="flex h-full flex-col rounded-3xl bg-primary px-2 pt-2 pb-6">
-      <div className="relative">
-        {thumbnail ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
-            src={thumbnail}
-            alt={course.name}
-            loading="lazy"
-            className="aspect-373/218 w-full rounded-2xl object-cover"
-          />
-        ) : (
-          <div className="grid aspect-373/218 w-full place-items-center rounded-2xl bg-gray-50 text-gray-400">
-            <Star className="size-8" />
-          </div>
-        )}
-        <div
-          className={`absolute top-3 right-3 rounded-full px-3 py-1 text-xs font-semibold text-white uppercase ${typeColors[course.type]}`}
-        >
-          {course.type}
+    <article
+      className={cn(
+        "card-brutal card-brutal-hover group relative flex h-full flex-col overflow-hidden",
+        t.card,
+      )}
+    >
+      <div className="p-2.5 pb-0">
+        <div className="relative overflow-hidden rounded-[18px]">
+          {course.thumbnailUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={course.thumbnailUrl}
+              alt=""
+              loading="lazy"
+              className="aspect-16/10 w-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
+            />
+          ) : (
+            <span
+              className={cn(
+                "grid aspect-16/10 w-full place-items-center border-[1.5px]",
+                t.rule,
+              )}
+            >
+              <Star className="size-7 opacity-30" />
+            </span>
+          )}
+          <span
+            className={cn(
+              "absolute top-3 left-3 rounded-full px-2.5 py-1 text-[0.6875rem] font-bold tracking-[0.08em] uppercase",
+              t.badge,
+            )}
+          >
+            {course.type}
+          </span>
         </div>
       </div>
 
-      <div className="flex grow flex-col pt-5 sm:px-4">
-        <ul className="flex flex-wrap items-center gap-2.5 pb-4">
-          {course.duration ? (
-            <li className="flex max-h-6.5 items-center gap-1 pt-1 pb-1 leading-4.5 text-secondary">
-              <Clock className="size-4" />
-              <span className="text-xs leading-4.5">
-                {calculateMinutes(course.duration)}
-              </span>
-            </li>
-          ) : null}
-          {course.scormVersion ? (
-            <li className="flex max-h-6.5 items-center gap-1 pt-1 pb-1 leading-4.5 text-secondary">
-              <BookOpen className="size-4 stroke-[0.75]" />
-              <span className="text-xs leading-4.5">
-                SCORM {course.scormVersion}
-              </span>
-            </li>
-          ) : null}
-          {course.interactivityLevel ? (
-            <li className="flex max-h-6.5 items-center gap-1 pt-1 pb-1 leading-4.5 text-secondary">
-              <GraduationHat className="size-4" />
-              <span className="text-xs leading-4.5">
-                Level {course.interactivityLevel}
-              </span>
-            </li>
-          ) : null}
-        </ul>
+      <div className="flex grow flex-col p-5 sm:p-6">
+        {meta.length > 0 && (
+          <ul className={cn("flex flex-wrap items-center gap-x-4 gap-y-2", t.muted)}>
+            {meta.map((m) => (
+              <li key={m.label} className="flex items-center gap-1.5 text-xs font-medium">
+                {m.icon}
+                {m.label}
+              </li>
+            ))}
+          </ul>
+        )}
 
-        <h5 className="grow font-medium md:text-lg md:leading-7">
-          {href ? (
-            <Link href={href} className="transition-colors hover:text-purple-500">
-              {course.name}
-            </Link>
-          ) : (
-            course.name
-          )}
-        </h5>
+        <h3 className="mt-3 grow text-lg leading-7 font-bold tracking-[-0.02em] text-balance">
+          {course.name}
+        </h3>
+
         {course.description ? (
-          <small className="mt-2 block text-sm leading-5 tracking-sm text-secondary line-clamp-2">
+          <p className={cn("mt-2 text-sm leading-6 line-clamp-2", t.muted)}>
             {course.description}
-          </small>
+          </p>
         ) : null}
 
-        <div className="mt-7">
-          <Button asChild variant="outline" size="lg" className="w-full">
-            {href ? (
-              <Link href={href}>
-                View Course
-                <ButtonArrow />
-              </Link>
-            ) : (
-              <a
-                href={launchHref(course)}
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Launch Course
-                <ButtonArrow />
-              </a>
+        <div
+          className={cn(
+            "mt-5 flex items-center justify-between border-t-[1.5px] pt-4",
+            t.rule,
+          )}
+        >
+          <span className="text-sm font-semibold">
+            {href ? "View course" : "Start now"}
+          </span>
+          <span
+            className={cn(
+              "grid size-9 place-items-center rounded-full transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5",
+              tone === "dark" ? "bg-accent text-ink" : "bg-ink text-white",
             )}
-          </Button>
+          >
+            <LongArrowUpRight />
+          </span>
         </div>
+
+        {/* The whole footer is the click target the arrow implies. */}
+        <Link
+          href={href ?? launchHref(course)}
+          target={href ? undefined : "_blank"}
+          rel={href ? undefined : "noopener noreferrer"}
+          className="absolute inset-0 rounded-[24px]"
+        >
+          <span className="sr-only">
+            {href ? `View ${course.name}` : `Launch ${course.name}`}
+          </span>
+        </Link>
       </div>
-    </div>
+    </article>
   );
 };
 

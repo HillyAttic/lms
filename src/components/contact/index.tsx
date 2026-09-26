@@ -8,7 +8,7 @@ const Contact = () => {
         subTitle="Contact Us"
         description="Questions about a course, your account, or working with us? Send a message and we'll get back to you."
       >
-        Get In Touch
+        Get in <span className="marker">touch</span>
       </PageHeader>
       <ContactForm />
     </main>

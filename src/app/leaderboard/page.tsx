@@ -41,33 +41,32 @@ export default function LeaderboardPage() {
 
   return (
     <main>
-      <section className="bg-purple-500 py-12 text-center text-primary sm:py-16">
+      <section className="border-b-[1.5px] border-ink bg-dark py-14 text-white sm:py-20">
         <div className="container">
-          <h1 className="flex items-center justify-center gap-3 text-3xl font-bold tracking-[-0.6px] sm:text-4xl">
-            <span className="flex size-12 items-center justify-center rounded-full bg-primary/15">
-              <Trophy className="size-7" />
-            </span>
-            Global Leaderboard
+          <span className="grid size-12 place-items-center rounded-full bg-accent text-ink">
+            <Trophy className="size-6" />
+          </span>
+          <h1 className="display-2 mt-6 text-balance">
+            Global <span className="marker">leaderboard</span>
           </h1>
-          <p className="mt-3 text-primary/80 sm:text-lg">
-            See how you stack up against other learners
+          <p className="mt-4 max-w-lg text-lg leading-8 text-white/60">
+            See how you stack up against other learners.
           </p>
 
           {rows && rows.length > 0 ? (
-            <dl className="mx-auto mt-8 grid max-w-2xl grid-cols-3 gap-3">
+            <dl className="mt-10 grid max-w-2xl gap-px overflow-hidden rounded-[24px] border-[1.5px] border-white/20 bg-white/20 sm:grid-cols-3">
               {[
                 { label: "Entries", value: rows.length },
                 { label: "Learners", value: leaders },
                 { label: "Average score", value: average },
               ].map(({ label, value }) => (
-                <div
-                  key={label}
-                  className="rounded-2xl bg-primary/10 px-3 py-4 backdrop-blur-sm"
-                >
-                  <dt className="text-xs font-medium tracking-sm text-primary/70 uppercase">
+                <div key={label} className="bg-dark px-5 py-5">
+                  <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-white/50 uppercase">
                     {label}
                   </dt>
-                  <dd className="mt-1 text-2xl font-bold tabular-nums">{value}</dd>
+                  <dd className="mt-1.5 text-3xl font-bold tracking-[-0.03em] tabular-nums">
+                    {value}
+                  </dd>
                 </div>
               ))}
             </dl>
@@ -75,45 +74,45 @@ export default function LeaderboardPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 py-12 sm:py-16">
+      <section className="py-12 sm:py-16">
         <div className="container">
           {rows === null ? (
             <div className="flex min-h-[30vh] items-center justify-center">
-              <div className="size-10 animate-spin rounded-full border-4 border-purple-500 border-t-transparent" />
+              <div className="size-10 animate-spin rounded-full border-[3px] border-ink border-t-transparent" />
             </div>
           ) : (
             <>
               {top.length > 0 ? (
-                <div className="mb-10 grid items-end gap-4 sm:grid-cols-3">
+                <div className="mb-12 grid items-end gap-5 sm:grid-cols-3">
                   {podium.map((row) => {
                     const rank = top.indexOf(row) + 1;
                     return (
                       <div
                         key={row.id}
                         className={cn(
-                          "rounded-2xl border border-gray-100 bg-white p-6 text-center shadow-card",
-                          rank === 1 && "sm:order-none sm:pb-10 sm:pt-8",
+                          "card-brutal bg-white p-6 text-center",
+                          rank === 1 && "sm:order-none sm:pt-8 sm:pb-10",
                           rank === 2 && "sm:order-first",
                         )}
                       >
                         <span
                           className={cn(
-                            "mx-auto flex size-16 items-center justify-center rounded-full text-lg font-bold",
+                            "mx-auto flex size-16 items-center justify-center rounded-full border-[1.5px] border-ink text-lg font-bold",
                             RANK_BADGE[rank - 1],
                           )}
                         >
                           {initials(row.userName)}
                         </span>
-                        <p className="mt-4 truncate font-semibold text-gray-900">
+                        <p className="mt-4 truncate font-bold">
                           {row.userName}
                         </p>
                         <p className="mt-1 truncate text-sm text-secondary">
                           {row.courseName}
                         </p>
-                        <p className="mt-4 text-3xl font-bold tabular-nums text-purple-600">
+                        <p className="mt-4 text-3xl font-bold tracking-[-0.03em] tabular-nums">
                           {row.score}
                         </p>
-                        <p className="mt-1 text-xs font-medium tracking-sm text-gray-400 uppercase">
+                        <p className="mt-1 text-[0.6875rem] font-semibold tracking-[0.1em] text-secondary uppercase">
                           Rank #{rank}
                         </p>
                       </div>
