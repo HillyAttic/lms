@@ -178,7 +178,7 @@ export default function ExternalUsersPage() {
   };
 
   const copyShareLink = async (token: string) => {
-    const baseUrl = window.location.origin;
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || window.location.origin;
     const url = `${baseUrl}/shared/${token}`;
     try {
       await navigator.clipboard.writeText(url);

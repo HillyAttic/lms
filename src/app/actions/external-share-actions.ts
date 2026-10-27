@@ -1,5 +1,6 @@
 "use server";
 
+import { headers } from "next/headers";
 import { adminDb, FieldValue, Timestamp, serializeTimestamps } from "@/lib/firebase-admin";
 import { canAccessAdminPanel } from "@/lib/roles";
 import { resolveThumbnails } from "@/lib/storage-urls";
@@ -119,8 +120,12 @@ export async function createExternalShare(data: ExternalShareData, adminUserId: 
 
     const docRef = await adminDb.collection("external_shares").add(shareDoc);
 
-    // Build the share URL
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000";
+    // Build the share URL — prefer configured base URL, else the incoming request host
+    const h = await headers();
+    const host = h.get("x-forwarded-host") ?? h.get("host");
+    const proto = h.get("x-forwarded-proto") ?? "http";
+    const baseUrl =
+      process.env.NEXT_PUBLIC_BASE_URL || (host ? `${proto}://${host}` : "http://localhost:3000");
     const shareUrl = `${baseUrl}/shared/${token}`;
 
     return {
