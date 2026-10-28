@@ -1,5 +1,9 @@
 @import "tailwindcss";
 
+html {
+  scroll-behavior: smooth;
+}
+
 /*
  * EdventureHub design system.
  *
@@ -94,6 +98,9 @@
   --font-mulish: var(--font-poppins);
   --font-inter: var(--font-poppins);
   --font-poppins: var(--font-poppins);
+  /* `font-serif` is the landing page's display face; falls back to the
+     platform serif if the variable is missing (e.g. an error page). */
+  --font-serif: var(--font-serif-display), ui-serif, Georgia, "Times New Roman", serif;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-primary: var(--primary);

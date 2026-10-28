@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { siteName, siteUrl } from "@/utils/envExport";
-import { Poppins } from "next/font/google";
+import { Poppins, Source_Serif_4 } from "next/font/google";
 import Header from "@/components/header";
 import Footer from "@/components/footer";
 import { AuthProvider } from "@/lib/auth-context";
@@ -18,6 +18,14 @@ const poppins = Poppins({
   variable: "--font-poppins",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
+});
+
+/* Editorial serif for display headings (the /homev2 landing page). Same
+   self-hosted strategy as Poppins, so no request leaves the origin. */
+const sourceSerif = Source_Serif_4({
+  variable: "--font-serif-display",
+  subsets: ["latin"],
+  weight: ["600", "700"],
 });
 
 export const metadata: Metadata = {
@@ -61,7 +69,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={poppins.variable}>
+      <body className={`${poppins.variable} ${sourceSerif.variable}`}>
         <AuthProvider>
           <AdminLayoutGuard>
             {children}

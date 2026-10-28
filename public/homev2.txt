@@ -1,0 +1,81 @@
+Redesign and professionally refine the attached EdVenture LMS website screenshot. Use the attached image as the exact visual reference. The goal is to improve the grid system, spacing, alignment, and icon quality while preserving the original design identity.
+
+## 1. Mandatory background and visual style
+
+**The crumpled paper background is the highest priority.**
+
+Preserve the same realistic off-white crumpled paper texture throughout the entire website, including the header, hero, courses, Why Us section, contact card, and footer. Keep the natural wrinkles, folded creases, subtle shadows, and tactile paper appearance clearly visible.
+
+Do not replace the background with plain white, a gradient, a solid color, or another texture.
+
+Preserve the existing:
+- EdVenture LMS logo and branding.
+- Navy blue, forest green, muted teal, and slate-blue palette.
+- Elegant serif headings and clean sans-serif body text.
+- Hand-drawn educational illustrations.
+- Rounded white paper cards with subtle shadows.
+- Overall composition, content, and section order.
+
+## 2. Professional grid system and alignment
+
+Implement a consistent 12-column desktop grid with a centered content container, balanced margins, uniform spacing, and precise alignment.
+
+**Header:** Align the logo to the left and navigation to the right. Use consistent vertical alignment, balanced spacing, and a subtle green underline for the active navigation item.
+
+**Hero section:** Use a balanced two-column grid. Keep the headline, supporting text, book illustration, and trusted-by area on the left. Place the login panel on the right. Improve column proportions, vertical alignment, whitespace, and spacing between elements.
+
+**Our Courses:** Arrange all five course cards in a professional, uniform five-column grid on desktop. Ensure:
+- Identical card widths and consistent heights.
+- Equal gutters and perfectly aligned top edges.
+- Consistent colored icon-header heights.
+- Matching internal padding and typography.
+- Course titles, descriptions, and difficulty labels aligned consistently.
+- Carousel arrows positioned neatly outside the card grid.
+- Responsive layouts that adapt gracefully to tablets and mobile screens.
+
+Keep the existing course names, content, icons, and navy, green, teal, and slate-blue color scheme.
+
+## 3. Improve the Why Us section with professional icons
+
+Keep the existing two-column layout but improve its visual quality and information hierarchy.
+
+**Left column:**
+- Retain the “Why Us?” heading.
+- Preserve the subheading “Built for learners, not for completion rates”.
+- Improve paragraph line lengths, spacing, and readability.
+- Display the three existing benefits in a clean, evenly spaced list.
+
+Replace the basic checkmark icons with a consistent set of premium, professionally designed outline icons. Use meaningful icons such as:
+- Self-paced learning: a clock combined with a book.
+- Job-ready skills: a graduation cap or target with a checkmark.
+- Growing course library: stacked books or an open book.
+
+Use a consistent Lucide-style or equivalent high-quality vector icon family. Prefer forest-green strokes, clean shapes, consistent stroke widths, and appropriately sized icon containers. Keep the icons simple, elegant, recognizable, and visually consistent. Do not mix unrelated icon styles or use emojis.
+
+## 4. Upgrade the contact card icons
+
+Keep the existing contact information and the original white paper-card appearance, but improve the icon design and alignment.
+
+Use a consistent set of modern outline icons:
+- Address: map-pin.
+- Contact Us: phone or phone-call.
+- Email Us: mail.
+- Website: globe.
+
+Place each icon inside a subtle, pale sage-green circular background with a refined forest-green stroke. Use identical circle sizes, consistent icon dimensions, and uniform spacing between rows. Align each heading and its details along a shared vertical axis.
+
+The icons should feel professionally designed and complement the handcrafted paper background rather than looking glossy, oversized, or cartoonish.
+
+## 5. Footer and final polish
+
+Keep the original copyright, Privacy Policy, and Terms & Conditions. Use a thin divider, balanced horizontal alignment, and consistent spacing.
+
+Apply a unified spacing system, clean typographic hierarchy, consistent corner radii, restrained shadows, and precise grid alignment across every section.
+
+## Final requirements
+
+Generate a complete, high-resolution, full-page desktop website design based on the attached screenshot.
+
+The result must look like the same original EdVenture LMS website, not a completely different redesign. Improve the professionalism of the grids and the quality of the Why Us and contact icons while preserving the visible crumpled paper background as the defining visual feature.
+
+Do not introduce bento grids, glassmorphism, neon colors, excessive gradients, new sections, or a different design theme. Do not remove or rewrite the existing content. Preserve the original branding, colors, illustrations, and overall aesthetic.
