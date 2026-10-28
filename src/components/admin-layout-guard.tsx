@@ -7,8 +7,9 @@ import Footer from "@/components/footer";
 export default function AdminLayoutGuard({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const isAdmin = pathname.startsWith("/admin");
-  // /homev2 is a self-contained landing page with its own header/footer.
-  const isStandalone = pathname === "/homev2";
+  // /homev2 and /coursesv2 are self-contained landing pages with their own
+  // header/footer.
+  const isStandalone = pathname === "/homev2" || pathname === "/coursesv2";
 
   if (isAdmin || isStandalone) {
     return <>{children}</>;

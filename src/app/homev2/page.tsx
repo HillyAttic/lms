@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { useAuth } from "@/lib/auth-context";
+import { LandingFooter, LandingHeader } from "@/components/landing";
 
 /*
  * Standalone landing page — own header/footer on the crumpled-paper ground
@@ -41,14 +42,6 @@ const Svg = ({ children, className }: IconProps & { children: React.ReactNode })
   >
     {children}
   </svg>
-);
-
-const BookLogo = ({ className }: IconProps) => (
-  <Svg className={className ?? "h-9 w-9"}>
-    <path d="M12 6.5C10.2 5.2 7.8 4.6 4.5 4.7v13c3.3-.1 5.7.5 7.5 1.8 1.8-1.3 4.2-1.9 7.5-1.8v-13c-3.3-.1-5.7.5-7.5 1.8Z" />
-    <path d="M12 6.5v13" />
-    <path d="m12 2.5.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1L9 4.7l2.1-.3.9-1.9Z" />
-  </Svg>
 );
 
 const IconCode = ({ className }: IconProps) => (
@@ -252,27 +245,7 @@ export default function HomeV2() {
   return (
     <div className="min-h-dvh bg-[url('/crumbled.jpg')] bg-cover bg-center bg-scroll text-[#243040] lg:bg-fixed">
       {/* header */}
-      <header className="border-b border-[#d9d4c7]/70">
-        <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
-          <Link href="/homev2" className="flex shrink-0 items-center gap-3 whitespace-nowrap" aria-label="EdVenture LMS home">
-            <BookLogo className="h-10 w-10" />
-            <span className="font-serif text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>
-              EdVenture <span style={{ color: GREEN }}>LMS</span>
-            </span>
-          </Link>
-          <nav aria-label="Primary">
-            <ul className="flex items-center gap-6 text-[1.02rem] sm:gap-10">
-              <li>
-                <Link href="/homev2" aria-current="page" className="border-b-2 pb-1 font-medium" style={{ borderColor: GREEN }}>
-                  Home
-                </Link>
-              </li>
-              <li><a href="#courses" className="hover:opacity-70">Courses</a></li>
-              <li><a href="#why-us" className="hover:opacity-70">About Us</a></li>
-            </ul>
-          </nav>
-        </div>
-      </header>
+      <LandingHeader active="home" />
 
       {/* hero */}
       <section className="mx-auto grid max-w-[1120px] grid-cols-1 gap-12 px-6 py-14 lg:grid-cols-12 lg:gap-10 lg:py-16">
@@ -423,7 +396,7 @@ export default function HomeV2() {
             <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: NAVY }}>Our Courses</h2>
             <div className="flex items-center gap-2 sm:gap-3">
               <div className="flex items-center gap-2">{prevBtn}{nextBtn}</div>
-              <Link href="/courses" className="flex items-center gap-1 text-[0.95rem] font-medium whitespace-nowrap sm:text-[1.02rem]" style={{ color: GREEN }}>
+              <Link href="/coursesv2" className="flex items-center gap-1 text-[0.95rem] font-medium whitespace-nowrap sm:text-[1.02rem]" style={{ color: GREEN }}>
                 View All <IconChevron className="h-5 w-5" />
               </Link>
             </div>
@@ -516,16 +489,7 @@ export default function HomeV2() {
       </section>
 
       {/* footer */}
-      <footer className="border-t border-[#c9c3b3]">
-        <div className="mx-auto flex max-w-[1120px] flex-col items-center justify-between gap-3 px-6 py-6 text-[0.95rem] text-[#39434f] sm:flex-row">
-          <p>© 2026 EdVentureHub</p>
-          <p className="flex items-center gap-3">
-            <Link href="/" className="hover:underline">Privacy Policy</Link>
-            <span aria-hidden="true" className="h-4 w-px bg-[#9aa5ad]" />
-            <Link href="/" className="hover:underline">Terms &amp; Conditions</Link>
-          </p>
-        </div>
-      </footer>
+      <LandingFooter />
     </div>
   );
 }
