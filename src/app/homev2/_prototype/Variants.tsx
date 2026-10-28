@@ -9,7 +9,7 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import type { ComponentType } from "react";
+import type { ComponentType, CSSProperties } from "react";
 import { motion } from "framer-motion";
 import { LandingFooter, LandingHeader } from "@/components/landing";
 import {
@@ -86,6 +86,22 @@ function TrustedTiles({ tileClass }: { tileClass: string }) {
 
 const levelColor = (level: string) => (level === "Beginner" ? GREEN : TEAL);
 
+/* Same paper asset, a different treatment per variant: tint colour/opacity,
+ * gradient angle, crop anchor and texture scale. */
+function paper({
+  tint, opacity = 0.88, angle = 180, size = "cover", position = "center",
+}: { tint?: string; opacity?: number; angle?: number; size?: string; position?: string } = {}): CSSProperties {
+  const wash = tint
+    ? `linear-gradient(${angle}deg, rgba(${tint},${opacity}), rgba(${tint},${opacity}))`
+    : null;
+  return {
+    backgroundImage: [wash, "url('/crumbled.jpg')"].filter(Boolean).join(", "),
+    backgroundSize: size,
+    backgroundPosition: position,
+    backgroundRepeat: "no-repeat",
+  } as CSSProperties;
+}
+
 /* ───────────────────────────── L · Neumorphic ───────────────────────────── */
 
 function Neumorphic() {
@@ -104,8 +120,8 @@ function Neumorphic() {
 
   return (
     <div
-      className="min-h-dvh bg-cover bg-center text-[#243040]"
-      style={{ backgroundImage: "linear-gradient(rgba(231,236,223,0.9), rgba(231,236,223,0.9)), url('/crumbled.jpg')" }}
+      className="min-h-dvh text-[#243040]"
+      style={paper({ tint: "231,236,223", opacity: 0.35, angle: 160, size: "110%", position: "left top" })}
     >
       <LandingHeader active="home" />
 
@@ -231,8 +247,8 @@ function Material() {
 
   return (
     <div
-      className="min-h-dvh bg-cover bg-center text-[#243040]"
-      style={{ backgroundImage: "linear-gradient(rgba(247,248,244,0.9), rgba(247,248,244,0.9)), url('/crumbled.jpg')" }}
+      className="min-h-dvh text-[#243040]"
+      style={paper({ tint: "247,248,244", opacity: 0.35, angle: 200, position: "center 30%" })}
     >
       <header className="sticky top-0 z-40 bg-white shadow-[0_1px_3px_rgba(18,48,91,0.2)]">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-3">
@@ -255,7 +271,7 @@ function Material() {
         </div>
       </header>
 
-      <section className="bg-[#eef1e8]/80">
+      <section className="bg-[#eef1e8]/50">
         <div className="mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-10 px-6 py-14 lg:grid-cols-12 lg:gap-12">
           <div className="lg:col-span-7">
             <p className="text-[0.82rem] font-semibold uppercase tracking-[0.14em]" style={{ color: GREEN }}>Learn · Build · Grow</p>
@@ -286,7 +302,7 @@ function Material() {
         </div>
       </section>
 
-      <section id="courses" className="bg-white/65">
+      <section id="courses" className="bg-white/45">
         <div className="mx-auto max-w-[1200px] px-6 py-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: NAVY }}>Our Courses</h2>
@@ -314,7 +330,7 @@ function Material() {
         </div>
       </section>
 
-      <section id="why-us" className="bg-[#eef1e8]/80">
+      <section id="why-us" className="bg-[#eef1e8]/50">
         <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-12">
           <div className="lg:col-span-7">
             <h2 className="font-serif text-[2rem] font-bold" style={{ color: NAVY }}>Why Us?</h2>
@@ -397,8 +413,8 @@ function Shadcn() {
 
   return (
     <div
-      className="min-h-dvh bg-cover bg-center text-[#243040]"
-      style={{ backgroundImage: "linear-gradient(rgba(255,255,255,0.86), rgba(255,255,255,0.86)), url('/crumbled.jpg')" }}
+      className="min-h-dvh text-[#243040]"
+      style={paper({ tint: "255,255,255", opacity: 0.35, angle: 170, position: "center 20%" })}
     >
       <header className="sticky top-0 z-30 border-b border-[#e6e2d8] bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-6 py-4">
@@ -461,7 +477,7 @@ function Shadcn() {
         </aside>
       </section>
 
-      <section id="courses" className="border-t border-[#e6e2d8] bg-[#f7f8f4]/80">
+      <section id="courses" className="border-t border-[#e6e2d8] bg-[#f7f8f4]/50">
         <div className="mx-auto max-w-[1200px] px-6 py-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
@@ -570,7 +586,7 @@ function Motion() {
   };
 
   return (
-    <div className="min-h-dvh overflow-hidden bg-[url('/crumbled.jpg')] bg-cover bg-center text-[#243040]">
+    <div className="min-h-dvh overflow-hidden text-[#243040]" style={paper({ size: "112%", position: "center 30%" })}>
       <LandingHeader active="home" />
 
       <section className="relative mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-6 py-14 lg:grid-cols-12 lg:gap-10">
@@ -749,7 +765,7 @@ function Bento() {
   };
 
   return (
-    <div className="min-h-dvh bg-[url('/crumbled.jpg')] bg-cover bg-center text-[#243040]">
+    <div className="min-h-dvh text-[#243040]" style={paper({ tint: "255,252,245", opacity: 0.32, angle: 180, position: "left center" })}>
       <LandingHeader active="home" />
 
       <section className="mx-auto max-w-[1200px] px-6 py-10">

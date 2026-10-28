@@ -45,7 +45,7 @@ export function ThemedHome({ theme }: { theme: Theme }) {
     "flex h-9 w-9 items-center justify-center rounded-full border border-[color:var(--line)] bg-[var(--card)] text-[color:var(--ink)] shadow-sm transition-opacity disabled:opacity-40";
 
   return (
-    <div className={theme.shell} style={{ ...theme.vars, background: "var(--page)", backgroundImage: "var(--page-image)", backgroundSize: "var(--page-size)", backgroundPosition: "center", backgroundRepeat: "var(--page-repeat, repeat)" } as CSSProperties}>
+    <div className={theme.shell} style={{ ...theme.vars, background: "var(--page)", backgroundImage: "var(--page-image)", backgroundSize: "var(--page-size)", backgroundPosition: "var(--page-position, center)", backgroundRepeat: "var(--page-repeat, repeat)" } as CSSProperties}>
       {/* header — same anatomy as LandingHeader, themed */}
       <header className="border-b border-[color:var(--line)]">
         <div className={`${theme.wide} flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-5`}>
