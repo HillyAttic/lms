@@ -50,7 +50,7 @@ export function ThemedHome({ theme }: { theme: Theme }) {
       <header className="border-b border-[color:var(--line)]">
         <div className={`${theme.wide} flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-5`}>
           <Link href="/homev2?variant=A" className="flex shrink-0 items-center gap-3 whitespace-nowrap">
-            <IconGradCap className="h-9 w-9" style={{ color: "var(--accent)" }} />
+            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-9 w-auto" />
             <span className={`${theme.heading} text-[1.55rem] font-bold tracking-tight`} style={{ color: "var(--ink)" }}>
               EdVenture <span style={{ color: "var(--accent)" }}>LMS</span>
             </span>

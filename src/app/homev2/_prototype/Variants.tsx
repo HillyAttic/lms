@@ -15,7 +15,7 @@ import { LandingFooter, LandingHeader } from "@/components/landing";
 import {
   NAVY, GREEN, TEAL, SLATE, SAGE,
   courses, benefits, contactRows, useLoginForm,
-  IconGradCap, IconChevron, IconPin,
+  IconChevron, IconPin,
 } from "./shared";
 import type { LoginForm } from "./shared";
 
@@ -253,7 +253,7 @@ function Material() {
       <header className="sticky top-0 z-40 bg-white shadow-[0_1px_3px_rgba(18,48,91,0.2)]">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-3">
           <Link href="/homev2" className="flex shrink-0 items-center gap-2">
-            <IconGradCap className="h-9 w-9" style={{ color: NAVY }} />
+            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-9 w-auto" />
             <span className="font-serif text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>
               EdVenture <span style={{ color: GREEN }}>LMS</span>
             </span>
@@ -419,7 +419,7 @@ function Shadcn() {
       <header className="sticky top-0 z-30 border-b border-[#e6e2d8] bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-6 py-4">
           <Link href="/homev2" className="flex shrink-0 items-center gap-2">
-            <IconGradCap className="h-8 w-8" style={{ color: NAVY }} />
+            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-8 w-auto" />
             <span className="text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>EdVenture</span>
           </Link>
           <nav aria-label="Primary" className="hidden sm:block">

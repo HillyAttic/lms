@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
 
 /* Shared chrome for the standalone landing pages (/homev2, /coursesv2) so both
@@ -12,23 +13,6 @@ export const SLATE = "#5c6b7a";
 
 type IconProps = { className?: string };
 
-const BookLogo = ({ className }: IconProps) => (
-  <svg
-    viewBox="0 0 24 24"
-    fill="none"
-    stroke="currentColor"
-    strokeWidth={1.75}
-    strokeLinecap="round"
-    strokeLinejoin="round"
-    aria-hidden="true"
-    className={className ?? "h-9 w-9"}
-  >
-    <path d="M12 6.5C10.2 5.2 7.8 4.6 4.5 4.7v13c3.3-.1 5.7.5 7.5 1.8 1.8-1.3 4.2-1.9 7.5-1.8v-13c-3.3-.1-5.7.5-7.5 1.8Z" />
-    <path d="M12 6.5v13" />
-    <path d="m12 2.5.9 1.9 2.1.3-1.5 1.5.4 2.1-1.9-1-1.9 1 .4-2.1L9 4.7l2.1-.3.9-1.9Z" />
-  </svg>
-);
-
 const NAV = [
   { key: "home", label: "Home", href: "/homev2" },
   { key: "courses", label: "Courses", href: "/coursesv2" },
@@ -40,7 +24,7 @@ export function LandingHeader({ active }: { active: "home" | "courses" }) {
     <header className="border-b border-[#d9d4c7]/70">
       <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
         <Link href="/homev2" className="flex shrink-0 items-center gap-3 whitespace-nowrap" aria-label="EdVenture LMS home">
-          <BookLogo className="h-10 w-10" />
+          <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-10 w-auto" />
           <span className="font-serif text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>
             EdVenture <span style={{ color: GREEN }}>LMS</span>
           </span>
