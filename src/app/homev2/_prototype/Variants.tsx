@@ -252,11 +252,8 @@ function Material() {
     >
       <header className="sticky top-0 z-40 bg-white shadow-[0_1px_3px_rgba(18,48,91,0.2)]">
         <div className="mx-auto flex max-w-[1200px] items-center justify-between gap-4 px-6 py-3">
-          <Link href="/homev2" className="flex shrink-0 items-center gap-2">
-            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-9 w-auto" />
-            <span className="font-serif text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>
-              EdVenture <span style={{ color: GREEN }}>LMS</span>
-            </span>
+          <Link href="/homev2" className="flex shrink-0 items-center" aria-label="EdVenture LMS home">
+            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={200} height={80} unoptimized className="h-16 w-auto" />
           </Link>
           <nav aria-label="Primary" className="hidden sm:block">
             <ul className="flex items-center gap-8 text-[1.02rem] text-[#39434f]">
@@ -418,9 +415,8 @@ function Shadcn() {
     >
       <header className="sticky top-0 z-30 border-b border-[#e6e2d8] bg-white/90 backdrop-blur">
         <div className="mx-auto flex max-w-[1120px] items-center justify-between gap-4 px-6 py-4">
-          <Link href="/homev2" className="flex shrink-0 items-center gap-2">
-            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-8 w-auto" />
-            <span className="text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>EdVenture</span>
+          <Link href="/homev2" className="flex shrink-0 items-center" aria-label="EdVenture LMS home">
+            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={200} height={80} unoptimized className="h-16 w-auto" />
           </Link>
           <nav aria-label="Primary" className="hidden sm:block">
             <ul className="flex items-center gap-6 text-[0.95rem] text-[#4a5563]">

@@ -23,11 +23,8 @@ export function LandingHeader({ active }: { active: "home" | "courses" }) {
   return (
     <header className="border-b border-[#d9d4c7]/70">
       <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
-        <Link href="/homev2" className="flex shrink-0 items-center gap-3 whitespace-nowrap" aria-label="EdVenture LMS home">
-          <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-10 w-auto" />
-          <span className="font-serif text-[1.55rem] font-bold tracking-tight" style={{ color: NAVY }}>
-            EdVenture <span style={{ color: GREEN }}>LMS</span>
-          </span>
+        <Link href="/homev2" className="flex shrink-0 items-center whitespace-nowrap" aria-label="EdVenture LMS home">
+          <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={200} height={80} unoptimized className="h-16 w-auto" />
         </Link>
         <nav aria-label="Primary">
           <ul className="flex items-center gap-6 text-[1.02rem] sm:gap-10">

@@ -49,11 +49,8 @@ export function ThemedHome({ theme }: { theme: Theme }) {
       {/* header — same anatomy as LandingHeader, themed */}
       <header className="border-b border-[color:var(--line)]">
         <div className={`${theme.wide} flex flex-wrap items-center justify-between gap-x-6 gap-y-3 py-5`}>
-          <Link href="/homev2?variant=A" className="flex shrink-0 items-center gap-3 whitespace-nowrap">
-            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={100} height={40} unoptimized className="h-9 w-auto" />
-            <span className={`${theme.heading} text-[1.55rem] font-bold tracking-tight`} style={{ color: "var(--ink)" }}>
-              EdVenture <span style={{ color: "var(--accent)" }}>LMS</span>
-            </span>
+          <Link href="/homev2?variant=A" className="flex shrink-0 items-center whitespace-nowrap" aria-label="EdVenture LMS home">
+            <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={200} height={80} unoptimized className="h-16 w-auto" />
           </Link>
           <nav aria-label="Primary">
             <ul className="flex items-center gap-6 text-[1.02rem] sm:gap-10">
