@@ -114,8 +114,7 @@ export default async function CoursesV2() {
                     color={style.color}
                     icon={style.icon}
                     image={course.thumbnailUrl || TYPE_IMAGE[course.type]}
-                    // Video courses have no detail route yet — see /courses.
-                    href={course.type === "video" ? undefined : `/courses/${course.id}`}
+                    href={`/coursesv2/${course.id}`}
                     className="h-full"
                   />
                 </li>

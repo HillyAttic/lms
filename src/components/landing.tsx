@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import type { ComponentType, ReactNode } from "react";
+import type { ComponentType } from "react";
 import { LandingNavLink } from "./landing-nav-link";
 
 /* Shared chrome for the standalone landing pages (/homev2, /coursesv2) so both
@@ -93,15 +93,22 @@ export function LandingCourseCard({
         (className ? ` ${className}` : "")
       }
     >
-      <div
-        className="mx-2 mt-2 flex h-[100px] shrink-0 items-center justify-center rounded-xl bg-cover bg-center"
-        style={
-          image
-            ? { backgroundImage: `url(${image})` }
-            : { backgroundImage: `linear-gradient(135deg, ${color} 0%, #7c3aed 100%)` }
-        }
-      >
-        {image ? null : <Icon className="h-9 w-9 text-white" />}
+      <div className="relative mx-2 mt-2 h-[100px] shrink-0 overflow-hidden rounded-xl bg-[linear-gradient(135deg,#2563eb_0%,#7c3aed_100%)]">
+        {image ? (
+          // Signed GCS URLs are long; the optimizer resizes them to the painted
+          // size and caches by URL, so repeat views don't re-download the original.
+          <Image
+            src={image}
+            alt=""
+            fill
+            sizes="(min-width: 1280px) 300px, (min-width: 640px) 50vw, 100vw"
+            className="object-cover"
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <Icon className="h-9 w-9 text-white" />
+          </div>
+        )}
       </div>
       <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
         <h3 className="font-serif text-[1.12rem] font-bold leading-snug text-[#020617]">{title}</h3>
