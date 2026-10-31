@@ -56,8 +56,6 @@ function Switcher({ current }: { current: Key }) {
     return () => window.removeEventListener("keydown", onKey);
   }, [go, index]);
 
-  if (process.env.NODE_ENV === "production") return null;
-
   const active = VARIANTS[index];
 
   return (
