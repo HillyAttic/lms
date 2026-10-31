@@ -117,8 +117,8 @@ export const benefits = [
 
 export const contactRows = [
   { icon: IconPin, title: "Our Address", lines: ["EdVentureHub Pvt. Ltd.", "123 Learning Lane", "Knowledge Park", "Bangalore, Karnataka 560001", "India"] },
-  { icon: IconPhone, title: "Contact Us", lines: ["+91 98765 43210", "+91 87654 32109"] },
-  { icon: IconMail, title: "Email Us", lines: ["hello@edventurehub.com"] },
+  { icon: IconPhone, title: "Contact Us", lines: ["9582232050", "9999457847"] },
+  { icon: IconMail, title: "Email Us", lines: ["admin@edventurehub.com"] },
   { icon: IconGlobe, title: "Website", lines: ["www.edventurehub.com"] },
 ];
 
