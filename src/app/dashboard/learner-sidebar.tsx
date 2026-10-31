@@ -55,7 +55,7 @@ export default function LearnerSidebar() {
       <nav aria-label="Dashboard">
         <ul className="-mx-4 flex gap-1 overflow-x-auto border-t-[1.5px] border-white/15 px-4 pt-4 lg:mx-0 lg:flex-col lg:overflow-visible lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
           {navItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.endsWith(item.href);
             return (
               <li key={item.href} className="shrink-0 lg:shrink">
                 <Link

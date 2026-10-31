@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef, useCallback } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import {
@@ -788,11 +789,11 @@ export default function AdminRepositoryPage() {
   const openEditModal = async (item: RepositoryItem) => {
     // Video and game courses have their own admin edit pages.
     if (item.type === "video") {
-      router.push(`/admin/video-courses/${item.id}`);
+      router.push(themedHref(`/admin/video-courses/${item.id}`));
       return;
     }
     if (item.type === "game") {
-      router.push(`/admin/game-courses/${item.id}`);
+      router.push(themedHref(`/admin/game-courses/${item.id}`));
       return;
     }
 

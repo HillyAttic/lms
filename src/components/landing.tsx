@@ -1,11 +1,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType } from "react";
-import { LandingNavLink } from "./landing-nav-link";
 
-/* Shared chrome for the standalone landing pages (/homev2, /coursesv2) so both
- * sit on the same crumpled-paper theme and one header/footer edit applies to
- * both. */
+/* Shared chrome for the standalone landing pages (/homev2, /coursesv2 and the
+ * themed subpages) so they sit on the same crumpled-paper theme and one
+ * header/footer edit applies to all of them.
+ *
+ * The header lives in ./landing-header.tsx because it needs client hooks;
+ * this module stays a Server Component so cards can receive icon components. */
+
+export { LandingHeader } from "./landing-header";
 
 export const NAVY = "#12305b";
 export const GREEN = "#3d6b35";
@@ -13,44 +17,6 @@ export const TEAL = "#0f5c66";
 export const SLATE = "#5c6b7a";
 
 type IconProps = { className?: string };
-
-const NAV = [
-  { key: "home", label: "Home", href: "/homev2" },
-  { key: "courses", label: "Courses", href: "/homev2#courses" },
-  { key: "about", label: "About Us", href: "/homev2#why-us" },
-] as const;
-
-export function LandingHeader({ active, accent = GREEN }: { active: "home" | "courses"; accent?: string }) {
-  return (
-    <header className="border-b border-[#d9d4c7]/70">
-      <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
-        <Link href="/homev2" className="flex shrink-0 items-center whitespace-nowrap" aria-label="EdVenture LMS home">
-          <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={200} height={80} unoptimized className="h-16 w-auto" />
-        </Link>
-        <nav aria-label="Primary">
-          <ul className="flex items-center gap-6 text-[1.02rem] sm:gap-10">
-            {NAV.map((item) => (
-              <li key={item.key}>
-                <LandingNavLink
-                  href={item.href}
-                  ariaCurrent={active === item.key ? "page" : undefined}
-                  className={
-                    active === item.key
-                      ? "border-b-2 pb-1 font-medium"
-                      : "hover:opacity-70"
-                  }
-                  style={active === item.key ? { borderColor: accent } : undefined}
-                >
-                  {item.label}
-                </LandingNavLink>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </div>
-    </header>
-  );
-}
 
 export function LandingFooter() {
   return (

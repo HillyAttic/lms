@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, FormEvent } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter } from "next/navigation";
 import {
   createPublicCourse,
@@ -155,7 +156,7 @@ export default function NewPublicCoursePage() {
       }
 
       toast.success("Course created successfully!");
-      router.push("/admin/public-courses");
+      router.push(themedHref("/admin/public-courses"));
     } catch (error: any) {
       toast.error(error.message || "Failed to create course");
       console.error(error);
@@ -528,7 +529,7 @@ export default function NewPublicCoursePage() {
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={() => router.push("/admin/public-courses")}
+              onClick={() => router.push(themedHref("/admin/public-courses"))}
               disabled={saving}
               className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >

@@ -10,23 +10,30 @@ interface ProtectedRouteProps {
   /** Admin panel gate: admin and manager only. Learners and instructors are bounced. */
   adminOnly?: boolean;
   instructorOrAbove?: boolean;
+  /** Where unauthenticated visitors go. The new theme points at its own login. */
+  loginHref?: string;
 }
 
-export function ProtectedRoute({ children, adminOnly = false, instructorOrAbove = false }: ProtectedRouteProps) {
+export function ProtectedRoute({
+  children,
+  adminOnly = false,
+  instructorOrAbove = false,
+  loginHref = "/admin/login",
+}: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
     if (!loading) {
       if (!user) {
-        router.replace("/admin/login");
+        router.replace(loginHref);
       } else if (adminOnly && !canAccessAdminPanel(role)) {
         router.replace("/");
       } else if (instructorOrAbove && !canAccessAdminPanel(role) && role !== "instructor") {
         router.replace("/");
       }
     }
-  }, [user, role, loading, router, adminOnly, instructorOrAbove]);
+  }, [user, role, loading, router, adminOnly, instructorOrAbove, loginHref]);
 
   if (loading) {
     return (

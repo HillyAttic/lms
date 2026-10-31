@@ -25,13 +25,18 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const { user, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
+  // Reused verbatim by /adminv2; land in that tree's home after auth.
+  const home =
+    typeof window !== "undefined" && window.location.pathname.startsWith("/adminv2")
+      ? "/homev2"
+      : "/";
 
   // Redirect to homepage if already logged in
   useEffect(() => {
     if (!loading && user) {
-      router.replace("/");
+      router.replace(home);
     }
-  }, [user, loading, router]);
+  }, [user, loading, router, home]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -49,7 +54,7 @@ export default function AdminLogin() {
         await signUpWithEmail(email, password, name);
         toast.success("Account created successfully!");
       }
-      router.push("/");
+      router.push(home);
     } catch (error: any) {
       const message = error.code === "auth/user-not-found"
         ? "No account found with this email"
@@ -79,7 +84,7 @@ export default function AdminLogin() {
     try {
       await signInWithGoogle();
       toast.success("Login successful!");
-      router.push("/");
+      router.push(home);
     } catch (error: any) {
       toast.error(error.message || "Google sign-in failed");
     } finally {

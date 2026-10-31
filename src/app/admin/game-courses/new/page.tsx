@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
@@ -165,7 +166,7 @@ export default function CreateGameCoursePage() {
 
       if (result.success) {
         toast.success("Game course created successfully!");
-        router.push("/admin/game-courses");
+        router.push(themedHref("/admin/game-courses"));
       } else {
         toast.error(result.error || "Failed to create game course");
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter, useParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
@@ -61,7 +62,7 @@ export default function VideoCourseDetailPage() {
         setCreatedAt(course.createdAt);
       } else {
         toast.error("Course not found");
-        router.push("/admin/video-courses");
+        router.push(themedHref("/admin/video-courses"));
       }
     } catch (error) {
       toast.error("Failed to load course");
@@ -145,7 +146,7 @@ export default function VideoCourseDetailPage() {
       const result = await deleteVideoCourse(courseId, user.uid);
       if (result.success) {
         toast.success("Course deleted successfully!");
-        router.push("/admin/video-courses");
+        router.push(themedHref("/admin/video-courses"));
       } else {
         toast.error(result.error || "Failed to delete course");
       }

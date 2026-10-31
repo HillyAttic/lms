@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter, useParams } from "next/navigation";
 import {
   getBlogById,
@@ -82,7 +83,7 @@ export default function BlogEditPage() {
         }
       } else {
         toast.error("Blog not found");
-        router.push("/admin/blogs");
+        router.push(themedHref("/admin/blogs"));
       }
     } catch (error) {
       toast.error("Failed to load blog");
@@ -127,7 +128,7 @@ export default function BlogEditPage() {
 
       if (result.success) {
         toast.success("Blog updated successfully");
-        router.push("/admin/blogs");
+        router.push(themedHref("/admin/blogs"));
       } else {
         toast.error(result.error || "Failed to update blog");
       }
@@ -146,7 +147,7 @@ export default function BlogEditPage() {
       const result = await deleteBlog(blogId, user.uid);
       if (result.success) {
         toast.success("Blog deleted successfully");
-        router.push("/admin/blogs");
+        router.push(themedHref("/admin/blogs"));
       } else {
         toast.error(result.error || "Failed to delete blog");
       }
@@ -179,7 +180,7 @@ export default function BlogEditPage() {
               Delete
             </button>
             <button
-              onClick={() => router.push("/admin/blogs")}
+              onClick={() => router.push(themedHref("/admin/blogs"))}
               className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -411,7 +412,7 @@ export default function BlogEditPage() {
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={() => router.push("/admin/blogs")}
+              onClick={() => router.push(themedHref("/admin/blogs"))}
               disabled={saving}
               className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >

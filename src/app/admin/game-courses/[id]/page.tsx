@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter, useParams, useSearchParams } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
@@ -70,7 +71,7 @@ export default function GameCourseDetailPage() {
         setCreatedAt(course.createdAt);
       } else {
         toast.error("Course not found");
-        router.push("/admin/game-courses");
+        router.push(themedHref("/admin/game-courses"));
       }
     } catch (error) {
       toast.error("Failed to load course");
@@ -154,7 +155,7 @@ export default function GameCourseDetailPage() {
       const result = await deleteGameCourse(courseId, user.uid);
       if (result.success) {
         toast.success("Course deleted successfully!");
-        router.push("/admin/game-courses");
+        router.push(themedHref("/admin/game-courses"));
       } else {
         toast.error(result.error || "Failed to delete course");
       }

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
+import { themedHref } from "@/lib/theme-path";
 import { useRouter, useParams } from "next/navigation";
 import {
   getPublicCourseById,
@@ -114,7 +115,7 @@ export default function EditPublicCoursePage() {
         setThumbnailPreview(courseData.thumbnailUrl);
       } else {
         toast.error("Course not found");
-        router.push("/admin/public-courses");
+        router.push(themedHref("/admin/public-courses"));
       }
     } catch (error) {
       toast.error("Failed to load course");
@@ -195,7 +196,7 @@ export default function EditPublicCoursePage() {
 
       if (result.success) {
         toast.success("Course updated successfully");
-        router.push("/admin/public-courses");
+        router.push(themedHref("/admin/public-courses"));
       } else {
         toast.error(result.error || "Failed to update course");
       }
@@ -214,7 +215,7 @@ export default function EditPublicCoursePage() {
       const result = await deletePublicCourse(courseId, user.uid);
       if (result.success) {
         toast.success("Course deleted successfully");
-        router.push("/admin/public-courses");
+        router.push(themedHref("/admin/public-courses"));
       } else {
         toast.error(result.error || "Failed to delete course");
       }
@@ -247,7 +248,7 @@ export default function EditPublicCoursePage() {
               Delete
             </button>
             <button
-              onClick={() => router.push("/admin/public-courses")}
+              onClick={() => router.push(themedHref("/admin/public-courses"))}
               className="flex items-center gap-2 px-4 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -636,7 +637,7 @@ export default function EditPublicCoursePage() {
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
-              onClick={() => router.push("/admin/public-courses")}
+              onClick={() => router.push(themedHref("/admin/public-courses"))}
               disabled={saving}
               className="px-6 py-2.5 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors disabled:opacity-50"
             >

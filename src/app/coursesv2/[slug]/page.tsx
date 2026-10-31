@@ -127,14 +127,7 @@ export default async function CourseDetailV2Page({
 
   return (
     <div
-      className="min-h-dvh overflow-hidden bg-[#f8fafc] bg-scroll text-[#334155] lg:bg-fixed"
-      style={{
-        backgroundImage:
-          "linear-gradient(180deg, rgba(248,250,252,0.5), rgba(248,250,252,0.5)), url('/crumbled.jpg')",
-        backgroundSize: "cover",
-        backgroundPosition: "center 30%",
-        backgroundRepeat: "no-repeat",
-      }}
+      className="theme-v2 theme-v2-page theme-v2-static min-h-dvh overflow-hidden bg-scroll text-[#334155] lg:bg-fixed"
     >
       <LandingHeader active="courses" accent="#4338ca" />
 
