@@ -10,12 +10,13 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, CSSProperties } from "react";
+import { useRef } from "react";
 import { motion } from "framer-motion";
 import { LandingFooter, LandingHeader } from "@/components/landing";
 import {
   NAVY, GREEN, TEAL, SLATE, SAGE,
   courses, benefits, contactRows, useLoginForm,
-  IconChevron, IconPin,
+  IconChevron, IconArrowLeft, IconPin,
 } from "./shared";
 import type { LoginForm } from "./shared";
 
@@ -67,17 +68,21 @@ function AuthForm({ f, prefix, s }: { f: LoginForm; prefix: string; s: AuthStyle
   );
 }
 
-function TrustedTiles({ tileClass }: { tileClass: string }) {
+function TrustedTiles({
+  tileClass,
+  labelClass = "font-serif text-[1.35rem] text-[#2c3644]",
+  colors = [NAVY, "#8c99a3", SLATE],
+}: {
+  tileClass: string;
+  labelClass?: string;
+  colors?: string[];
+}) {
   return (
     <div className="mt-4 flex items-center gap-3">
-      <span className="font-serif text-[1.35rem] text-[#2c3644]">Trusted by</span>
-      {[
-        { letter: "a", bg: NAVY },
-        { letter: "b", bg: "#8c99a3" },
-        { letter: "c", bg: SLATE },
-      ].map((t) => (
-        <span key={t.letter} className={tileClass} style={{ background: t.bg, color: "#fff" }}>
-          {t.letter}
+      <span className={labelClass}>Trusted by</span>
+      {["a", "b", "c"].map((letter, i) => (
+        <span key={letter} className={tileClass} style={{ background: colors[i], color: "#fff" }}>
+          {letter}
         </span>
       ))}
     </div>
@@ -569,32 +574,40 @@ const fadeUp = {
   show: { opacity: 1, y: 0, transition: { duration: 0.55 } },
 };
 
+/* Accent from the dashboard nav: royal blue → violet, left to right. */
+const MOTION_GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
+
 function Motion() {
   const f = useLoginForm();
+  const scroller = useRef<HTMLDivElement>(null);
+  const scrollCourses = (dir: 1 | -1) => {
+    const el = scroller.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.8, behavior: "smooth" });
+  };
   const s: AuthStyles = {
-    title: "font-serif text-[1.35rem] font-semibold text-[#12305b]",
-    label: "text-[0.82rem] text-[#39434f]",
-    input: "mt-1 w-full rounded-xl border border-[#d9d4c7] bg-white/70 px-3 py-2.5 text-[0.95rem] focus:border-[#12305b] focus:outline-none",
-    submit: "mt-5 w-full rounded-xl bg-[linear-gradient(90deg,#12305b,#0f5c66)] px-4 py-2.5 text-[0.95rem] font-medium text-white shadow-[0_10px_24px_-12px_rgba(18,48,91,0.8)] transition-transform hover:-translate-y-0.5",
-    meta: "mt-3 flex items-center justify-between text-[0.82rem] text-[#4a5563]",
+    title: "font-serif text-[1.35rem] font-semibold text-[#020617]",
+    label: "text-[0.82rem] text-[#475569]",
+    input: "mt-1 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-[0.95rem] text-[#334155] focus:border-[#6366f1] focus:outline-none",
+    submit: "mt-5 w-full rounded-lg bg-[linear-gradient(90deg,#2563eb_0%,#7c3aed_100%)] px-4 py-2.5 text-[0.95rem] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(79,70,229,0.8)] transition-transform hover:-translate-y-0.5",
+    meta: "mt-3 flex items-center justify-between text-[0.82rem] text-[#475569]",
     link: "hover:underline",
-    action: "font-medium text-[#12305b] hover:underline",
+    action: "font-medium text-[#4338ca] hover:underline",
   };
 
   return (
-    <div className="min-h-dvh overflow-hidden text-[#243040]" style={paper({ size: "112%", position: "center 30%" })}>
-      <LandingHeader active="home" />
+    <div className="min-h-dvh overflow-hidden bg-[#f8fafc] text-[#334155]" style={paper({ tint: "248,250,252", opacity: 0.5, size: "112%", position: "center 30%" })}>
+      <LandingHeader active="home" accent="#4338ca" />
 
       <section className="relative mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-6 py-14 lg:grid-cols-12 lg:gap-10">
         <motion.span
           aria-hidden="true"
-          className="pointer-events-none absolute -left-24 top-10 h-56 w-56 rounded-full bg-[#3d6b35]/15 blur-3xl"
+          className="pointer-events-none absolute -left-24 top-10 h-56 w-56 rounded-full bg-[#2563eb]/15 blur-3xl"
           animate={{ y: [0, -18, 0], scale: [1, 1.08, 1] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-[#12305b]/10 blur-3xl"
+          className="pointer-events-none absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-[#7c3aed]/10 blur-3xl"
           animate={{ y: [0, 16, 0], scale: [1, 1.05, 1] }}
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
@@ -605,33 +618,42 @@ function Motion() {
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
         >
-          <motion.span variants={fadeUp} className="inline-block rounded-full border border-[#12305b]/15 bg-white/60 px-4 py-1.5 text-[0.82rem] font-medium text-[#3d6b35] backdrop-blur-sm">
+          <motion.span variants={fadeUp} className="inline-block rounded-full border border-[#e2e8f0] bg-white/70 px-4 py-1.5 text-[0.82rem] font-medium text-[#4338ca] backdrop-blur-sm">
             Move at your own pace
           </motion.span>
-          <motion.h1 variants={fadeUp} className="mt-6 font-serif text-[clamp(2.15rem,9vw,3.9rem)] leading-[1.08] tracking-tight" style={{ color: NAVY }}>
+          <motion.h1 variants={fadeUp} className="mt-6 font-serif text-[clamp(2.15rem,9vw,3.9rem)] leading-[1.08] tracking-tight" style={{ color: "#020617" }}>
             Welcome to
             <br />
-            <span style={{ color: GREEN }}>EdVenture LMS</span>
+            <span className="bg-clip-text text-transparent" style={{ backgroundImage: MOTION_GRADIENT }}>EdVenture LMS</span>
           </motion.h1>
-          <motion.p variants={fadeUp} className="mt-6 max-w-[30rem] text-[1.22rem] leading-relaxed text-[#39434f]">
+          <motion.p variants={fadeUp} className="mt-6 max-w-[30rem] text-[1.22rem] leading-relaxed text-[#334155]">
             Empowering your organization with personalized, interactive learning and growth.
           </motion.p>
-          <motion.div variants={fadeUp} className="mt-8 flex flex-wrap items-center gap-4">
-            <a href="#courses" className="rounded-xl px-5 py-3 text-[0.95rem] font-medium text-white shadow-[0_14px_28px_-14px_rgba(61,107,53,0.9)]" style={{ background: GREEN }}>
-              Browse courses
-            </a>
-            <a href="#why-us" className="rounded-xl border border-[#12305b]/25 bg-white/50 px-5 py-3 text-[0.95rem] font-medium backdrop-blur-sm" style={{ color: NAVY }}>
-              Why us
-            </a>
-          </motion.div>
-          <motion.div variants={fadeUp}>
-            <TrustedTiles tileClass="flex h-12 w-12 items-center justify-center rounded-xl font-serif text-2xl font-bold shadow-sm" />
+          <motion.div variants={fadeUp} className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+            <span className="font-serif text-[1.35rem] text-[#334155]">Trusted by</span>
+            {[
+              { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, cls: "h-8" },
+              { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, cls: "h-10" },
+              { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, cls: "h-6" },
+              { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, cls: "h-12" },
+              { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, cls: "h-6" },
+            ].map((logo) => (
+              <Image
+                key={logo.alt}
+                src={logo.src}
+                alt={logo.alt}
+                width={logo.w}
+                height={logo.h}
+                className={`${logo.cls} w-auto object-contain`}
+              />
+            ))}
+            <span className="text-[0.95rem] font-medium text-[#475569]">& more...</span>
           </motion.div>
         </motion.div>
 
         <aside id="login" className="relative lg:col-span-5">
           <motion.div
-            className="rounded-2xl border border-white/70 bg-white/80 p-6 shadow-[0_28px_60px_-28px_rgba(18,48,91,0.55)] backdrop-blur-md sm:p-7"
+            className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc]/90 p-6 shadow-[0_28px_60px_-28px_rgba(2,6,23,0.45)] backdrop-blur-md sm:p-7"
             initial={{ opacity: 0, y: 26, rotate: -1 }}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
@@ -641,64 +663,109 @@ function Motion() {
         </aside>
       </section>
 
-      <section id="courses" className="border-t border-[#d9d4c7]/70 bg-[#fdfcf9]/80 backdrop-blur-sm">
+      <section id="courses">
         <div className="mx-auto max-w-[1200px] px-6 py-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: NAVY }}>Our Courses</h2>
-            <Link href="/coursesv2" className="flex items-center gap-1 text-[0.95rem] font-medium sm:text-[1.02rem]" style={{ color: GREEN }}>
-              View All <IconChevron className="h-5 w-5" />
-            </Link>
-          </div>
-          <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {courses.map(({ title, copy, level, icon: Icon, color }, i) => (
-              <motion.article
-                key={title}
-                className="flex flex-col rounded-2xl border border-[#e6e2d8] bg-[#fdfcf9] p-5 shadow-[0_14px_30px_-22px_rgba(18,48,91,0.6)]"
-                initial={{ opacity: 0, y: 26 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true, margin: "-60px" }}
-                transition={{ duration: 0.5, delay: i * 0.06 }}
-                whileHover={{ y: -6 }}
-              >
-                <motion.span
-                  className="flex h-12 w-12 items-center justify-center rounded-xl text-white"
-                  style={{ background: color }}
-                  whileHover={{ rotate: -6, scale: 1.06 }}
+            <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: "#020617" }}>Our Courses</h2>
+            <div className="flex items-center gap-4">
+              <Link href="/coursesv2" className="flex items-center gap-1 text-[0.95rem] font-medium sm:text-[1.02rem]" style={{ color: "#4338ca" }}>
+                View All <IconChevron className="h-5 w-5" />
+              </Link>
+              <div className="flex gap-2 lg:hidden">
+                <button
+                  type="button"
+                  onClick={() => scrollCourses(-1)}
+                  aria-label="Previous courses"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/80 text-[#4338ca] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
                 >
-                  <Icon className="h-6 w-6" />
-                </motion.span>
-                <h3 className="mt-4 font-serif text-[1.12rem] font-bold leading-snug" style={{ color: NAVY }}>{title}</h3>
-                <p className="mt-2 flex-1 text-[0.86rem] leading-relaxed text-[#4a5563]">{copy}</p>
-                <p className="mt-4 text-[0.82rem] font-medium" style={{ color: levelColor(level) }}>{level}</p>
-              </motion.article>
-            ))}
+                  <IconArrowLeft className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => scrollCourses(1)}
+                  aria-label="Next courses"
+                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/80 text-[#4338ca] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
+                >
+                  <IconChevron className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="mt-8 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4">
+            <button
+              type="button"
+              onClick={() => scrollCourses(-1)}
+              aria-label="Previous courses"
+              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/90 text-[#4338ca] shadow-[0_10px_24px_-12px_rgba(2,6,23,0.45)] backdrop-blur-sm transition-colors hover:bg-white lg:flex"
+            >
+              <IconArrowLeft className="h-4 w-4" />
+            </button>
+            <div
+              ref={scroller}
+              className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            >
+              {courses.map(({ title, copy, level, photo }) => (
+                <motion.article
+                  key={title}
+                  className="flex w-[85%] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)] sm:w-[calc(50%-0.625rem)] lg:w-[calc(25%-0.9375rem)]"
+                  whileHover={{ y: -6 }}
+                >
+                  <div
+                    role="img"
+                    aria-label={title}
+                    className="h-[104px] shrink-0 bg-cover bg-center"
+                    style={{ backgroundImage: `url(${photo})` }}
+                  />
+                  <div className="flex flex-1 flex-col p-5">
+                    <h3 className="font-serif text-[1.12rem] font-bold leading-snug" style={{ color: "#020617" }}>{title}</h3>
+                    <p className="mt-2 flex-1 text-[0.86rem] leading-relaxed text-[#475569]">{copy}</p>
+                    <p className="mt-4 text-[0.82rem] font-medium" style={{ color: level === "Beginner" ? "#4338ca" : "#475569" }}>{level}</p>
+                  </div>
+                </motion.article>
+              ))}
+            </div>
+            <button
+              type="button"
+              onClick={() => scrollCourses(1)}
+              aria-label="Next courses"
+              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/90 text-[#4338ca] shadow-[0_10px_24px_-12px_rgba(2,6,23,0.45)] backdrop-blur-sm transition-colors hover:bg-white lg:flex"
+            >
+              <IconChevron className="h-4 w-4" />
+            </button>
           </div>
         </div>
       </section>
 
-      <section id="why-us" className="border-t border-[#d9d4c7]/70">
+      <section id="why-us">
         <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-12">
           <div className="lg:col-span-7">
-            <h2 className="font-serif text-[2rem] font-bold" style={{ color: NAVY }}>Why Us?</h2>
-            <h3 className="mt-6 text-[1.18rem] font-semibold text-[#2c3644]">Built for learners, not for completion rates</h3>
-            <p className="mt-4 max-w-[36rem] leading-relaxed text-[#46505e]">
+            <h2 className="font-serif text-[2rem] font-bold" style={{ color: "#020617" }}>Why Us?</h2>
+            <h3 className="mt-6 text-[1.18rem] font-semibold text-[#020617]">
+              <span className="inline rounded-sm px-1.5 py-0.5 text-white box-decoration-clone" style={{ backgroundImage: MOTION_GRADIENT }}>
+                Built for learners, not for completion rates
+              </span>
+            </h3>
+            <p className="mt-4 max-w-[36rem] leading-relaxed text-[#334155]">
               EdVentureHub started with a simple frustration: most online courses are long on theory
               and short on the skills people actually need at work.
             </p>
             <motion.ul
-              className="mt-8 space-y-4 border-l-2 border-[#3d6b35]/25 pl-6"
+              className="mt-8 space-y-3"
               initial="hidden"
               whileInView="show"
-              viewport={{ once: true, margin: "-60px" }}
+              viewport={{ once: false, margin: "-60px" }}
               variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
             >
               {benefits.map(({ text, icon: Icon }) => (
-                <motion.li key={text} variants={fadeUp} className="relative flex items-start gap-4">
-                  <span className="absolute -left-[1.95rem] mt-1 flex h-6 w-6 items-center justify-center rounded-full bg-[#fdfcf9] text-[#3d6b35] ring-2 ring-[#3d6b35]/35">
-                    <span className="h-2 w-2 rounded-full bg-[#3d6b35]" />
+                <motion.li
+                  key={text}
+                  variants={fadeUp}
+                  className="flex items-center gap-4 rounded-xl border border-[#e2e8f0] bg-white/75 px-4 py-3 backdrop-blur-sm"
+                >
+                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundImage: MOTION_GRADIENT }}>
+                    <Icon className="h-5 w-5" />
                   </span>
-                  <Icon className="mt-0.5 h-5 w-5 shrink-0" style={{ color: GREEN }} />
-                  <span className="text-[0.98rem] leading-relaxed text-[#46505e]">{text}</span>
+                  <span className="text-[0.98rem] leading-relaxed text-[#334155]">{text}</span>
                 </motion.li>
               ))}
             </motion.ul>
@@ -706,29 +773,33 @@ function Motion() {
 
           <div className="lg:col-span-5">
             <motion.div
-              className="rounded-2xl border border-white/70 bg-white/80 p-6 shadow-[0_24px_50px_-30px_rgba(18,48,91,0.6)] backdrop-blur-md"
+              className="flex h-full flex-col rounded-2xl border border-[#e5e7eb] bg-[#f8fafc]/90 p-6 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.45)] backdrop-blur-md"
               initial={{ opacity: 0, y: 24 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-60px" }}
+              viewport={{ once: false, margin: "-60px" }}
               transition={{ duration: 0.6 }}
             >
-              <h3 className="font-serif text-[1.35rem] font-semibold" style={{ color: NAVY }}>Find us</h3>
-              <ul className="mt-4 space-y-3">
-                {contactRows.map(({ icon: Icon, title, lines }, i) => (
+              <h3 className="font-serif text-[1.35rem] font-semibold" style={{ color: "#020617" }}>Find us</h3>
+              <p className="mt-3 text-[0.88rem] leading-relaxed text-[#475569]">
+                Questions about a course, a cohort, or a team plan? Use any channel below
+                and our team will get back to you within one business day.
+              </p>
+              <ul className="mt-5 flex flex-1 flex-col justify-around divide-y divide-[#e2e8f0]">
+                {contactRows.filter((row) => row.title !== "Our Address").reverse().map(({ icon: Icon, title, lines }, i) => (
                   <motion.li
                     key={title}
-                    className="flex gap-3"
+                    className="flex gap-3 py-3 first:pt-0 last:pb-0"
                     initial={{ opacity: 0, x: 14 }}
                     whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: true }}
+                    viewport={{ once: false }}
                     transition={{ delay: 0.1 + i * 0.06 }}
                   >
-                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#e7ecdd]" style={{ color: GREEN }}>
+                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundImage: MOTION_GRADIENT }}>
                       <Icon className="h-4 w-4" />
                     </span>
                     <div>
-                      <p className="text-[0.92rem] font-semibold text-[#1f2a37]">{title}</p>
-                      <div className="text-[0.88rem] leading-relaxed text-[#3f4a58]">
+                      <p className="text-[0.92rem] font-semibold text-[#020617]">{title}</p>
+                      <div className="text-[0.88rem] leading-relaxed text-[#475569]">
                         {lines.map((line) => <p key={line}>{line}</p>)}
                       </div>
                     </div>

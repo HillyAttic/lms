@@ -8,10 +8,6 @@ import {
   LandingFooter,
   LandingHeader,
   LandingCourseCard,
-  NAVY,
-  GREEN,
-  TEAL,
-  SLATE,
 } from "@/components/landing";
 
 export const metadata: Metadata = {
@@ -59,9 +55,19 @@ const TYPE_STYLES: Record<
   RepositoryContentItem["type"],
   { label: string; color: string; icon: React.ComponentType<{ className?: string }> }
 > = {
-  scorm: { label: "SCORM", color: NAVY, icon: IconScorm },
-  video: { label: "Video", color: TEAL, icon: IconVideo },
-  game: { label: "Game", color: GREEN, icon: IconGame },
+  scorm: { label: "SCORM", color: "#2563eb", icon: IconScorm },
+  video: { label: "Video", color: "#7c3aed", icon: IconVideo },
+  game: { label: "Game", color: "#4338ca", icon: IconGame },
+};
+
+const photo = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=800&h=320&q=80&auto=format&fit=crop`;
+
+/* Fallback cover art when a repository item has no thumbnail of its own. */
+const TYPE_IMAGE: Record<RepositoryContentItem["type"], string> = {
+  scorm: photo("1461749280684-dccba630e2f6"),
+  video: photo("1531403009284-440f080d1e12"),
+  game: photo("1551288049-bebda4e38f71"),
 };
 
 export default async function CoursesV2() {
@@ -69,14 +75,23 @@ export default async function CoursesV2() {
   const courses = result?.success ? (result.data as RepositoryContentItem[]) : [];
 
   return (
-    <div className="min-h-dvh bg-[url('/crumbled.jpg')] bg-cover bg-center bg-scroll text-[#243040] lg:bg-fixed">
-      <LandingHeader active="courses" />
+    <div
+      className="min-h-dvh overflow-hidden bg-[#f8fafc] bg-scroll text-[#334155] lg:bg-fixed"
+      style={{
+        backgroundImage:
+          "linear-gradient(180deg, rgba(248,250,252,0.5), rgba(248,250,252,0.5)), url('/crumbled.jpg')",
+        backgroundSize: "cover",
+        backgroundPosition: "center 30%",
+        backgroundRepeat: "no-repeat",
+      }}
+    >
+      <LandingHeader active="courses" accent="#4338ca" />
 
       <main className="mx-auto max-w-[1200px] px-6 py-14 lg:px-8">
-        <h1 className="font-serif text-[1.9rem] font-bold sm:text-[2.4rem]" style={{ color: NAVY }}>
+        <h1 className="font-serif text-[1.9rem] font-bold text-[#020617] sm:text-[2.4rem]">
           Our Courses
         </h1>
-        <p className="mt-3 max-w-[36rem] text-[1.05rem] leading-relaxed text-[#46505e]">
+        <p className="mt-3 max-w-[36rem] text-[1.05rem] leading-relaxed text-[#334155]">
           {courses.length > 0
             ? `${courses.length} course${courses.length === 1 ? "" : "s"} across every format on the platform.`
             : "Courses published from the admin panel will appear here."}
@@ -98,6 +113,7 @@ export default async function CoursesV2() {
                     label={style.label}
                     color={style.color}
                     icon={style.icon}
+                    image={course.thumbnailUrl || TYPE_IMAGE[course.type]}
                     // Video courses have no detail route yet — see /courses.
                     href={course.type === "video" ? undefined : `/courses/${course.id}`}
                     className="h-full"
@@ -107,11 +123,11 @@ export default async function CoursesV2() {
             })}
           </ul>
         ) : (
-          <div className="mt-10 rounded-2xl border border-[#e6e2d8] bg-[#fdfcf9]/95 px-6 py-16 text-center shadow-[0_16px_36px_-20px_rgba(18,48,91,0.4)]">
-            <p className="font-serif text-[1.3rem] font-bold" style={{ color: NAVY }}>
+          <div className="mt-10 rounded-2xl border border-[#e5e7eb] bg-white px-6 py-16 text-center shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)]">
+            <p className="font-serif text-[1.3rem] font-bold text-[#020617]">
               No courses published yet
             </p>
-            <p className="mt-2 text-[0.95rem] text-[#4a5563]">
+            <p className="mt-2 text-[0.95rem] text-[#475569]">
               Check back soon — new material lands here as it goes live.
             </p>
           </div>

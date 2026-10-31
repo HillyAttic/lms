@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType, ReactNode } from "react";
+import { LandingNavLink } from "./landing-nav-link";
 
 /* Shared chrome for the standalone landing pages (/homev2, /coursesv2) so both
  * sit on the same crumpled-paper theme and one header/footer edit applies to
@@ -15,11 +16,11 @@ type IconProps = { className?: string };
 
 const NAV = [
   { key: "home", label: "Home", href: "/homev2" },
-  { key: "courses", label: "Courses", href: "/coursesv2" },
+  { key: "courses", label: "Courses", href: "/homev2#courses" },
   { key: "about", label: "About Us", href: "/homev2#why-us" },
 ] as const;
 
-export function LandingHeader({ active }: { active: "home" | "courses" }) {
+export function LandingHeader({ active, accent = GREEN }: { active: "home" | "courses"; accent?: string }) {
   return (
     <header className="border-b border-[#d9d4c7]/70">
       <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
@@ -30,18 +31,18 @@ export function LandingHeader({ active }: { active: "home" | "courses" }) {
           <ul className="flex items-center gap-6 text-[1.02rem] sm:gap-10">
             {NAV.map((item) => (
               <li key={item.key}>
-                <Link
+                <LandingNavLink
                   href={item.href}
-                  aria-current={active === item.key ? "page" : undefined}
+                  ariaCurrent={active === item.key ? "page" : undefined}
                   className={
                     active === item.key
                       ? "border-b-2 pb-1 font-medium"
                       : "hover:opacity-70"
                   }
-                  style={active === item.key ? { borderColor: GREEN } : undefined}
+                  style={active === item.key ? { borderColor: accent } : undefined}
                 >
                   {item.label}
-                </Link>
+                </LandingNavLink>
               </li>
             ))}
           </ul>
@@ -72,6 +73,7 @@ export function LandingCourseCard({
   label,
   color,
   icon: Icon,
+  image,
   href,
   className,
 }: {
@@ -80,24 +82,32 @@ export function LandingCourseCard({
   label: string;
   color: string;
   icon: ComponentType<IconProps>;
+  image?: string | null;
   href?: string;
   className?: string;
 }) {
   const body = (
     <article
       className={
-        "flex h-full flex-col overflow-hidden rounded-xl border border-[#e6e2d8] bg-[#fdfcf9] shadow-[0_10px_24px_-16px_rgba(18,48,91,0.45)]" +
+        "flex h-full flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)]" +
         (className ? ` ${className}` : "")
       }
     >
-      <div className="mx-2 mt-2 flex h-[100px] shrink-0 items-center justify-center rounded-lg" style={{ background: color }}>
-        <Icon className="h-9 w-9 text-white" />
+      <div
+        className="mx-2 mt-2 flex h-[100px] shrink-0 items-center justify-center rounded-xl bg-cover bg-center"
+        style={
+          image
+            ? { backgroundImage: `url(${image})` }
+            : { backgroundImage: `linear-gradient(135deg, ${color} 0%, #7c3aed 100%)` }
+        }
+      >
+        {image ? null : <Icon className="h-9 w-9 text-white" />}
       </div>
       <div className="flex flex-1 flex-col px-4 pt-4 pb-4">
-        <h3 className="font-serif text-[1.12rem] font-bold leading-snug" style={{ color: NAVY }}>{title}</h3>
+        <h3 className="font-serif text-[1.12rem] font-bold leading-snug text-[#020617]">{title}</h3>
         {/* Three lines reserved on every card so titles and labels line up. */}
-        <p className="mt-2 line-clamp-3 min-h-[4.1rem] text-[0.86rem] leading-relaxed text-[#4a5563]">{description}</p>
-        <p className="mt-auto pt-4 text-[0.82rem] font-medium" style={{ color: label === "Beginner" ? GREEN : TEAL }}>
+        <p className="mt-2 line-clamp-3 min-h-[4.1rem] text-[0.86rem] leading-relaxed text-[#475569]">{description}</p>
+        <p className="mt-auto pt-4 text-[0.82rem] font-medium" style={{ color }}>
           {label}
         </p>
       </div>
@@ -105,7 +115,7 @@ export function LandingCourseCard({
   );
 
   return href ? (
-    <Link href={href} className="block h-full transition-transform hover:-translate-y-0.5">
+    <Link href={href} className="block h-full transition-transform duration-200 hover:-translate-y-1">
       {body}
     </Link>
   ) : (

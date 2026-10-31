@@ -60,10 +60,7 @@ export const IconBars = (p: IconProps) => (
   <Svg {...p}><path d="M6 20V13M12 20V8M18 20V4" /></Svg>
 );
 export const IconClockBook = (p: IconProps) => (
-  <Svg {...p}>
-    <circle cx="10" cy="10" r="6" /><path d="M10 6.5V10l2.5 1.5" />
-    <path d="M5 18.5c2.7-1 5.3-1 8 0v3c-2.7-1-5.3-1-8 0v-3ZM19 21v-3.5" />
-  </Svg>
+  <Svg {...p}><circle cx="12" cy="12" r="8.5" /><path d="M12 7.5V12l3 2" /></Svg>
 );
 export const IconGradCap = (p: IconProps) => (
   <Svg {...p}>
@@ -100,12 +97,15 @@ export const IconArrowLeft = (p: IconProps) => (
   <Svg {...p}><path d="m14 5-7 7 7 7" /></Svg>
 );
 
+const photo = (id: string) =>
+  `https://images.unsplash.com/photo-${id}?w=800&h=320&q=80&auto=format&fit=crop`;
+
 export const courses = [
-  { title: "Web Development", copy: "Build modern websites from scratch.", level: "Beginner", icon: IconCode, color: NAVY },
-  { title: "UI/UX Design", copy: "Design beautiful and usable interfaces.", level: "Beginner", icon: IconPalette, color: GREEN },
-  { title: "Data Science", copy: "Analyze data and build real-world models.", level: "Intermediate", icon: IconDatabase, color: TEAL },
-  { title: "Digital Marketing", copy: "Learn strategies to grow brands online.", level: "Beginner", icon: IconMegaphone, color: GREEN },
-  { title: "Business Analytics", copy: "Make data-driven business decisions.", level: "Intermediate", icon: IconBars, color: SLATE },
+  { title: "Web Development", copy: "Build modern websites from scratch.", level: "Beginner", icon: IconCode, color: NAVY, photo: photo("1461749280684-dccba630e2f6") },
+  { title: "UI/UX Design", copy: "Design beautiful and usable interfaces.", level: "Beginner", icon: IconPalette, color: GREEN, photo: photo("1531403009284-440f080d1e12") },
+  { title: "Data Science", copy: "Analyze data and build real-world models.", level: "Intermediate", icon: IconDatabase, color: TEAL, photo: photo("1551288049-bebda4e38f71") },
+  { title: "Digital Marketing", copy: "Learn strategies to grow brands online.", level: "Beginner", icon: IconMegaphone, color: GREEN, photo: photo("1553877522-43269d4ea984") },
+  { title: "Business Analytics", copy: "Make data-driven business decisions.", level: "Intermediate", icon: IconBars, color: SLATE, photo: photo("1432888622747-4eb9a8efeb07") },
 ];
 
 export const benefits = [
