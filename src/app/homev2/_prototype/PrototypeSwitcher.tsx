@@ -21,7 +21,7 @@ type Key = (typeof VARIANTS)[number]["key"];
 const KEYS: string[] = VARIANTS.map((v) => v.key);
 
 function normalize(raw: string | null): Key {
-  return (KEYS.includes(raw ?? "") ? raw : "A") as Key;
+  return (KEYS.includes(raw ?? "") ? raw : "O") as Key;
 }
 
 function Switcher() {

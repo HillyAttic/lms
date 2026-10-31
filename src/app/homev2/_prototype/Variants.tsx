@@ -737,77 +737,78 @@ function Motion() {
       </section>
 
       <section id="why-us">
-        <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-10 px-6 py-14 lg:grid-cols-12">
-          <div className="lg:col-span-7">
+        <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-x-12 px-6 py-14 lg:grid-cols-12">
+          <div className="lg:col-span-7 lg:row-start-1">
             <h2 className="font-serif text-[2rem] font-bold" style={{ color: "#020617" }}>Why Us?</h2>
-            <h3 className="mt-6 text-[1.18rem] font-semibold text-[#020617]">
+            <h3 className="mt-4 text-[1.18rem] font-semibold text-[#020617]">
               <span className="inline rounded-sm px-1.5 py-0.5 text-white box-decoration-clone" style={{ backgroundImage: MOTION_GRADIENT }}>
                 Built for learners, not for completion rates
               </span>
             </h3>
-            <p className="mt-4 max-w-[36rem] leading-relaxed text-[#334155]">
+            <p className="mt-4 mb-5 max-w-[36rem] leading-relaxed text-[#334155]">
               EdVentureHub started with a simple frustration: most online courses are long on theory
               and short on the skills people actually need at work.
             </p>
-            <motion.ul
-              className="mt-8 space-y-3"
-              initial="hidden"
-              whileInView="show"
-              viewport={{ once: false, margin: "-60px" }}
-              variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
-            >
-              {benefits.map(({ text, icon: Icon }) => (
-                <motion.li
-                  key={text}
-                  variants={fadeUp}
-                  className="flex items-center gap-4 rounded-xl border border-[#e2e8f0] bg-white/75 px-4 py-3 backdrop-blur-sm"
-                >
-                  <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundImage: MOTION_GRADIENT }}>
-                    <Icon className="h-5 w-5" />
-                  </span>
-                  <span className="text-[0.98rem] leading-relaxed text-[#334155]">{text}</span>
-                </motion.li>
-              ))}
-            </motion.ul>
           </div>
 
-          <div className="lg:col-span-5">
-            <motion.div
-              className="flex h-full flex-col rounded-2xl border border-[#e5e7eb] bg-[#f8fafc]/90 p-6 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.45)] backdrop-blur-md"
-              initial={{ opacity: 0, y: 24 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-60px" }}
-              transition={{ duration: 0.6 }}
-            >
+          <motion.ul
+            className="divide-y divide-[#e5e7eb] border-y border-[#e5e7eb] lg:col-span-7 lg:row-start-2"
+            initial="hidden"
+            whileInView="show"
+            viewport={{ once: false, margin: "-60px" }}
+            variants={{ hidden: {}, show: { transition: { staggerChildren: 0.1 } } }}
+          >
+            {benefits.map(({ text, icon: Icon }) => (
+              <motion.li
+                key={text}
+                variants={fadeUp}
+                className="flex h-[76px] items-center gap-4"
+              >
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundImage: MOTION_GRADIENT }}>
+                  <Icon className="h-5 w-5" />
+                </span>
+                <span className="text-[0.98rem] leading-relaxed text-[#334155]">{text}</span>
+              </motion.li>
+            ))}
+          </motion.ul>
+
+          <motion.div
+            className="mt-12 flex flex-col rounded-2xl border border-[#e5e7eb] bg-[#f8fafc]/90 shadow-[0_24px_50px_-30px_rgba(2,6,23,0.45)] backdrop-blur-md lg:col-span-5 lg:col-start-8 lg:row-span-2 lg:row-start-1 lg:mt-0 lg:grid lg:grid-rows-subgrid"
+            initial={{ opacity: 0, y: 24 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, margin: "-60px" }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="px-5 pt-5 sm:px-6 sm:pt-6">
               <h3 className="font-serif text-[1.35rem] font-semibold" style={{ color: "#020617" }}>Find us</h3>
-              <p className="mt-3 text-[0.88rem] leading-relaxed text-[#475569]">
+              <p className="mt-5 mb-6 text-[0.88rem] leading-relaxed text-[#475569]">
                 Questions about a course, a cohort, or a team plan? Use any channel below
                 and our team will get back to you within one business day.
               </p>
-              <ul className="mt-5 flex flex-1 flex-col justify-around divide-y divide-[#e2e8f0]">
-                {contactRows.filter((row) => row.title !== "Our Address").reverse().map(({ icon: Icon, title, lines }, i) => (
-                  <motion.li
-                    key={title}
-                    className="flex gap-3 py-3 first:pt-0 last:pb-0"
-                    initial={{ opacity: 0, x: 14 }}
-                    whileInView={{ opacity: 1, x: 0 }}
-                    viewport={{ once: false }}
-                    transition={{ delay: 0.1 + i * 0.06 }}
-                  >
-                    <span className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundImage: MOTION_GRADIENT }}>
-                      <Icon className="h-4 w-4" />
-                    </span>
-                    <div>
-                      <p className="text-[0.92rem] font-semibold text-[#020617]">{title}</p>
-                      <div className="text-[0.88rem] leading-relaxed text-[#475569]">
-                        {lines.map((line) => <p key={line}>{line}</p>)}
-                      </div>
+            </div>
+            <ul className="flex flex-col divide-y divide-[#e2e8f0] px-5 pb-5 sm:px-6 sm:pb-6">
+              {contactRows.filter((row) => row.title !== "Our Address").reverse().map(({ icon: Icon, title, lines }, i) => (
+                <motion.li
+                  key={title}
+                  className="flex h-[76px] items-center gap-3"
+                  initial={{ opacity: 0, x: 14 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: false }}
+                  transition={{ delay: 0.1 + i * 0.06 }}
+                >
+                  <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-white" style={{ backgroundImage: MOTION_GRADIENT }}>
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <p className="text-[0.92rem] font-semibold text-[#020617]">{title}</p>
+                    <div className="text-[0.88rem] leading-relaxed text-[#475569]">
+                      {lines.map((line) => <p key={line}>{line}</p>)}
                     </div>
-                  </motion.li>
-                ))}
-              </ul>
-            </motion.div>
-          </div>
+                  </div>
+                </motion.li>
+              ))}
+            </ul>
+          </motion.div>
         </div>
       </section>
 
