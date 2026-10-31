@@ -631,12 +631,16 @@ function Motion() {
           </motion.p>
           <motion.div variants={fadeUp} className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
             <span className="font-serif text-[1.35rem] text-[#334155]">Trusted by</span>
+            {/* Width and height are pinned: `h-* + w-auto` sizes these flex
+                items from their intrinsic ratio, so they shift when CSS is
+                hot-reloading or the row is under flex pressure (and can
+                shrink at narrow widths). */}
             {[
-              { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, cls: "h-8" },
-              { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, cls: "h-10" },
-              { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, cls: "h-6" },
-              { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, cls: "h-12" },
-              { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, cls: "h-6" },
+              { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
+              { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
+              { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
+              { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
+              { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
             ].map((logo) => (
               <Image
                 key={logo.alt}
@@ -644,7 +648,8 @@ function Motion() {
                 alt={logo.alt}
                 width={logo.w}
                 height={logo.h}
-                className={`${logo.cls} w-auto object-contain`}
+                className="shrink-0 object-contain"
+                style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
               />
             ))}
             <span className="text-[0.95rem] font-medium text-[#475569]">& more...</span>
