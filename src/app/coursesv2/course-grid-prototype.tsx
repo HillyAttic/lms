@@ -361,11 +361,10 @@ export function CourseGridPrototype({
   return <VariantA courses={courses} />;
 }
 
-/* Floating variant switcher — dev only. */
+/* Floating variant switcher. */
 export function PrototypeSwitcher({ current }: { current: PrototypeVariant }) {
   const router = useRouter();
   const pathname = usePathname();
-  if (process.env.NODE_ENV === "production") return null;
 
   const go = (next: PrototypeVariant) => router.replace(`${pathname}?variant=${next}`, { scroll: false });
   const step = (dir: 1 | -1) =>
