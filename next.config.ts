@@ -14,6 +14,16 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
+  /* The paper texture is on every new-theme page. It used to be sent with
+     max-age=0, so it was revalidated on every visit. */
+  async headers() {
+    return [
+      {
+        source: "/crumbled.jpg",
+        headers: [{ key: "Cache-Control", value: "public, max-age=604800, stale-while-revalidate=86400" }],
+      },
+    ];
+  },
 };
 
 export default nextConfig;

@@ -612,9 +612,11 @@ function Motion() {
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
 
+        {/* No entrance animation above the fold: the server-rendered HTML must
+            be visible immediately, not wait for hydration to fade it in. */}
         <motion.div
           className="relative lg:col-span-7"
-          initial="hidden"
+          initial={false}
           animate="show"
           variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
         >
@@ -659,7 +661,7 @@ function Motion() {
         <aside id="login" className="relative lg:col-span-5">
           <motion.div
             className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc]/90 p-6 shadow-[0_28px_60px_-28px_rgba(2,6,23,0.45)] backdrop-blur-md sm:p-7"
-            initial={{ opacity: 0, y: 26, rotate: -1 }}
+            initial={false}
             animate={{ opacity: 1, y: 0, rotate: 0 }}
             transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
           >
@@ -988,10 +990,16 @@ function Bento() {
   );
 }
 
-export const LAYOUT_VARIANTS: Record<string, { label: string; Component: ComponentType }> = {
-  L: { label: "Soft — neumorphic sage", Component: Neumorphic },
-  M: { label: "Material — tonal surfaces", Component: Material },
-  N: { label: "shadcn — minimal borders", Component: Shadcn },
-  O: { label: "Motion — paper, animated", Component: Motion },
-  P: { label: "Bento — asymmetric tiles", Component: Bento },
+const LAYOUT_VARIANTS: Record<string, ComponentType> = {
+  L: Neumorphic,
+  M: Material,
+  N: Shadcn,
+  O: Motion,
+  P: Bento,
 };
+
+/* Rendered from a dynamically imported chunk (see PrototypeSwitcher). */
+export function LayoutHome({ variant }: { variant: string }) {
+  const Component = LAYOUT_VARIANTS[variant];
+  return Component ? <Component /> : null;
+}

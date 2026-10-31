@@ -97,8 +97,9 @@ export const IconArrowLeft = (p: IconProps) => (
   <Svg {...p}><path d="m14 5-7 7 7 7" /></Svg>
 );
 
+/* Card art paints at ~280–560 CSS px; ask Unsplash for that size, not 800. */
 const photo = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?w=800&h=320&q=80&auto=format&fit=crop`;
+  `https://images.unsplash.com/photo-${id}?w=480&h=280&q=60&auto=format&fit=crop`;
 
 export const courses = [
   { title: "Web Development", copy: "Build modern websites from scratch.", level: "Beginner", icon: IconCode, color: NAVY, photo: photo("1461749280684-dccba630e2f6") },

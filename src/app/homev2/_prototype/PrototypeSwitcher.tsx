@@ -4,17 +4,29 @@
  * A is the existing page; B–K are theme variations of the same structure;
  * L–P are separate layouts from Variants.tsx. */
 
-import { Suspense, useEffect } from "react";
-import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import dynamic from "next/dynamic";
+import { useCallback, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { VariantA } from "./VariantA";
 import { ThemedHome } from "./ThemedHome";
 import { THEMES } from "./themes";
-import { LAYOUT_VARIANTS } from "./Variants";
+
+/* L–P pull in framer-motion and five layouts. Load that chunk only when one of
+ * them is selected so every other variant ships a much smaller bundle. */
+const LayoutHome = dynamic(() => import("./Variants").then((m) => m.LayoutHome));
+
+const LAYOUTS = [
+  { key: "L", name: "Soft — neumorphic sage" },
+  { key: "M", name: "Material — tonal surfaces" },
+  { key: "N", name: "shadcn — minimal borders" },
+  { key: "O", name: "Motion — paper, animated" },
+  { key: "P", name: "Bento — asymmetric tiles" },
+] as const;
 
 const VARIANTS = [
   { key: "A", name: "Current (paper)" },
   ...THEMES.map((t) => ({ key: t.key, name: t.label })),
-  ...Object.entries(LAYOUT_VARIANTS).map(([key, v]) => ({ key, name: v.label })),
+  ...LAYOUTS,
 ] as const;
 
 type Key = (typeof VARIANTS)[number]["key"];
@@ -24,19 +36,14 @@ function normalize(raw: string | null): Key {
   return (KEYS.includes(raw ?? "") ? raw : "O") as Key;
 }
 
-function Switcher() {
+function Switcher({ current }: { current: Key }) {
   const router = useRouter();
-  const pathname = usePathname();
-  const params = useSearchParams();
-  const current = normalize(params.get("variant")?.toUpperCase() ?? null);
   const index = KEYS.indexOf(current);
 
-  const go = (next: number) => {
+  const go = useCallback((next: number) => {
     const key = KEYS[(next + KEYS.length) % KEYS.length];
-    const sp = new URLSearchParams(params.toString());
-    sp.set("variant", key);
-    router.replace(`${pathname}?${sp.toString()}`, { scroll: false });
-  };
+    router.replace(`/homev2?variant=${key}`, { scroll: false });
+  }, [router]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -47,7 +54,7 @@ function Switcher() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  });
+  }, [go, index]);
 
   if (process.env.NODE_ENV === "production") return null;
 
@@ -68,27 +75,18 @@ function Switcher() {
   );
 }
 
-function Root() {
-  const params = useSearchParams();
-  const current = normalize(params.get("variant")?.toUpperCase() ?? null);
+export default function PrototypeSwitcher({ variant }: { variant?: string }) {
+  const current = normalize(variant?.toUpperCase() ?? null);
   const theme = THEMES.find((t) => t.key === current);
-  const layout = LAYOUT_VARIANTS[current];
+  const isLayout = LAYOUTS.some((l) => l.key === current);
 
   return (
     <>
       {current === "A" ? <VariantA />
         : theme ? <ThemedHome theme={theme} />
-        : layout ? <layout.Component />
+        : isLayout ? <LayoutHome variant={current} />
         : null}
-      <Switcher />
+      <Switcher current={current} />
     </>
-  );
-}
-
-export default function PrototypeSwitcher() {
-  return (
-    <Suspense fallback={<div className="min-h-dvh bg-[#f1f4f7]" />}>
-      <Root />
-    </Suspense>
   );
 }
