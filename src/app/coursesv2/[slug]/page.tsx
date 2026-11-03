@@ -71,20 +71,25 @@ export default async function CourseDetailV2Page({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const result = await getCourse(slug);
+  // Reviews only need the slug; fetching them alongside the course saves a
+  // Firestore round trip on the critical path.
+  const [result, reviewsResult] = await Promise.all([
+    getCourse(slug),
+    getCourseReviews(slug),
+  ]);
   const publicCourse = result.success
     ? (result.data as PublicCourse | undefined)
     : undefined;
 
   // A slug can name a `public_courses` record or the repository upload itself —
   // same fallback as /courses/[slug].
-  const linkedContent = publicCourse?.contentId
-    ? await getLaunchableItemById(publicCourse.contentId)
-    : null;
-  let content = linkedContent?.success
-    ? (linkedContent.data as RepositoryContentItem)
-    : undefined;
-
+  let content: RepositoryContentItem | undefined;
+  if (publicCourse?.contentId) {
+    const linkedContent = await getLaunchableItemById(publicCourse.contentId);
+    content = linkedContent.success
+      ? (linkedContent.data as RepositoryContentItem)
+      : undefined;
+  }
   if (!content) {
     const fallback = await getLaunchableItemById(slug);
     content = fallback.success
@@ -96,7 +101,6 @@ export default async function CourseDetailV2Page({
     notFound();
   }
 
-  const reviewsResult = await getCourseReviews(slug);
   const reviews: CourseReview[] = reviewsResult.success ? reviewsResult.data : [];
 
   const title = publicCourse?.title || content?.name || "Untitled course";
@@ -169,6 +173,7 @@ export default async function CourseDetailV2Page({
                     src={thumbnail}
                     alt={title}
                     fill
+                    preload
                     sizes="(min-width: 1024px) 640px, 100vw"
                     className="object-cover"
                   />

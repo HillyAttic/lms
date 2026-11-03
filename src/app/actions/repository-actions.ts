@@ -1,6 +1,7 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import type { DocumentData } from "firebase-admin/firestore";
 import { canAccessAdminPanel } from "@/lib/roles";
 import { getSignedReadUrl, resolveThumbnails } from "@/lib/storage-urls";
 import JSZip from "jszip";
@@ -80,69 +81,67 @@ export interface RepositoryContentItem {
  * Read all three content collections and normalise them into one list.
  * Thumbnails are resolved on the way out — see `resolveThumbnails`.
  */
-async function loadRepositoryContent(): Promise<RepositoryContentItem[]> {
-  const [scormSnapshot, videoSnapshot, gameSnapshot] = await Promise.all([
-    adminDb.collection("repository").get(),
-    adminDb.collection("video_courses").get(),
-    adminDb.collection("game_courses").get(),
-  ]);
+/* Which Firestore collection each content type lives in. */
+const REPOSITORY_COLLECTIONS: [string, RepositoryContentType][] = [
+  ["repository", "scorm"],
+  ["video_courses", "video"],
+  ["game_courses", "game"],
+];
 
-  const scorm: RepositoryContentItem[] = scormSnapshot.docs.map((doc) => {
-    const data = doc.data();
+/** Normalise one Firestore document into the shared item shape. */
+function toRepositoryItem(
+  id: string,
+  type: RepositoryContentType,
+  data: DocumentData
+): RepositoryContentItem {
+  const base = {
+    id,
+    type,
+    name:
+      type === "scorm"
+        ? data.name || data.title || "Untitled"
+        : data.title || data.name || "Untitled",
+    description: data.description || "",
+    duration: data.duration || 0,
+    thumbnailUrl: data.thumbnailUrl || null,
+    createdAt: data.createdAt || null,
+    rating: data.rating || 0,
+    ratingCount: data.ratingCount || 0,
+  };
+
+  if (type === "scorm") {
     return {
-      id: doc.id,
-      type: "scorm",
-      name: data.name || data.title || "Untitled",
-      description: data.description || "",
+      ...base,
       features: data.features || "",
-      duration: data.duration || 0,
-      thumbnailUrl: data.thumbnailUrl || null,
-      createdAt: data.createdAt || null,
-      rating: data.rating || 0,
-      ratingCount: data.ratingCount || 0,
       interactivityLevel: data.interactivityLevel,
       scormVersion: data.scormVersion,
       entryPoint: data.entryPoint,
     };
-  });
+  }
+  if (type === "video") {
+    return { ...base, features: "", videoUrl: data.videoUrl || null };
+  }
+  return {
+    ...base,
+    features: "",
+    gameUrl: data.gameUrl || null,
+    gameType: data.gameType,
+    gameEntryFile: data.gameEntryFile,
+  };
+}
 
-  const video: RepositoryContentItem[] = videoSnapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      type: "video",
-      name: data.title || data.name || "Untitled",
-      description: data.description || "",
-      features: "",
-      duration: data.duration || 0,
-      thumbnailUrl: data.thumbnailUrl || null,
-      createdAt: data.createdAt || null,
-      rating: data.rating || 0,
-      ratingCount: data.ratingCount || 0,
-      videoUrl: data.videoUrl || null,
-    };
-  });
+async function loadRepositoryContent(): Promise<RepositoryContentItem[]> {
+  const snapshots = await Promise.all(
+    REPOSITORY_COLLECTIONS.map(([collection]) =>
+      adminDb.collection(collection).get()
+    )
+  );
 
-  const game: RepositoryContentItem[] = gameSnapshot.docs.map((doc) => {
-    const data = doc.data();
-    return {
-      id: doc.id,
-      type: "game",
-      name: data.title || data.name || "Untitled",
-      description: data.description || "",
-      features: "",
-      duration: data.duration || 0,
-      thumbnailUrl: data.thumbnailUrl || null,
-      createdAt: data.createdAt || null,
-      rating: data.rating || 0,
-      ratingCount: data.ratingCount || 0,
-      gameUrl: data.gameUrl || null,
-      gameType: data.gameType,
-      gameEntryFile: data.gameEntryFile,
-    };
-  });
-
-  const items = [...scorm, ...video, ...game];
+  const items = snapshots.flatMap((snapshot, index) =>
+    snapshot.docs.map((doc) =>
+      toRepositoryItem(doc.id, REPOSITORY_COLLECTIONS[index][1], doc.data())
+    )
+  );
 
   // Newest first: only SCORM documents carry a serial number, so creation time
   // is the one ordering all three collections share.
@@ -269,12 +268,22 @@ export async function getRepositoryItemById(itemId: string) {
  */
 export async function getLaunchableItemById(itemId: string) {
   try {
-    const items = await loadRepositoryContent();
-    const item = items.find((candidate) => candidate.id === itemId);
+    /* Direct document reads instead of `loadRepositoryContent`: the detail page
+       needs one item, not three full collection scans on every request. */
+    const items = await Promise.all(
+      REPOSITORY_COLLECTIONS.map(async ([collection, type]) => {
+        const doc = await adminDb.doc(`${collection}/${itemId}`).get();
+        return doc.exists
+          ? toRepositoryItem(doc.id, type, doc.data()!)
+          : null;
+      })
+    );
+    const item = items.find((candidate) => candidate !== null);
     if (!item) {
       return { success: false as const, error: "Repository item not found" };
     }
-    return { success: true as const, data: serializeTimestamps(item) };
+    const [resolved] = await resolveThumbnails([item]);
+    return { success: true as const, data: serializeTimestamps(resolved) };
   } catch (error: any) {
     console.error("Get launchable item error:", error);
     return { success: false as const, error: error.message };
