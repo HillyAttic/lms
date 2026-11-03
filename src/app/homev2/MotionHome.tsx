@@ -82,7 +82,7 @@ const benefits = [
 ];
 
 const contactRows = [
-  { icon: IconPin, title: "Our Address", lines: ["EdVentureHub Pvt. Ltd.", "123 Learning Lane", "Knowledge Park", "Bangalore, Karnataka 560001", "India"] },
+  { icon: IconPin, title: "Our Address", lines: ["EdVenture Hub Pvt. Ltd.", "123 Learning Lane", "Knowledge Park", "Bangalore, Karnataka 560001", "India"] },
   { icon: IconPhone, title: "Contact Us", lines: ["9582232050", "9999457847"] },
   { icon: IconMail, title: "Email Us", lines: ["admin@edventurehub.com"] },
   { icon: IconGlobe, title: "Website", lines: ["www.edventurehub.com"] },
@@ -95,6 +95,9 @@ function useLoginForm() {
   const router = useRouter();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
+  const [contactNo, setContactNo] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [designation, setDesignation] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -108,7 +111,15 @@ function useLoginForm() {
           toast.error("Please enter your name");
           return;
         }
-        await signUpWithEmail(email, password, name);
+        if (!contactNo.trim() || !organization.trim()) {
+          toast.error("Please enter contact number and organization");
+          return;
+        }
+        await signUpWithEmail(email, password, name, {
+          contactNo: contactNo.trim(),
+          organization: organization.trim(),
+          designation: designation.trim() || undefined,
+        });
         toast.success("Account created successfully!");
       } else {
         await signInWithEmail(email, password);
@@ -132,7 +143,10 @@ function useLoginForm() {
   };
 
   return {
-    mode, setMode, name, setName, email, setEmail, password, setPassword,
+    mode, setMode, name, setName,
+    contactNo, setContactNo, organization, setOrganization,
+    designation, setDesignation,
+    email, setEmail, password, setPassword,
     loading, handleSubmit,
     toggleMode: () => setMode(mode === "signup" ? "login" : "signup"),
   };
@@ -156,11 +170,28 @@ function AuthForm({ f, prefix, s }: { f: LoginForm; prefix: string; s: AuthStyle
       <h2 className={s.title}>{f.mode === "signup" ? "Create your account" : "Sign in"}</h2>
       <div className="mt-4 space-y-3.5">
         {f.mode === "signup" && (
-          <div>
-            <label htmlFor={`${prefix}-name`} className={s.label}>Full name</label>
-            <input id={`${prefix}-name`} type="text" autoComplete="name" required
-              value={f.name} onChange={(e) => f.setName(e.target.value)} className={s.input} />
-          </div>
+          <>
+            <div>
+              <label htmlFor={`${prefix}-name`} className={s.label}>Full name</label>
+              <input id={`${prefix}-name`} type="text" autoComplete="name" required
+                value={f.name} onChange={(e) => f.setName(e.target.value)} className={s.input} />
+            </div>
+            <div>
+              <label htmlFor={`${prefix}-contact`} className={s.label}>Contact number</label>
+              <input id={`${prefix}-contact`} type="tel" autoComplete="tel" required
+                value={f.contactNo} onChange={(e) => f.setContactNo(e.target.value)} className={s.input} />
+            </div>
+            <div>
+              <label htmlFor={`${prefix}-organization`} className={s.label}>Organization</label>
+              <input id={`${prefix}-organization`} type="text" autoComplete="organization" required
+                value={f.organization} onChange={(e) => f.setOrganization(e.target.value)} className={s.input} />
+            </div>
+            <div>
+              <label htmlFor={`${prefix}-designation`} className={s.label}>Designation <span className="text-[#94a3b8]">(optional)</span></label>
+              <input id={`${prefix}-designation`} type="text" autoComplete="organization-title"
+                value={f.designation} onChange={(e) => f.setDesignation(e.target.value)} className={s.input} />
+            </div>
+          </>
         )}
         <div>
           <label htmlFor={`${prefix}-email`} className={s.label}>Email address</label>
@@ -281,30 +312,52 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
           <motion.p variants={fadeUp} className="mt-6 max-w-[30rem] text-[1.22rem] leading-relaxed text-[#334155]">
             Empowering your organization with personalized, interactive learning and growth.
           </motion.p>
-          <motion.div variants={fadeUp} className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-3">
+          <motion.div variants={fadeUp} className="mt-12 flex flex-col gap-4">
             <span className="font-serif text-[1.35rem] text-[#334155]">Trusted by</span>
-            {/* Width and height are pinned: `h-* + w-auto` sizes these flex
-                items from their intrinsic ratio, so they shift when CSS is
-                hot-reloading or the row is under flex pressure (and can
-                shrink at narrow widths). */}
-            {[
-              { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
-              { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
-              { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
-              { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
-              { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
-            ].map((logo) => (
-              <Image
-                key={logo.alt}
-                src={logo.src}
-                alt={logo.alt}
-                width={logo.w}
-                height={logo.h}
-                className="shrink-0 object-contain"
-                style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
-              />
-            ))}
-            <span className="text-[0.95rem] font-medium text-[#475569]">& more...</span>
+            <div className="flex flex-col gap-3">
+              {/* Width and height are pinned: `h-* + w-auto` sizes these flex
+                  items from their intrinsic ratio, so they shift when CSS is
+                  hot-reloading or the row is under flex pressure (and can
+                  shrink at narrow widths). */}
+              {[
+                {
+                  align: "items-center",
+                  logos: [
+                    { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
+                    { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
+                  ],
+                },
+                {
+                  /* Wordmarks sit at different heights inside these PNGs
+                     (Reliance is stacked, JIVA is a flat wordmark), so centre
+                     alignment leaves them visually staggered — align on the
+                     bottom edge instead. */
+                  align: "items-end",
+                  logos: [
+                    { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
+                    { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
+                    { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
+                  ],
+                },
+              ].map((row, i) => (
+                <div key={row.logos[0].alt} className={`flex flex-wrap gap-x-6 gap-y-3 ${row.align}`}>
+                  {row.logos.map((logo) => (
+                    <Image
+                      key={logo.alt}
+                      src={logo.src}
+                      alt={logo.alt}
+                      width={logo.w}
+                      height={logo.h}
+                      className="shrink-0 object-contain"
+                      style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
+                    />
+                  ))}
+                  {i === 1 && (
+                    <span className="text-[0.95rem] font-medium text-[#475569]">& more...</span>
+                  )}
+                </div>
+              ))}
+            </div>
           </motion.div>
         </motion.div>
 
@@ -423,7 +476,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
               </span>
             </h3>
             <p className="mt-4 mb-5 max-w-[36rem] leading-relaxed text-[#334155]">
-              EdVentureHub started with a simple frustration: most online courses are long on theory
+              EdVenture Hub started with a simple frustration: most online courses are long on theory
               and short on the skills people actually need at work.
             </p>
           </div>

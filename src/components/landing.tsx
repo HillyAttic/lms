@@ -22,7 +22,7 @@ export function LandingFooter() {
   return (
     <footer className="border-t border-[#c9c3b3]">
       <div className="mx-auto flex max-w-[1120px] flex-col items-center justify-between gap-3 px-6 py-6 text-[0.95rem] text-[#39434f] sm:flex-row">
-        <p>© 2026 EdVentureHub</p>
+        <p>© 2026 EdVenture Hub</p>
         <p className="flex items-center gap-3">
           <Link href="/" className="hover:underline">Privacy Policy</Link>
           <span aria-hidden="true" className="h-4 w-px bg-[#9aa5ad]" />

@@ -27,6 +27,9 @@ export default function SignInDialog({
   const { signInWithEmail, signUpWithEmail } = useAuth();
   const [mode, setMode] = useState<"login" | "signup">("login");
   const [name, setName] = useState("");
+  const [contactNo, setContactNo] = useState("");
+  const [organization, setOrganization] = useState("");
+  const [designation, setDesignation] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
@@ -48,7 +51,15 @@ export default function SignInDialog({
           toast.error("Please enter your name");
           return;
         }
-        await signUpWithEmail(email, password, name);
+        if (!contactNo.trim() || !organization.trim()) {
+          toast.error("Please enter contact number and organization");
+          return;
+        }
+        await signUpWithEmail(email, password, name, {
+          contactNo: contactNo.trim(),
+          organization: organization.trim(),
+          designation: designation.trim() || undefined,
+        });
         toast.success("Account created successfully!");
       } else {
         await signInWithEmail(email, password);
@@ -115,6 +126,34 @@ export default function SignInDialog({
                   className="mt-1 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-[0.95rem] text-[#334155] focus:border-[#6366f1] focus:outline-none"
                 />
               </div>
+            )}
+            {mode === "signup" && (
+              <>
+                <div>
+                  <label htmlFor="course-signin-contact" className="text-[0.82rem] text-[#475569]">
+                    Contact number
+                  </label>
+                  <input id="course-signin-contact" type="tel" autoComplete="tel" required
+                    value={contactNo} onChange={(event) => setContactNo(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-[0.95rem] text-[#334155] focus:border-[#6366f1] focus:outline-none" />
+                </div>
+                <div>
+                  <label htmlFor="course-signin-organization" className="text-[0.82rem] text-[#475569]">
+                    Organization
+                  </label>
+                  <input id="course-signin-organization" type="text" autoComplete="organization" required
+                    value={organization} onChange={(event) => setOrganization(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-[0.95rem] text-[#334155] focus:border-[#6366f1] focus:outline-none" />
+                </div>
+                <div>
+                  <label htmlFor="course-signin-designation" className="text-[0.82rem] text-[#475569]">
+                    Designation <span className="text-[#94a3b8]">(optional)</span>
+                  </label>
+                  <input id="course-signin-designation" type="text" autoComplete="organization-title"
+                    value={designation} onChange={(event) => setDesignation(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-[0.95rem] text-[#334155] focus:border-[#6366f1] focus:outline-none" />
+                </div>
+              </>
             )}
             <div>
               <label htmlFor="course-signin-email" className="text-[0.82rem] text-[#475569]">

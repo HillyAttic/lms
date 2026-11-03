@@ -276,8 +276,8 @@ button {
 }
 
 ::selection {
-  background: var(--accent);
-  color: var(--ink);
+  background: #c7d2fe; /* indigo-200 — selection is a surface, not the lime accent */
+  color: #1e1b4b;
 }
 
 :focus-visible {

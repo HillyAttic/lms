@@ -12,11 +12,21 @@ import type { UserRole } from "@/lib/roles";
  * `users/{uid}` at all (see firestore.rules), which is what stops a learner
  * from promoting themselves to admin.
  */
-export async function ensureUserProfile(idToken: string, displayName?: string) {
+export async function ensureUserProfile(
+  idToken: string,
+  displayName?: string,
+  profile?: { contactNo?: string; organization?: string; designation?: string },
+) {
   try {
     const { uid, email, name } = await adminAuth.verifyIdToken(idToken);
     const ref = adminDb.doc(`users/${uid}`);
     const existing = await ref.get();
+    // Server action input is client-controlled: keep only trimmed strings.
+    const fields = Object.fromEntries(
+      Object.entries(profile ?? {})
+        .map(([k, v]) => [k, typeof v === "string" ? v.trim().slice(0, 120) : ""])
+        .filter(([, v]) => v),
+    );
 
     if (existing.exists) {
       const data = existing.data();
@@ -26,6 +36,10 @@ export async function ensureUserProfile(idToken: string, displayName?: string) {
       if (displayName && !data?.displayName) {
         await ref.set({ displayName }, { merge: true });
       }
+      const fill = Object.fromEntries(
+        Object.entries(fields).filter(([k, v]) => !data?.[k]),
+      );
+      if (Object.keys(fill).length) await ref.set(fill, { merge: true });
       return { success: true, data: { role: (data?.role as UserRole) || "learner" } };
     }
 
@@ -38,6 +52,7 @@ export async function ensureUserProfile(idToken: string, displayName?: string) {
       uid,
       email: email || "",
       displayName: displayName || name || email?.split("@")[0] || "Learner",
+      ...fields,
       role,
       createdAt: FieldValue.serverTimestamp(),
     });

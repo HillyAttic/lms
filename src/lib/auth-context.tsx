@@ -17,12 +17,23 @@ import type { UserRole } from "@/lib/roles";
 
 type Role = UserRole | null;
 
+export type SignUpProfile = {
+  contactNo: string;
+  organization: string;
+  designation?: string;
+};
+
 interface AuthContextType {
   user: User | null;
   role: Role;
   loading: boolean;
   signInWithEmail: (email: string, password: string) => Promise<void>;
-  signUpWithEmail: (email: string, password: string, name: string) => Promise<void>;
+  signUpWithEmail: (
+    email: string,
+    password: string,
+    name: string,
+    profile?: SignUpProfile,
+  ) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   signOut: () => Promise<void>;
 }
@@ -59,13 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     await signInWithEmailAndPassword(auth, email, password);
   };
 
-  const signUpWithEmail = async (email: string, password: string, name: string) => {
+  const signUpWithEmail = async (
+    email: string,
+    password: string,
+    name: string,
+    profile?: SignUpProfile,
+  ) => {
     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
     await updateProfile(userCredential.user, { displayName: name });
 
     // `onAuthStateChanged` also fires and calls this with the account's own
     // name; the action only fills a blank displayName, so the stated name wins.
-    await ensureUserProfile(await userCredential.user.getIdToken(), name);
+    await ensureUserProfile(await userCredential.user.getIdToken(), name, profile);
   };
 
   const signInWithGoogle = async () => {
