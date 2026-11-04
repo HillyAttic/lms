@@ -279,7 +279,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
     <div className="min-h-dvh overflow-hidden bg-[#f8fafc] text-[#334155]" style={paper({ tint: "248,250,252", opacity: 0.5, size: "112%", position: "center 30%" })}>
       <LandingHeader active="home" accent="#4338ca" />
 
-      <section className="relative mx-auto grid max-w-[1120px] grid-cols-1 items-center gap-12 px-6 py-14 lg:grid-cols-12 lg:gap-10">
+      <section className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 px-6 py-14 lg:grid-cols-12 lg:gap-10">
         <motion.span
           aria-hidden="true"
           className="pointer-events-none absolute -left-24 top-10 h-56 w-56 rounded-full bg-[#2563eb]/15 blur-3xl"
@@ -467,7 +467,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
       </section>
 
       <section id="why-us">
-        <div className="mx-auto grid max-w-[1120px] grid-cols-1 gap-x-12 px-6 py-14 lg:grid-cols-12">
+        <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-12 px-6 py-14 lg:grid-cols-12">
           <div className="lg:col-span-7 lg:row-start-1">
             <h2 className="font-serif text-[2rem] font-bold" style={{ color: "#020617" }}>Why Us?</h2>
             <h3 className="mt-4 text-[1.18rem] font-semibold text-[#020617]">
