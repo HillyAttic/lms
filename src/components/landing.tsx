@@ -21,7 +21,7 @@ type IconProps = { className?: string };
 export function LandingFooter() {
   return (
     <footer className="border-t border-[#c9c3b3]">
-      <div className="mx-auto flex max-w-[1120px] flex-col items-center justify-between gap-3 px-6 py-6 text-[0.95rem] text-[#39434f] sm:flex-row">
+      <div className="mx-auto flex max-w-[1200px] flex-col items-center justify-between gap-3 px-6 py-6 text-[0.95rem] text-[#39434f] sm:flex-row">
         <p>© 2026 EdVenture Hub</p>
         <p className="flex items-center gap-3">
           <Link href="/" className="hover:underline">Privacy Policy</Link>
