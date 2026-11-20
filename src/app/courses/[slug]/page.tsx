@@ -24,11 +24,7 @@ import {
 } from "@/app/actions/repository-actions";
 import CourseActions from "./courseActions";
 
-/*
- * /coursesv2/[slug] — the Motion theme's read of the course detail page.
- * Same data and same enrolment behaviour as /courses/[slug]; only the visual
- * language differs so both can be compared side by side.
- */
+/* /courses/[slug] — course detail with the Motion theme's visual language. */
 
 const GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
 
@@ -148,13 +144,13 @@ export default async function CourseDetailV2Page({
         <nav aria-label="Breadcrumb" className="relative text-sm text-[#475569]">
           <ol className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <li>
-              <Link href="/homev2" className="transition-colors hover:text-[#4338ca]">
+              <Link href="/" className="transition-colors hover:text-[#4338ca]">
                 Home
               </Link>
             </li>
             <li aria-hidden="true" className="text-[#94a3b8]">/</li>
             <li>
-              <Link href="/coursesv2" className="transition-colors hover:text-[#4338ca]">
+              <Link href="/courses" className="transition-colors hover:text-[#4338ca]">
                 Courses
               </Link>
             </li>

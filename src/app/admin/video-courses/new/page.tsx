@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useRef } from "react";
-import { themedHref } from "@/lib/theme-path";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 import { toast } from "react-toastify";
@@ -154,7 +153,7 @@ export default function UploadVideoCoursePage() {
 
       if (result.success) {
         toast.success("Video course uploaded successfully!");
-        router.push(themedHref("/admin/video-courses"));
+        router.push(("/admin/video-courses"));
       } else {
         toast.error(result.error || "Failed to upload video course");
       }

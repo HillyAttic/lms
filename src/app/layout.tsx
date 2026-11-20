@@ -2,12 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { siteName, siteUrl } from "@/utils/envExport";
 import { Poppins, Source_Serif_4 } from "next/font/google";
-import Header from "@/components/header";
-import Footer from "@/components/footer";
 import { AuthProvider } from "@/lib/auth-context";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
-import AdminLayoutGuard from "@/components/admin-layout-guard";
 
 /*
  * One family for the whole app. The three variable names the template shipped
@@ -20,7 +17,7 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700", "800"],
 });
 
-/* Editorial serif for display headings (the /homev2 landing page). Same
+/* Editorial serif for display headings (the landing page). Same
    self-hosted strategy as Poppins, so no request leaves the origin. */
 const sourceSerif = Source_Serif_4({
   variable: "--font-serif-display",
@@ -71,9 +68,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${poppins.variable} ${sourceSerif.variable}`}>
         <AuthProvider>
-          <AdminLayoutGuard>
-            {children}
-          </AdminLayoutGuard>
+          {children}
           {/* Only one container may be mounted: two both render and animate the
               same toast, so the duplicate never auto-closes and stays stuck. */}
           <ToastContainer

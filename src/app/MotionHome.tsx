@@ -1,7 +1,7 @@
 "use client";
 
 /*
- * The /homev2 landing page.
+ * The site's landing page.
  *
  * Paper texture, blue→violet accent, staggered motion. Hero + auth, courses,
  * why us + contact. Auth behaviour is shared with the sign-in dialog via
@@ -309,56 +309,9 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
             <br />
             <span className="bg-clip-text text-transparent" style={{ backgroundImage: MOTION_GRADIENT }}>EdVenture LMS</span>
           </motion.h1>
-          <motion.p variants={fadeUp} className="mt-6 max-w-[30rem] text-[1.22rem] leading-relaxed text-[#334155]">
+          <motion.p variants={fadeUp} className="mt-6 text-[1.22rem] leading-relaxed text-[#334155]">
             Empowering your organization with personalized, interactive learning and growth.
           </motion.p>
-          <motion.div variants={fadeUp} className="mt-12 flex flex-col gap-4">
-            <span className="font-serif text-[1.35rem] text-[#334155]">Trusted by</span>
-            <div className="flex flex-col gap-3">
-              {/* Width and height are pinned: `h-* + w-auto` sizes these flex
-                  items from their intrinsic ratio, so they shift when CSS is
-                  hot-reloading or the row is under flex pressure (and can
-                  shrink at narrow widths). */}
-              {[
-                {
-                  align: "items-center",
-                  logos: [
-                    { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
-                    { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
-                  ],
-                },
-                {
-                  /* Wordmarks sit at different heights inside these PNGs
-                     (Reliance is stacked, JIVA is a flat wordmark), so centre
-                     alignment leaves them visually staggered — align on the
-                     bottom edge instead. */
-                  align: "items-end",
-                  logos: [
-                    { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
-                    { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
-                    { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
-                  ],
-                },
-              ].map((row, i) => (
-                <div key={row.logos[0].alt} className={`flex flex-wrap gap-x-6 gap-y-3 ${row.align}`}>
-                  {row.logos.map((logo) => (
-                    <Image
-                      key={logo.alt}
-                      src={logo.src}
-                      alt={logo.alt}
-                      width={logo.w}
-                      height={logo.h}
-                      className="shrink-0 object-contain"
-                      style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
-                    />
-                  ))}
-                  {i === 1 && (
-                    <span className="text-[0.95rem] font-medium text-[#475569]">& more...</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </motion.div>
         </motion.div>
 
         <aside id="login" className="relative lg:col-span-5">
@@ -373,12 +326,44 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
         </aside>
       </section>
 
+      <section aria-label="Customers" className="border-y border-[#e5e7eb] bg-white">
+        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-7 px-6 py-10">
+          <p className="text-[0.78rem] font-semibold tracking-[0.18em] text-[#475569] uppercase">
+            Trusted by industry leaders
+          </p>
+          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
+            {/* Width and height are pinned so the intrinsic ratio doesn't shift
+                under flex pressure; heights follow the wordmarks' own scale. */}
+            {[
+              { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
+              { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
+              { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
+              { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
+              { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
+            ].map((logo) => (
+              <Image
+                key={logo.alt}
+                src={logo.src}
+                alt={logo.alt}
+                width={logo.w}
+                height={logo.h}
+                className="shrink-0 object-contain"
+                style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
+              />
+            ))}
+            <span className="rounded-full bg-[#f1f5f9] px-4 py-2 text-[0.9rem] font-medium text-[#4338ca]">
+              + 20+ More Enterprises
+            </span>
+          </div>
+        </div>
+      </section>
+
       <section id="courses">
         <div className="mx-auto max-w-[1200px] px-6 py-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: "#020617" }}>Our Courses</h2>
             <div className="flex items-center gap-4">
-              <Link href="/coursesv2" className="flex items-center gap-1 text-[0.95rem] font-medium sm:text-[1.02rem]" style={{ color: "#4338ca" }}>
+              <Link href="/courses" className="flex items-center gap-1 text-[0.95rem] font-medium sm:text-[1.02rem]" style={{ color: "#4338ca" }}>
                 View All <IconChevron className="h-5 w-5" />
               </Link>
               <div className="flex gap-2 lg:hidden">
@@ -424,7 +409,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
                   {courses.map((course) => (
                     <Link
                       key={`${course.type}-${course.id}`}
-                      href={`/coursesv2/${course.id}`}
+                      href={`/courses/${course.id}`}
                       data-course-card=""
                       className="group flex w-[85%] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)] transition-transform hover:-translate-y-1.5 sm:w-[calc(50%-0.625rem)] lg:w-[calc(25%-0.9375rem)]"
                     >

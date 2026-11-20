@@ -8,7 +8,7 @@ import { useAuth } from "@/lib/auth-context";
 const GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
 
 /**
- * The /homev2 (variant O) sign-in card, in a native <dialog> so Escape, focus
+ * The landing page's sign-in card, in a native <dialog> so Escape, focus
  * handling and the backdrop come from the platform. Opened from the course
  * actions when a signed-out learner tries to enrol or wishlist.
  */

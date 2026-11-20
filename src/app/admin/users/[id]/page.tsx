@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, FormEvent } from "react";
-import { themedHref } from "@/lib/theme-path";
 import { useRouter, useParams } from "next/navigation";
 import { getUserById, updateUserProfile, deleteUser, getUserProgress, toggleRepositoryAccess } from "@/app/actions/user-actions";
 import { getCourses } from "@/app/actions/course-actions";
@@ -76,7 +75,7 @@ export default function UserDetailPage() {
         setRepositoryAccess(data.repositoryAccess || false);
       } else {
         toast.error("User not found");
-        router.push(themedHref("/admin/users"));
+        router.push(("/admin/users"));
       }
     } catch (error) {
       toast.error("Failed to load user");
@@ -135,7 +134,7 @@ export default function UserDetailPage() {
       const result = await deleteUser(userId, user.uid);
       if (result.success) {
         toast.success("User deleted successfully");
-        router.push(themedHref("/admin/users"));
+        router.push(("/admin/users"));
       } else {
         toast.error(result.error || "Failed to delete user");
       }
@@ -231,7 +230,7 @@ export default function UserDetailPage() {
               Delete
             </button>
             <button
-              onClick={() => router.push(themedHref("/admin/users"))}
+              onClick={() => router.push(("/admin/users"))}
               className="flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2.5 text-sm text-gray-700 transition-colors hover:bg-gray-50 sm:px-4"
             >
               <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5" />

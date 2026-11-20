@@ -12,12 +12,10 @@ import SignInDialog from "./signInDialog";
 const GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
 
 /**
- * /coursesv2 actions — same enroll/wishlist behaviour as the /courses page's
- * CourseActions, restyled for the Motion theme. Behaviour is duplicated rather
- * than themed through props so the classic page stays untouched; fold the two
- * together if this page becomes the only detail route.
+ * Course detail actions — enroll/wishlist, open the sign-in box when signed
+ * out, and hand off to the player once enrolled.
  */
-export default function CourseActionsV2({
+export default function CourseActions({
   slug,
   launchable,
 }: {
@@ -91,7 +89,7 @@ export default function CourseActionsV2({
     const result = await withToken((idToken) => setEnrollment(idToken, slug, true));
     if (!result?.success) return;
     setFlags((current) => ({ uid: user.uid, enrolled: true, wishlisted: current?.wishlisted || false }));
-    router.push(`/coursesv2/${slug}/launch`);
+    router.push(`/courses/${slug}/launch`);
   };
 
   const handleWishlist = async () => {
@@ -135,7 +133,7 @@ export default function CourseActionsV2({
       <div className="flex items-center gap-3">
       <button
         type="button"
-        onClick={enrolled ? () => router.push(`/coursesv2/${slug}/launch`) : handleEnroll}
+        onClick={enrolled ? () => router.push(`/courses/${slug}/launch`) : handleEnroll}
         disabled={busy}
         className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(79,70,229,0.8)] transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
         style={{ backgroundImage: GRADIENT }}

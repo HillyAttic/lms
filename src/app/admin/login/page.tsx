@@ -25,11 +25,8 @@ export default function AdminLogin() {
   const [loading, setLoading] = useState(false);
   const { user, signInWithEmail, signUpWithEmail, signInWithGoogle } = useAuth();
   const router = useRouter();
-  // Reused verbatim by /adminv2; land in that tree's home after auth.
-  const home =
-    typeof window !== "undefined" && window.location.pathname.startsWith("/adminv2")
-      ? "/homev2"
-      : "/";
+  // Land on the site home after auth.
+  const home = "/";
 
   // Redirect to homepage if already logged in
   useEffect(() => {

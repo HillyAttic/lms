@@ -29,7 +29,7 @@ const TYPE_IMAGE: Record<RepositoryContentItem["type"], string> = {
 const blurb = (c: RepositoryContentItem) =>
   c.description || c.features || "Open the course to see what it covers.";
 
-export default async function CoursesV2() {
+export default async function Courses() {
   const result = await getRepositoryItems().catch(() => null);
   const courses = result?.success ? (result.data as RepositoryContentItem[]) : [];
 
@@ -54,7 +54,7 @@ export default async function CoursesV2() {
               return (
                 <li key={`${course.type}-${course.id}`} className="h-full">
                   <Link
-                    href={`/coursesv2/${course.id}`}
+                    href={`/courses/${course.id}`}
                     className="group flex h-[360px] flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)] transition-transform duration-200 hover:-translate-y-1"
                   >
                     <div className="relative h-1/2 shrink-0 overflow-hidden bg-[linear-gradient(135deg,#2563eb_0%,#7c3aed_100%)]">

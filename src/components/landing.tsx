@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ComponentType } from "react";
 
-/* Shared chrome for the standalone landing pages (/homev2, /coursesv2 and the
+/* Shared chrome for the landing, course and public pages
  * themed subpages) so they sit on the same crumpled-paper theme and one
  * header/footer edit applies to all of them.
  *
