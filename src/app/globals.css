@@ -478,3 +478,17 @@ input[type="number"] {
   background-image: linear-gradient(90deg, #1d4ed8 0%, #6d28d9 100%);
 }
 
+/*
+ * Spinners are functional feedback, not decoration. Both motion kill switches
+ * above freeze them: `.theme-v2-static *` zeroes every descendant's animation
+ * (it is unlayered, so it beats Tailwind's layered `.animate-spin` utility),
+ * and the reduced-motion block collapses the rest to 0.01ms. The result is a
+ * notched ring that never turns, which reads as a hung page. This rule is
+ * unlayered and comes last, so it wins the cascade while leaving the decorative
+ * fade-ups/floats/transitions suppressed as intended.
+ */
+.animate-spin {
+  animation-duration: 1s !important;
+  animation-iteration-count: infinite !important;
+}
+
