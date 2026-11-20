@@ -18,30 +18,40 @@ type Type = RepositoryContentItem["type"];
 
 const TYPE_META: Record<
   Type,
-  { badge: string; module: string; tint: string; text: string; image: string }
+  { badge: string; module: string; tint: string; text: string }
 > = {
   scorm: {
     badge: "SCORM",
     module: "Interactive Module",
     tint: "bg-[#f3efff]",
     text: "text-[#6d28d9]",
-    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=500&q=80&auto=format&fit=crop",
   },
   video: {
     badge: "Video",
     module: "Video Lesson",
     tint: "bg-[#eaf2ff]",
     text: "text-[#2563eb]",
-    image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&h=500&q=80&auto=format&fit=crop",
   },
   game: {
     badge: "Game",
     module: "Interactive Game",
     tint: "bg-[#fff5e5]",
     text: "text-[#b45309]",
-    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=500&q=80&auto=format&fit=crop",
   },
 };
+
+/*
+ * ponytail: every item's stored thumbnail is the same placeholder upload, so
+ * covers cycle a curated web set (matched to the reference grid) by position.
+ * Switch `src` back to `course.thumbnailUrl` once each course has its own image.
+ */
+const COVER_IMAGES = [
+  "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=500&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=500&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&h=500&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1552664730-d307ca884978?w=800&h=500&q=80&auto=format&fit=crop",
+  "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=500&q=80&auto=format&fit=crop",
+];
 
 const blurb = (c: RepositoryContentItem) =>
   c.description || c.features || "Open the course to see what it covers.";
@@ -113,7 +123,7 @@ export default async function Courses() {
     <div className="theme-v2 theme-v2-page theme-v2-static min-h-dvh overflow-hidden bg-scroll text-[#334155] lg:bg-fixed">
       <LandingHeader active="courses" accent="#4338ca" />
 
-      <main className="mx-auto max-w-[1200px] px-6 py-14 lg:px-8">
+      <main className="mx-auto max-w-[1500px] px-6 py-14 lg:px-14">
         <h1 className="font-serif text-[1.9rem] font-bold text-[#020617] sm:text-[2.4rem]">
           Our Courses
         </h1>
@@ -124,45 +134,46 @@ export default async function Courses() {
         </p>
 
         {courses.length > 0 ? (
-          <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
-            {courses.map((course) => {
+          <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4 xl:gap-7">
+            {courses.map((course, index) => {
               const meta = TYPE_META[course.type];
               const LevelIcon = LEVEL_ICON[course.type];
               const ModuleIcon = MODULE_ICON[course.type];
+              const cover = COVER_IMAGES[index % COVER_IMAGES.length];
               return (
                 <li key={`${course.type}-${course.id}`} className="h-full">
                   <Link
                     href={`/courses/${course.id}`}
-                    className="group flex h-full flex-col overflow-hidden rounded-[18px] border border-[#eef0f4] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06),0_16px_32px_-24px_rgba(16,24,40,0.28)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(16,24,40,0.06),0_22px_40px_-22px_rgba(16,24,40,0.35)]"
+                    className="group flex h-full flex-col overflow-hidden rounded-[20px] border border-[#eef0f4] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06),0_16px_32px_-24px_rgba(16,24,40,0.28)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(16,24,40,0.06),0_22px_40px_-22px_rgba(16,24,40,0.35)]"
                   >
-                    <div className="relative h-[185px] shrink-0 overflow-hidden bg-[#e2e8f0]">
+                    <div className="relative h-[200px] shrink-0 overflow-hidden bg-[#e2e8f0] sm:h-[230px]">
                       <Image
-                        src={course.thumbnailUrl || meta.image}
+                        src={cover}
                         alt=""
                         fill
-                        sizes="(min-width: 1024px) 280px, (min-width: 640px) 50vw, 100vw"
+                        sizes="(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
                       <div className="absolute inset-0 bg-gradient-to-t from-[#0b1220]/70 via-[#0b1220]/10 to-[#0b1220]/5" />
-                      <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-[0.72rem] font-semibold text-[#0f172a] shadow-sm backdrop-blur">
+                      <span className="absolute left-4 top-4 rounded-md bg-white/95 px-3 py-1.5 text-[0.78rem] font-semibold text-[#0f172a] shadow-sm backdrop-blur">
                         {meta.badge}
                       </span>
-                      <span className="absolute bottom-3 left-3 flex items-center gap-1.5 text-[0.78rem] font-medium text-white drop-shadow">
+                      <span className="absolute bottom-4 left-4 flex items-center gap-1.5 text-[0.85rem] font-medium text-white drop-shadow">
                         <LevelIcon />
                         {level(course)}
                       </span>
                     </div>
 
-                    <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
-                      <h3 className="line-clamp-2 text-[1.05rem] font-bold leading-snug text-[#0b1220] transition-colors group-hover:text-[#5b21b6]">
+                    <div className="flex flex-1 flex-col px-5 pb-5 pt-5">
+                      <h3 className="line-clamp-2 text-[1.15rem] font-bold leading-snug text-[#0b1220] transition-colors group-hover:text-[#5b21b6]">
                         {course.name}
                       </h3>
-                      <p className="mt-2 line-clamp-2 text-[0.84rem] leading-relaxed text-[#64748b]">
+                      <p className="mt-2.5 line-clamp-2 text-[0.9rem] leading-relaxed text-[#64748b]">
                         {blurb(course)}
                       </p>
-                      <div className="mt-auto flex items-center justify-between pt-5">
+                      <div className="mt-auto flex items-center justify-between pt-6">
                         <span
-                          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[0.78rem] font-semibold ${meta.tint} ${meta.text}`}
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-[0.82rem] font-semibold ${meta.tint} ${meta.text}`}
                         >
                           <ModuleIcon />
                           {meta.module}

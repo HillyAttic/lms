@@ -130,7 +130,7 @@ function useLoginForm() {
         await signInWithEmail(email, password);
         toast.success("Login successful!");
       }
-      router.push("/leaderboard");
+      router.push("/dashboard");
     } catch (error) {
       const code = (error as { code?: string })?.code;
       const message =
@@ -172,6 +172,24 @@ function FieldIcon({ children }: { children: ReactNode }) {
   );
 }
 
+/* Accent from the dashboard nav: royal blue → violet, left to right. */
+const MOTION_GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
+
+/* Width/height are pinned so the intrinsic ratio doesn't shift under flex
+   pressure; heights follow the wordmarks' own scale. */
+const CLIENT_LOGOS = [
+  { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
+  { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
+  { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
+  { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
+  { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
+  { src: "/clients-logo/srm-logo.png", alt: "SRM Institute of Science and Technology", w: 544, h: 184, height: 34 },
+];
+
+/* One copy of the loop, repeated so it spans the widest viewport — otherwise
+   both copies (and therefore duplicate logos) are visible at once. */
+const CLIENT_MARQUEE = [...CLIENT_LOGOS, ...CLIENT_LOGOS];
+
 function AuthForm({ f, prefix }: { f: LoginForm; prefix: string }) {
   return (
     <form onSubmit={f.handleSubmit} className="text-left">
@@ -184,7 +202,7 @@ function AuthForm({ f, prefix }: { f: LoginForm; prefix: string }) {
           : "Access your assigned company learning tracks"}
       </p>
 
-      <div className="mt-6 space-y-4">
+      <div className={`mt-6 grid gap-4 ${f.mode === "signup" ? "sm:grid-cols-2" : ""}`}>
         {f.mode === "signup" && (
           <>
             <div>
@@ -242,7 +260,8 @@ function AuthForm({ f, prefix }: { f: LoginForm; prefix: string }) {
       <button
         type="submit"
         disabled={f.loading}
-        className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)] px-4 text-[0.98rem] font-semibold text-white shadow-[0_16px_32px_-16px_rgba(109,40,217,0.85)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+        className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-xl px-4 text-[0.98rem] font-semibold text-white shadow-[0_16px_32px_-16px_rgba(109,40,217,0.85)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+        style={{ backgroundImage: MOTION_GRADIENT }}
       >
         {f.loading ? "Please wait…" : f.mode === "signup" ? "Create account" : "Sign in"}
         {!f.loading && <IconArrowRight className="h-[18px] w-[18px]" />}
@@ -262,9 +281,6 @@ const fadeUp = {
   hidden: { opacity: 0, y: 18 },
   show: { opacity: 1, y: 0, transition: { duration: 0.55 } },
 };
-
-/* Accent from the dashboard nav: royal blue → violet, left to right. */
-const MOTION_GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
 
 export default function MotionHome() {
   const f = useLoginForm();
@@ -293,11 +309,11 @@ export default function MotionHome() {
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#7c3aed]" />
               On-demand capability hub
             </span>
-            <h1 className="mt-7 text-[clamp(2.1rem,4.8vw,3.4rem)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[#0b0b12]">
+            <h1 className="mt-7 font-serif text-[clamp(2.1rem,4.8vw,3.4rem)] leading-[1.05] font-bold tracking-[-0.01em] text-[#0b0b12]">
               Welcome to the{" "}
               <span
                 className="block bg-clip-text text-transparent"
-                style={{ backgroundImage: "linear-gradient(90deg,#8b5cf6 0%,#6d28d9 55%,#5b21b6 100%)" }}
+                style={{ backgroundImage: MOTION_GRADIENT }}
               >
                 EdVenture Learning Portal
               </span>
@@ -309,7 +325,7 @@ export default function MotionHome() {
           </div>
 
           <aside id="login" className="relative lg:col-span-5">
-            <div className="relative rounded-[26px] bg-white p-8 shadow-[0_40px_90px_-50px_rgba(76,29,149,0.55)] ring-1 ring-[#efe8fb] sm:p-10">
+            <div className="relative rounded-[26px] bg-white p-8 font-serif shadow-[0_40px_90px_-50px_rgba(76,29,149,0.55)] ring-1 ring-[#efe8fb] sm:p-10">
               <span className="absolute top-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3efff] text-[#7c3aed]">
                 <IconShieldCheck className="h-5 w-5" />
               </span>
@@ -324,29 +340,23 @@ export default function MotionHome() {
           <p className="text-[0.78rem] font-semibold tracking-[0.18em] text-[#475569] uppercase">
             Trusted by industry leaders
           </p>
-          <div className="flex flex-wrap items-center justify-center gap-x-10 gap-y-6">
-            {/* Width and height are pinned so the intrinsic ratio doesn't shift
-                under flex pressure; heights follow the wordmarks' own scale. */}
-            {[
-              { src: "/clients-logo/hdfc.png", alt: "HDFC Bank", w: 914, h: 260, height: 32 },
-              { src: "/clients-logo/Tata_Motors_Logo.png", alt: "Tata Motors", w: 1404, h: 147, height: 22 },
-              { src: "/clients-logo/tata.png", alt: "Tata", w: 376, h: 331, height: 34 },
-              { src: "/clients-logo/reliance.png", alt: "Reliance Retail", w: 740, h: 369, height: 36 },
-              { src: "/clients-logo/jiva.png", alt: "JIVA", w: 1129, h: 292, height: 18 },
-            ].map((logo) => (
-              <Image
-                key={logo.alt}
-                src={logo.src}
-                alt={logo.alt}
-                width={logo.w}
-                height={logo.h}
-                className="shrink-0 object-contain"
-                style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
-              />
-            ))}
-            <span className="rounded-full bg-[#f1f5f9] px-4 py-2 text-[0.9rem] font-medium text-[#4338ca]">
-              + 20+ More Enterprises
-            </span>
+          <div className="relative w-full overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_8%,black_92%,transparent)]">
+            <div className="flex w-max animate-[marquee_32s_linear_infinite] items-center gap-x-10 pr-10 hover:[animation-play-state:paused] motion-reduce:animate-none">
+              {/* Two copies + trailing gap so the -50% loop is seamless; the
+                  second copy is hidden from assistive tech. */}
+              {[...CLIENT_MARQUEE, ...CLIENT_MARQUEE].map((logo, i) => (
+                <Image
+                  key={i}
+                  src={logo.src}
+                  alt={i < CLIENT_LOGOS.length ? logo.alt : ""}
+                  aria-hidden={i >= CLIENT_LOGOS.length}
+                  width={logo.w}
+                  height={logo.h}
+                  className="shrink-0 object-contain"
+                  style={{ height: logo.height, width: (logo.height * logo.w) / logo.h }}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </section>

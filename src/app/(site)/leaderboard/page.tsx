@@ -41,30 +41,37 @@ export default function LeaderboardPage() {
 
   return (
     <main>
-      <section className="border-b-[1.5px] border-ink bg-dark py-14 text-white sm:py-20">
+      <section className="py-14 sm:py-20">
         <div className="container">
-          <span className="grid size-12 place-items-center rounded-full bg-accent text-ink">
-            <Trophy className="size-6" />
+          <span className="inline-flex items-center gap-2 rounded-full border border-[#ddd6fe] bg-white/70 px-4 py-1.5 text-[0.72rem] font-bold tracking-[0.14em] text-[#4c1d95] uppercase backdrop-blur-sm">
+            <Trophy className="size-3.5" />
+            Hall of fame
           </span>
-          <h1 className="display-2 mt-6 text-balance">
-            Global <span className="marker">leaderboard</span>
+          <h1 className="display-2 mt-6 text-balance text-[#0b0b12]">
+            Global{" "}
+            <span
+              className="bg-clip-text text-transparent"
+              style={{ backgroundImage: "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)" }}
+            >
+              leaderboard
+            </span>
           </h1>
-          <p className="mt-4 max-w-lg text-lg leading-8 text-white/60">
+          <p className="mt-4 max-w-lg text-lg leading-8 text-[#4b5563]">
             See how you stack up against other learners.
           </p>
 
           {rows && rows.length > 0 ? (
-            <dl className="mt-10 grid max-w-2xl gap-px overflow-hidden rounded-[24px] border-[1.5px] border-white/20 bg-white/20 sm:grid-cols-3">
+            <dl className="mt-10 grid max-w-2xl gap-px overflow-hidden rounded-[24px] border border-[#eef0f4] bg-[#eef0f4] shadow-[0_16px_32px_-28px_rgba(76,29,149,0.35)] sm:grid-cols-3">
               {[
                 { label: "Entries", value: rows.length },
                 { label: "Learners", value: leaders },
                 { label: "Average score", value: average },
               ].map(({ label, value }) => (
-                <div key={label} className="bg-dark px-5 py-5">
-                  <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-white/50 uppercase">
+                <div key={label} className="bg-white px-5 py-5">
+                  <dt className="text-[0.6875rem] font-semibold tracking-[0.08em] text-[#64748b] uppercase">
                     {label}
                   </dt>
-                  <dd className="mt-1.5 text-3xl font-bold tracking-[-0.03em] tabular-nums">
+                  <dd className="mt-1.5 text-3xl font-bold tracking-[-0.03em] text-[#0b0b12] tabular-nums">
                     {value}
                   </dd>
                 </div>
