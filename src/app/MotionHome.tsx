@@ -125,7 +125,7 @@ function useLoginForm() {
         await signInWithEmail(email, password);
         toast.success("Login successful!");
       }
-      router.push("/dashboard");
+      router.push("/leaderboard");
     } catch (error) {
       const code = (error as { code?: string })?.code;
       const message =

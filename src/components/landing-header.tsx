@@ -77,13 +77,21 @@ export function LandingHeader({
               </Link>
             )}
             {user && (
-              <Link
-                href="/homev2/dashboard"
-                className="rounded-full px-4 py-2 text-[0.9rem] font-medium text-white shadow-[0_10px_24px_-12px_rgba(79,70,229,0.8)] transition-transform hover:-translate-y-0.5"
-                style={{ backgroundImage: "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)" }}
-              >
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  href="/leaderboard"
+                  className="rounded-full border border-[#e2e8f0] bg-white/70 px-4 py-2 text-[0.9rem] font-medium text-[#4338ca] backdrop-blur-sm transition-colors hover:bg-white"
+                >
+                  Leaderboard
+                </Link>
+                <Link
+                  href="/homev2/dashboard"
+                  className="rounded-full px-4 py-2 text-[0.9rem] font-medium text-white shadow-[0_10px_24px_-12px_rgba(79,70,229,0.8)] transition-transform hover:-translate-y-0.5"
+                  style={{ backgroundImage: "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)" }}
+                >
+                  Dashboard
+                </Link>
+              </>
             )}
           </div>
         </div>

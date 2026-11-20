@@ -3,43 +3,50 @@
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { ProtectedRoute } from "@/lib/protected-route";
-import AdminSidebar from "./admin-sidebar";
-import "react-toastify/dist/ReactToastify.css";
+import ThemeFlow from "@/components/v2/theme-flow";
 import { MenuIcon } from "@/lib/icons";
+import AdminSidebarV2 from "./admin-sidebar";
 
-export default function AdminLayout({ children }: { children: React.ReactNode }) {
+/*
+ * New-theme admin shell. The screens themselves are the existing admin pages,
+ * reused through thin route files; `.theme-v2` restyles them and ThemeFlow
+ * keeps their links on /adminv2. The classic /admin tree is untouched.
+ */
+export default function AdminLayoutV2({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const isLoginPage = pathname === "/admin/login";
+  const isLoginPage = pathname === "/adminv2/login";
   const [sidebarOpen, setSidebarOpen] = useState(false);
 
-  // Don't wrap the login page in ProtectedRoute - it needs to be accessible to unauthenticated users
   if (isLoginPage) {
-    return <>{children}</>;
+    return <div className="theme-v2 theme-v2-page theme-v2-static min-h-dvh">{children}</div>;
   }
 
-  // adminOnly here means "admin or manager" — see canAccessAdminPanel in @/lib/roles
   return (
-    <ProtectedRoute adminOnly={true}>
-      <div className="flex min-h-screen bg-gray-100">
-        <AdminSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+    <div className="theme-v2 theme-v2-page theme-v2-static min-h-screen text-[#334155]">
+      <ProtectedRoute adminOnly loginHref="/adminv2/login">
+        <div className="flex min-h-screen">
+          <AdminSidebarV2 isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          {/* Mobile top bar */}
-          <header className="flex items-center gap-3 border-b border-gray-200 bg-white px-4 py-3 lg:hidden">
-            <button
-              onClick={() => setSidebarOpen(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-lg text-gray-600 hover:bg-gray-100"
-            >
-              <MenuIcon />
-            </button>
-            <h1 className="text-lg font-bold text-gray-900">Admin Panel</h1>
-          </header>
+          <div className="flex min-w-0 flex-1 flex-col">
+            <header className="flex items-center gap-3 border-b border-[#e5e7eb] bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
+              <button
+                onClick={() => setSidebarOpen(true)}
+                aria-label="Open admin menu"
+                className="flex size-9 items-center justify-center rounded-lg text-[#475569] hover:bg-[#f1f5f9]"
+              >
+                <MenuIcon />
+              </button>
+              <h1 className="font-serif text-lg font-bold text-[#020617]">Admin Panel</h1>
+            </header>
 
-          <main className="flex-1 p-4 sm:p-6 lg:p-8">
-            {children}
-          </main>
+            <main className="flex-1 p-4 sm:p-6 lg:p-8">
+              {children}
+            </main>
+          </div>
+
+          <ThemeFlow />
         </div>
-      </div>
-    </ProtectedRoute>
+      </ProtectedRoute>
+    </div>
   );
 }

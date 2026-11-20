@@ -1,22 +1,23 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
 import { toast } from "react-toastify";
-import Button from "@/components/ui/button";
-import ButtonArrow from "@/components/ui/buttonArrow";
 import { Heart } from "@/lib/icons";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { getLearnerCourseState, setEnrollment, setWishlist } from "@/app/actions/learner-actions";
+import SignInDialog from "./signInDialog";
+
+const GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
 
 /**
- * Enrolling is a deliberate click — it is what puts the course on the learner's
- * dashboard — so the button writes the enrollment before handing them to the
- * player. The heart is the separate, reversible "not yet" the wishlist holds.
+ * /coursesv2 actions — same enroll/wishlist behaviour as the /courses page's
+ * CourseActions, restyled for the Motion theme. Behaviour is duplicated rather
+ * than themed through props so the classic page stays untouched; fold the two
+ * together if this page becomes the only detail route.
  */
-export default function CourseActions({
+export default function CourseActionsV2({
   slug,
   launchable,
 }: {
@@ -32,6 +33,19 @@ export default function CourseActions({
     wishlisted: boolean;
   } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [signInOpen, setSignInOpen] = useState(false);
+  // The click that opened the sign-in box, replayed once auth resolves.
+  const pendingAction = useRef<"enroll" | "wishlist" | null>(null);
+
+  const openSignIn = (action: "enroll" | "wishlist") => {
+    pendingAction.current = action;
+    setSignInOpen(true);
+  };
+
+  const dismissSignIn = () => {
+    pendingAction.current = null;
+    setSignInOpen(false);
+  };
 
   useEffect(() => {
     if (!user) return;
@@ -48,14 +62,13 @@ export default function CourseActions({
     };
   }, [user, slug]);
 
-  // Flags belong to the learner they were read for: another account — or none —
-  // reads as "not enrolled, not saved" without a render to reset them.
   const mine = flags?.uid === user?.uid ? flags : null;
   const enrolled = mine?.enrolled || false;
   const wishlisted = mine?.wishlisted || false;
 
-  /** Both buttons wait on the same token round trip, so one lock covers them. */
-  const withToken = async (run: (idToken: string) => Promise<{ success: boolean; error?: string }>) => {
+  const withToken = async (
+    run: (idToken: string) => Promise<{ success: boolean; error?: string }>,
+  ) => {
     if (!user || busy) return;
     setBusy(true);
     try {
@@ -70,19 +83,21 @@ export default function CourseActions({
   const handleEnroll = async () => {
     if (loading) return;
     if (!user) {
-      toast.info("Sign in to enroll in this course.");
+      // No dead-end toast: the same sign-in box the landing page uses, so the
+      // learner can authenticate without losing the course.
+      openSignIn("enroll");
       return;
     }
     const result = await withToken((idToken) => setEnrollment(idToken, slug, true));
     if (!result?.success) return;
     setFlags((current) => ({ uid: user.uid, enrolled: true, wishlisted: current?.wishlisted || false }));
-    router.push(`/courses/${slug}/launch`);
+    router.push(`/coursesv2/${slug}/launch`);
   };
 
   const handleWishlist = async () => {
     if (loading) return;
     if (!user) {
-      toast.info("Sign in to save this course to your wishlist.");
+      openSignIn("wishlist");
       return;
     }
     const next = !wishlisted;
@@ -92,34 +107,42 @@ export default function CourseActions({
     toast.success(next ? "Saved to your wishlist." : "Removed from your wishlist.");
   };
 
+  // Replay the click that opened the sign-in box once auth resolves. Waits for
+  // `loading` so the action never runs against a half-settled auth state.
+  useEffect(() => {
+    if (loading || !user || !pendingAction.current) return;
+    const action = pendingAction.current;
+    pendingAction.current = null;
+    if (action === "enroll") void handleEnroll();
+    else void handleWishlist();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handlers are recreated per render; only auth settling should replay
+  }, [user, loading]);
+
   if (!launchable) {
     return (
-      <Button size="lg" disabled className="max-sm:w-full">
+      <button
+        type="button"
+        disabled
+        className="inline-flex w-full items-center justify-center rounded-xl border border-[#e5e7eb] bg-white/80 px-6 py-3 text-[0.95rem] font-medium text-[#64748b]"
+      >
         Content coming soon
-      </Button>
+      </button>
     );
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-3">
-      {enrolled ? (
-        <Button asChild variant="accent" size="lg" className="max-sm:w-full">
-          <Link href={`/courses/${slug}/launch`}>
-            <span>Continue course</span>
-            <ButtonArrow />
-          </Link>
-        </Button>
-      ) : (
-        <Button
-          size="lg"
-          onClick={handleEnroll}
-          disabled={busy}
-          className="max-sm:w-full"
-        >
-          <span>{busy ? "Enrolling…" : "Enrol now"}</span>
-          {!busy && <ButtonArrow />}
-        </Button>
-      )}
+    <>
+      <div className="flex items-center gap-3">
+      <button
+        type="button"
+        onClick={enrolled ? () => router.push(`/coursesv2/${slug}/launch`) : handleEnroll}
+        disabled={busy}
+        className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl px-6 py-3 text-[0.95rem] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(79,70,229,0.8)] transition-transform hover:-translate-y-0.5 disabled:opacity-60 disabled:hover:translate-y-0"
+        style={{ backgroundImage: GRADIENT }}
+      >
+        {enrolled ? "Continue course" : busy ? "Enrolling…" : "Enrol now"}
+        {!busy && <span aria-hidden="true">→</span>}
+      </button>
 
       <button
         type="button"
@@ -128,14 +151,22 @@ export default function CourseActions({
         aria-pressed={wishlisted}
         aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
         className={cn(
-          "grid size-12 shrink-0 place-items-center rounded-full border-[1.5px] transition-colors",
+          "grid h-12 w-12 shrink-0 place-items-center rounded-xl border transition-colors",
           wishlisted
-            ? "border-ink bg-accent text-ink"
-            : "border-ink/20 text-secondary hover:border-ink hover:text-ink",
+            ? "border-transparent text-white"
+            : "border-[#e5e7eb] bg-white/80 text-[#4338ca] hover:bg-white",
         )}
+        style={wishlisted ? { backgroundImage: GRADIENT } : undefined}
       >
         <Heart className={cn("size-5", wishlisted && "fill-current")} />
       </button>
-    </div>
+      </div>
+
+      <SignInDialog
+        open={signInOpen}
+        onDismiss={dismissSignIn}
+        onSignedIn={() => setSignInOpen(false)}
+      />
+    </>
   );
 }
