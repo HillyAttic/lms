@@ -42,7 +42,7 @@ export function LandingHeader({
 
   return (
     <header className="border-b border-[#d9d4c7]/70">
-      <div className="mx-auto flex max-w-[1120px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-5">
+      <div className="mx-auto flex w-full max-w-[1500px] flex-wrap items-center justify-between gap-x-6 gap-y-3 px-6 py-6 sm:px-10 lg:px-14">
         <Link href="/" className="flex shrink-0 items-center whitespace-nowrap" aria-label="EdVenture LMS home">
           <Image src="/branding_edVenture-5.webp" alt="EdVenture logo" width={200} height={80} unoptimized className="h-16 w-auto" />
         </Link>

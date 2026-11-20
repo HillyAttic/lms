@@ -74,6 +74,19 @@ const IconChevron = (p: IconProps) => (
 const IconArrowLeft = (p: IconProps) => (
   <Svg {...p}><path d="m14 5-7 7 7 7" /></Svg>
 );
+const IconArrowRight = (p: IconProps) => (
+  <Svg {...p}><path d="M4 12h15M13 6l6 6-6 6" /></Svg>
+);
+const IconLock = (p: IconProps) => (
+  <Svg {...p}>
+    <rect x="4.5" y="10.5" width="15" height="9.5" rx="2.5" /><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5" />
+  </Svg>
+);
+const IconShieldCheck = (p: IconProps) => (
+  <Svg {...p}>
+    <path d="M12 3l7 2.7v5.6c0 4.3-2.9 7.9-7 9.7-4.1-1.8-7-5.4-7-9.7V5.7L12 3Z" /><path d="m8.8 12 2.2 2.2 4.2-4.4" />
+  </Svg>
+);
 
 const benefits = [
   { text: "Self-paced learning that fits around a full-time schedule", icon: IconClockBook },
@@ -154,67 +167,101 @@ function useLoginForm() {
 
 type LoginForm = ReturnType<typeof useLoginForm>;
 
-type AuthStyles = {
-  title: string;
-  label: string;
-  input: string;
-  submit: string;
-  meta: string;
-  link: string;
-  action: string;
-};
+const LABEL = "block text-[0.72rem] font-bold tracking-[0.1em] text-[#475569] uppercase";
+const INPUT =
+  "mt-2 h-12 w-full rounded-xl border border-[#e5e7eb] bg-white px-3.5 text-[0.95rem] text-[#0f172a] placeholder:text-[#9aa4b2] focus:border-[#8b5cf6] focus:outline-none focus:ring-2 focus:ring-[#8b5cf6]/15";
+const ICON_INPUT = `${INPUT} pl-11`;
 
-function AuthForm({ f, prefix, s }: { f: LoginForm; prefix: string; s: AuthStyles }) {
+function FieldIcon({ children }: { children: ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute bottom-0 left-3.5 flex h-12 items-center text-[#94a3b8]">
+      {children}
+    </span>
+  );
+}
+
+function AuthForm({ f, prefix }: { f: LoginForm; prefix: string }) {
   return (
     <form onSubmit={f.handleSubmit} className="text-left">
-      <h2 className={s.title}>{f.mode === "signup" ? "Create your account" : "Sign in"}</h2>
-      <div className="mt-4 space-y-3.5">
+      <h2 className="text-[1.65rem] font-bold tracking-tight text-[#0b0b12]">
+        {f.mode === "signup" ? "Create account" : "Sign in"}
+      </h2>
+      <p className="mt-1.5 pr-14 text-[0.88rem] leading-relaxed text-[#64748b]">
+        {f.mode === "signup"
+          ? "Set up access to your assigned learning tracks"
+          : "Access your assigned company learning tracks"}
+      </p>
+
+      <div className="mt-6 space-y-4">
         {f.mode === "signup" && (
           <>
             <div>
-              <label htmlFor={`${prefix}-name`} className={s.label}>Full name</label>
+              <label htmlFor={`${prefix}-name`} className={LABEL}>Full name</label>
               <input id={`${prefix}-name`} type="text" autoComplete="name" required
-                value={f.name} onChange={(e) => f.setName(e.target.value)} className={s.input} />
+                value={f.name} onChange={(e) => f.setName(e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label htmlFor={`${prefix}-contact`} className={s.label}>Contact number</label>
+              <label htmlFor={`${prefix}-contact`} className={LABEL}>Contact number</label>
               <input id={`${prefix}-contact`} type="tel" autoComplete="tel" required
-                value={f.contactNo} onChange={(e) => f.setContactNo(e.target.value)} className={s.input} />
+                value={f.contactNo} onChange={(e) => f.setContactNo(e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label htmlFor={`${prefix}-organization`} className={s.label}>Organization</label>
+              <label htmlFor={`${prefix}-organization`} className={LABEL}>Organization</label>
               <input id={`${prefix}-organization`} type="text" autoComplete="organization" required
-                value={f.organization} onChange={(e) => f.setOrganization(e.target.value)} className={s.input} />
+                value={f.organization} onChange={(e) => f.setOrganization(e.target.value)} className={INPUT} />
             </div>
             <div>
-              <label htmlFor={`${prefix}-designation`} className={s.label}>Designation <span className="text-[#94a3b8]">(optional)</span></label>
+              <label htmlFor={`${prefix}-designation`} className={LABEL}>Designation <span className="font-medium normal-case tracking-normal text-[#94a3b8]">(optional)</span></label>
               <input id={`${prefix}-designation`} type="text" autoComplete="organization-title"
-                value={f.designation} onChange={(e) => f.setDesignation(e.target.value)} className={s.input} />
+                value={f.designation} onChange={(e) => f.setDesignation(e.target.value)} className={INPUT} />
             </div>
           </>
         )}
         <div>
-          <label htmlFor={`${prefix}-email`} className={s.label}>Email address</label>
-          <input id={`${prefix}-email`} type="email" autoComplete="email" required
-            value={f.email} onChange={(e) => f.setEmail(e.target.value)} className={s.input} />
+          <label htmlFor={`${prefix}-email`} className={LABEL}>Email address</label>
+          <div className="relative">
+            <input id={`${prefix}-email`} type="email" autoComplete="email" required
+              placeholder="name@company.com"
+              value={f.email} onChange={(e) => f.setEmail(e.target.value)} className={ICON_INPUT} />
+            <FieldIcon><IconMail className="h-[18px] w-[18px]" /></FieldIcon>
+          </div>
         </div>
         <div>
-          <label htmlFor={`${prefix}-password`} className={s.label}>Password</label>
-          <input id={`${prefix}-password`} type="password"
-            autoComplete={f.mode === "signup" ? "new-password" : "current-password"}
-            required minLength={6} value={f.password} onChange={(e) => f.setPassword(e.target.value)}
-            className={s.input} />
+          <label htmlFor={`${prefix}-password`} className={LABEL}>Password</label>
+          <div className="relative">
+            <input id={`${prefix}-password`} type="password"
+              autoComplete={f.mode === "signup" ? "new-password" : "current-password"}
+              placeholder="••••••••••"
+              required minLength={6} value={f.password} onChange={(e) => f.setPassword(e.target.value)}
+              className={ICON_INPUT} />
+            <FieldIcon><IconLock className="h-[18px] w-[18px]" /></FieldIcon>
+          </div>
         </div>
       </div>
-      <button type="submit" disabled={f.loading} className={s.submit}>
+
+      {f.mode === "login" && (
+        <div className="mt-3 text-right">
+          <Link href="/admin/login" className="text-[0.84rem] font-semibold text-[#6d28d9] hover:underline">
+            Forgot password?
+          </Link>
+        </div>
+      )}
+
+      <button
+        type="submit"
+        disabled={f.loading}
+        className="mt-6 flex h-13 w-full items-center justify-center gap-2 rounded-xl bg-[linear-gradient(90deg,#8b5cf6_0%,#6d28d9_100%)] px-4 text-[0.98rem] font-semibold text-white shadow-[0_16px_32px_-16px_rgba(109,40,217,0.85)] transition-transform hover:-translate-y-0.5 disabled:opacity-60"
+      >
         {f.loading ? "Please wait…" : f.mode === "signup" ? "Create account" : "Sign in"}
+        {!f.loading && <IconArrowRight className="h-[18px] w-[18px]" />}
       </button>
-      <div className={s.meta}>
-        <Link href="/admin/login" className={s.link}>Forgot password?</Link>
-        <button type="button" onClick={f.toggleMode} className={s.action}>
+
+      <p className="mt-5 text-center text-[0.86rem] text-[#64748b]">
+        {f.mode === "signup" ? "Already have an account?" : "New to the portal?"}{" "}
+        <button type="button" onClick={f.toggleMode} className="font-semibold text-[#6d28d9] hover:underline">
           {f.mode === "signup" ? "Sign in" : "Create account"}
         </button>
-      </div>
+      </p>
     </form>
   );
 }
@@ -265,69 +312,59 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
     if (dir === -1 && el.scrollLeft < step) el.scrollLeft += half;
     el.scrollBy({ left: dir * step, behavior: "smooth" });
   };
-  const s: AuthStyles = {
-    title: "font-serif text-[1.35rem] font-semibold text-[#020617]",
-    label: "text-[0.82rem] text-[#475569]",
-    input: "mt-1 w-full rounded-xl border border-[#e5e7eb] bg-white px-3 py-2.5 text-[0.95rem] text-[#334155] focus:border-[#6366f1] focus:outline-none",
-    submit: "mt-5 w-full rounded-lg bg-[linear-gradient(90deg,#2563eb_0%,#7c3aed_100%)] px-4 py-2.5 text-[0.95rem] font-semibold text-white shadow-[0_10px_24px_-12px_rgba(79,70,229,0.8)] transition-transform hover:-translate-y-0.5",
-    meta: "mt-3 flex items-center justify-between text-[0.82rem] text-[#475569]",
-    link: "hover:underline",
-    action: "font-medium text-[#4338ca] hover:underline",
-  };
 
   return (
     <div className="min-h-dvh overflow-hidden bg-[#f8fafc] text-[#334155]" style={paper({ tint: "248,250,252", opacity: 0.5, size: "112%", position: "center 30%" })}>
       <LandingHeader active="home" accent="#4338ca" />
 
-      <section className="relative mx-auto grid max-w-[1200px] grid-cols-1 items-center gap-12 px-6 py-14 lg:grid-cols-12 lg:gap-10">
+      <section className="relative overflow-hidden bg-[linear-gradient(155deg,#f7f4ff_0%,#f0eafc_48%,#e8ddf8_100%)]">
         <motion.span
           aria-hidden="true"
-          className="pointer-events-none absolute -left-24 top-10 h-56 w-56 rounded-full bg-[#2563eb]/15 blur-3xl"
+          className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-[#8b5cf6]/15 blur-3xl"
           animate={{ y: [0, -18, 0], scale: [1, 1.08, 1] }}
           transition={{ duration: 9, repeat: Infinity, ease: "easeInOut" }}
         />
         <motion.span
           aria-hidden="true"
-          className="pointer-events-none absolute -right-16 bottom-0 h-64 w-64 rounded-full bg-[#7c3aed]/10 blur-3xl"
+          className="pointer-events-none absolute -right-16 bottom-0 h-72 w-72 rounded-full bg-[#7c3aed]/10 blur-3xl"
           animate={{ y: [0, 16, 0], scale: [1, 1.05, 1] }}
           transition={{ duration: 11, repeat: Infinity, ease: "easeInOut" }}
         />
 
-        {/* No entrance animation above the fold: the server-rendered HTML must
-            be visible immediately, not wait for hydration to fade it in. */}
-        <motion.div
-          className="relative lg:col-span-7"
-          initial={false}
-          animate="show"
-          variants={{ hidden: {}, show: { transition: { staggerChildren: 0.08 } } }}
-        >
-          <motion.span variants={fadeUp} className="inline-block rounded-full border border-[#e2e8f0] bg-white/70 px-4 py-1.5 text-[0.82rem] font-medium text-[#4338ca] backdrop-blur-sm">
-            Move at your own pace
-          </motion.span>
-          <motion.h1 variants={fadeUp} className="mt-6 font-serif text-[clamp(2.15rem,9vw,3.9rem)] leading-[1.08] tracking-tight" style={{ color: "#020617" }}>
-            Welcome to
-            <br />
-            <span className="bg-clip-text text-transparent" style={{ backgroundImage: MOTION_GRADIENT }}>EdVenture LMS</span>
-          </motion.h1>
-          <motion.p variants={fadeUp} className="mt-6 text-[1.22rem] leading-relaxed text-[#334155]">
-            Empowering your organization with personalized, interactive learning and growth.
-          </motion.p>
-        </motion.div>
+        <div className="relative mx-auto grid w-full max-w-[1500px] grid-cols-1 items-center gap-12 px-6 py-20 sm:px-10 lg:grid-cols-12 lg:gap-16 lg:px-14 lg:py-24">
+          <div className="lg:col-span-7">
+            <span className="inline-flex items-center gap-2 rounded-full border border-[#ddd6fe] bg-white/70 px-4 py-1.5 text-[0.72rem] font-bold tracking-[0.14em] text-[#4c1d95] uppercase backdrop-blur-sm">
+              <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#7c3aed]" />
+              On-demand capability hub
+            </span>
+            <h1 className="mt-7 text-[clamp(2.4rem,7.5vw,4.3rem)] leading-[1.03] font-extrabold tracking-[-0.035em] text-[#0b0b12]">
+              Welcome to the{" "}
+              <span
+                className="block bg-clip-text text-transparent"
+                style={{ backgroundImage: "linear-gradient(90deg,#8b5cf6 0%,#6d28d9 55%,#5b21b6 100%)" }}
+              >
+                EdVenture Learning Portal
+              </span>
+            </h1>
+            <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-[#4b5563]">
+              A dedicated portal for immersive, scenario-led training — built to build job-ready
+              skills, not just tick completion boxes.
+            </p>
+          </div>
 
-        <aside id="login" className="relative lg:col-span-5">
-          <motion.div
-            className="rounded-2xl border border-[#e5e7eb] bg-[#f8fafc]/90 p-6 shadow-[0_28px_60px_-28px_rgba(2,6,23,0.45)] backdrop-blur-md sm:p-7"
-            initial={false}
-            animate={{ opacity: 1, y: 0, rotate: 0 }}
-            transition={{ duration: 0.7, delay: 0.15, ease: [0.22, 1, 0.36, 1] }}
-          >
-            <AuthForm f={f} prefix="mot" s={s} />
-          </motion.div>
-        </aside>
+          <aside id="login" className="relative lg:col-span-5">
+            <div className="relative rounded-[26px] bg-white p-8 shadow-[0_40px_90px_-50px_rgba(76,29,149,0.55)] ring-1 ring-[#efe8fb] sm:p-10">
+              <span className="absolute top-6 right-6 flex h-12 w-12 items-center justify-center rounded-full bg-[#f3efff] text-[#7c3aed]">
+                <IconShieldCheck className="h-5 w-5" />
+              </span>
+              <AuthForm f={f} prefix="mot" />
+            </div>
+          </aside>
+        </div>
       </section>
 
       <section aria-label="Customers" className="border-y border-[#e5e7eb] bg-white">
-        <div className="mx-auto flex max-w-[1200px] flex-col items-center gap-7 px-6 py-10">
+        <div className="mx-auto flex w-full max-w-[1500px] flex-col items-center gap-7 px-6 py-14 sm:px-10 lg:px-14">
           <p className="text-[0.78rem] font-semibold tracking-[0.18em] text-[#475569] uppercase">
             Trusted by industry leaders
           </p>
@@ -359,7 +396,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
       </section>
 
       <section id="courses">
-        <div className="mx-auto max-w-[1200px] px-6 py-14">
+        <div className="mx-auto w-full max-w-[1500px] px-6 py-16 sm:px-10 lg:px-14">
           <div className="flex flex-wrap items-end justify-between gap-3">
             <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: "#020617" }}>Our Courses</h2>
             <div className="flex items-center gap-4">
@@ -452,7 +489,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
       </section>
 
       <section id="why-us">
-        <div className="mx-auto grid max-w-[1200px] grid-cols-1 gap-x-12 px-6 py-14 lg:grid-cols-12">
+        <div className="mx-auto grid w-full max-w-[1500px] grid-cols-1 gap-x-12 px-6 py-16 sm:px-10 lg:grid-cols-12 lg:px-14">
           <div className="lg:col-span-7 lg:row-start-1">
             <h2 className="font-serif text-[2rem] font-bold" style={{ color: "#020617" }}>Why Us?</h2>
             <h3 className="mt-4 text-[1.18rem] font-semibold text-[#020617]">

@@ -1,4 +1,5 @@
 import { Metadata } from "next";
+import type { ReactElement } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -13,21 +14,96 @@ export const metadata: Metadata = {
   description: "Every course on EdVenture LMS in one place.",
 };
 
-const TYPE_STYLES: Record<RepositoryContentItem["type"], { label: string; color: string }> = {
-  scorm: { label: "SCORM", color: "#2563eb" },
-  video: { label: "Video", color: "#7c3aed" },
-  game: { label: "Game", color: "#4338ca" },
-};
+type Type = RepositoryContentItem["type"];
 
-const photo = (id: string) => `https://images.unsplash.com/photo-${id}?w=800&h=320&q=80&auto=format&fit=crop`;
-const TYPE_IMAGE: Record<RepositoryContentItem["type"], string> = {
-  scorm: photo("1461749280684-dccba630e2f6"),
-  video: photo("1531403009284-440f080d1e12"),
-  game: photo("1551288049-bebda4e38f71"),
+const TYPE_META: Record<
+  Type,
+  { badge: string; module: string; tint: string; text: string; image: string }
+> = {
+  scorm: {
+    badge: "SCORM",
+    module: "Interactive Module",
+    tint: "bg-[#f3efff]",
+    text: "text-[#6d28d9]",
+    image: "https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=800&h=500&q=80&auto=format&fit=crop",
+  },
+  video: {
+    badge: "Video",
+    module: "Video Lesson",
+    tint: "bg-[#eaf2ff]",
+    text: "text-[#2563eb]",
+    image: "https://images.unsplash.com/photo-1531403009284-440f080d1e12?w=800&h=500&q=80&auto=format&fit=crop",
+  },
+  game: {
+    badge: "Game",
+    module: "Interactive Game",
+    tint: "bg-[#fff5e5]",
+    text: "text-[#b45309]",
+    image: "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=500&q=80&auto=format&fit=crop",
+  },
 };
 
 const blurb = (c: RepositoryContentItem) =>
   c.description || c.features || "Open the course to see what it covers.";
+
+const level = (c: RepositoryContentItem) =>
+  c.type === "scorm" && c.interactivityLevel
+    ? `Level ${c.interactivityLevel}`
+    : c.type === "video"
+      ? "Self-paced"
+      : "Interactive";
+
+const PlayCircle = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M10 8.5l5.5 3.5L10 15.5v-7z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+const Sparkle = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden>
+    <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8L12 3z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+const OpenBook = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden>
+    <path d="M12 6.5C10.5 5 8.5 4.5 5 4.5v13c3.5 0 5.5.5 7 2 1.5-1.5 3.5-2 7-2v-13c-3.5 0-5.5.5-7 2z" />
+    <path d="M12 6.5v13" />
+  </svg>
+);
+
+const VideoIcon = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden>
+    <rect x="3" y="6" width="12" height="12" rx="2.5" />
+    <path d="M15 11l5-3v8l-5-3z" />
+  </svg>
+);
+
+const Bolt = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden>
+    <path d="M13 3L5 13h5l-1 8 8-10h-5l1-8z" fill="currentColor" stroke="none" />
+  </svg>
+);
+
+const ArrowOut = () => (
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" className="h-4 w-4 shrink-0" aria-hidden>
+    <path d="M14 5h5v5M19 5l-7 7" />
+    <path d="M18 14v4a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4" />
+  </svg>
+);
+
+const LEVEL_ICON: Record<Type, () => ReactElement> = {
+  scorm: PlayCircle,
+  video: VideoIcon,
+  game: Sparkle,
+};
+
+const MODULE_ICON: Record<Type, () => ReactElement> = {
+  scorm: OpenBook,
+  video: VideoIcon,
+  game: Bolt,
+};
 
 export default async function Courses() {
   const result = await getRepositoryItems().catch(() => null);
@@ -48,31 +124,54 @@ export default async function Courses() {
         </p>
 
         {courses.length > 0 ? (
-          <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <ul className="mt-10 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {courses.map((course) => {
-              const style = TYPE_STYLES[course.type];
+              const meta = TYPE_META[course.type];
+              const LevelIcon = LEVEL_ICON[course.type];
+              const ModuleIcon = MODULE_ICON[course.type];
               return (
                 <li key={`${course.type}-${course.id}`} className="h-full">
                   <Link
                     href={`/courses/${course.id}`}
-                    className="group flex h-[360px] flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)] transition-transform duration-200 hover:-translate-y-1"
+                    className="group flex h-full flex-col overflow-hidden rounded-[18px] border border-[#eef0f4] bg-white shadow-[0_1px_2px_rgba(16,24,40,0.06),0_16px_32px_-24px_rgba(16,24,40,0.28)] transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_1px_2px_rgba(16,24,40,0.06),0_22px_40px_-22px_rgba(16,24,40,0.35)]"
                   >
-                    <div className="relative h-1/2 shrink-0 overflow-hidden bg-[linear-gradient(135deg,#2563eb_0%,#7c3aed_100%)]">
+                    <div className="relative h-[185px] shrink-0 overflow-hidden bg-[#e2e8f0]">
                       <Image
-                        src={course.thumbnailUrl || TYPE_IMAGE[course.type]}
+                        src={course.thumbnailUrl || meta.image}
                         alt=""
                         fill
-                        sizes="(min-width: 1280px) 300px, (min-width: 640px) 50vw, 100vw"
+                        sizes="(min-width: 1024px) 280px, (min-width: 640px) 50vw, 100vw"
                         className="object-cover transition-transform duration-300 group-hover:scale-105"
                       />
+                      <div className="absolute inset-0 bg-gradient-to-t from-[#0b1220]/70 via-[#0b1220]/10 to-[#0b1220]/5" />
+                      <span className="absolute left-3 top-3 rounded-md bg-white/95 px-2.5 py-1 text-[0.72rem] font-semibold text-[#0f172a] shadow-sm backdrop-blur">
+                        {meta.badge}
+                      </span>
+                      <span className="absolute bottom-3 left-3 flex items-center gap-1.5 text-[0.78rem] font-medium text-white drop-shadow">
+                        <LevelIcon />
+                        {level(course)}
+                      </span>
                     </div>
-                    <div className="flex h-1/2 flex-col px-4 pt-4 pb-4">
-                      <h3 className="line-clamp-2 font-serif text-[1.12rem] font-bold leading-snug text-[#020617]">{course.name}</h3>
-                      <p className="mt-2 line-clamp-3 text-[0.86rem] leading-relaxed text-[#475569]">{blurb(course)}</p>
-                      <p className="mt-auto pt-3 text-[0.82rem] font-medium" style={{ color: style.color }}>
-                        {style.label}
-                        {course.duration ? <span className="text-[#6b7280]"> · {course.duration} min</span> : null}
+
+                    <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
+                      <h3 className="line-clamp-2 text-[1.05rem] font-bold leading-snug text-[#0b1220] transition-colors group-hover:text-[#5b21b6]">
+                        {course.name}
+                      </h3>
+                      <p className="mt-2 line-clamp-2 text-[0.84rem] leading-relaxed text-[#64748b]">
+                        {blurb(course)}
                       </p>
+                      <div className="mt-auto flex items-center justify-between pt-5">
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-[0.78rem] font-semibold ${meta.tint} ${meta.text}`}
+                        >
+                          <ModuleIcon />
+                          {meta.module}
+                          {course.duration ? ` • ${course.duration} min` : null}
+                        </span>
+                        <span className="text-[#94a3b8] transition-colors group-hover:text-[#5b21b6]">
+                          <ArrowOut />
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 </li>
