@@ -3,19 +3,17 @@
 /*
  * The site's landing page.
  *
- * Paper texture, blue→violet accent, staggered motion. Hero + auth, courses,
- * why us + contact. Auth behaviour is shared with the sign-in dialog via
- * useLoginForm below.
+ * Blue→violet accent, staggered motion. Hero + auth, why us + contact. Auth
+ * behaviour is shared with the sign-in dialog via useLoginForm below.
  */
 
 import Link from "next/link";
 import Image from "next/image";
-import { useRef, useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
+import { useState, type CSSProperties, type FormEvent, type ReactNode } from "react";
 import { motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 import { toast } from "react-toastify";
 import { LandingFooter, LandingHeader } from "@/components/landing";
-import type { RepositoryContentItem } from "@/app/actions/repository-actions";
 import { useAuth } from "@/lib/auth-context";
 
 type IconProps = { className?: string; style?: CSSProperties };
@@ -67,12 +65,6 @@ const IconGlobe = (p: IconProps) => (
   <Svg {...p}>
     <circle cx="12" cy="12" r="9" /><path d="M3 12h18M12 3a15 15 0 0 1 0 18 15 15 0 0 1 0-18Z" />
   </Svg>
-);
-const IconChevron = (p: IconProps) => (
-  <Svg {...p}><path d="m9 5 7 7-7 7" /></Svg>
-);
-const IconArrowLeft = (p: IconProps) => (
-  <Svg {...p}><path d="m14 5-7 7 7 7" /></Svg>
 );
 const IconArrowRight = (p: IconProps) => (
   <Svg {...p}><path d="M4 12h15M13 6l6 6-6 6" /></Svg>
@@ -266,21 +258,6 @@ function AuthForm({ f, prefix }: { f: LoginForm; prefix: string }) {
   );
 }
 
-/* Crumpled-paper wash: tint, texture scale and crop anchor. */
-function paper({
-  tint, opacity = 0.88, angle = 180, size = "cover", position = "center",
-}: { tint?: string; opacity?: number; angle?: number; size?: string; position?: string } = {}): CSSProperties {
-  const wash = tint
-    ? `linear-gradient(${angle}deg, rgba(${tint},${opacity}), rgba(${tint},${opacity}))`
-    : null;
-  return {
-    backgroundImage: [wash, "url('/crumbled.jpg')"].filter(Boolean).join(", "),
-    backgroundSize: size,
-    backgroundPosition: position,
-    backgroundRepeat: "no-repeat",
-  } as CSSProperties;
-}
-
 const fadeUp = {
   hidden: { opacity: 0, y: 18 },
   show: { opacity: 1, y: 0, transition: { duration: 0.55 } },
@@ -288,36 +265,15 @@ const fadeUp = {
 
 /* Accent from the dashboard nav: royal blue → violet, left to right. */
 const MOTION_GRADIENT = "linear-gradient(90deg,#2563eb 0%,#7c3aed 100%)";
-const COURSE_TYPE_LABEL: Record<RepositoryContentItem["type"], string> = {
-  scorm: "SCORM",
-  video: "Video",
-  game: "Game",
-};
 
-export default function MotionHome({ courses }: { courses: RepositoryContentItem[] }) {
+export default function MotionHome() {
   const f = useLoginForm();
-  const scroller = useRef<HTMLDivElement>(null);
-
-  /* Two identical passes; hop by one copy before scrolling so the arrows loop forever. */
-  const scrollCourses = (dir: 1 | -1) => {
-    const el = scroller.current;
-    if (!el) return;
-    const cards = el.querySelectorAll<HTMLElement>("[data-course-card]");
-    const step = cards[1]
-      ? cards[1].getBoundingClientRect().left - cards[0].getBoundingClientRect().left
-      : 0;
-    if (!step) return;
-    const half = (el.firstElementChild as HTMLElement).getBoundingClientRect().width;
-    if (dir === 1 && el.scrollLeft >= half) el.scrollLeft -= half;
-    if (dir === -1 && el.scrollLeft < step) el.scrollLeft += half;
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
-  };
 
   return (
-    <div className="min-h-dvh overflow-hidden bg-[#f8fafc] text-[#334155]" style={paper({ tint: "248,250,252", opacity: 0.5, size: "112%", position: "center 30%" })}>
+    <div className="min-h-dvh overflow-hidden bg-[linear-gradient(155deg,#f7f4ff_0%,#f0eafc_48%,#e8ddf8_100%)] text-[#334155]">
       <LandingHeader active="home" accent="#4338ca" />
 
-      <section className="relative overflow-hidden bg-[linear-gradient(155deg,#f7f4ff_0%,#f0eafc_48%,#e8ddf8_100%)]">
+      <section className="relative overflow-hidden">
         <motion.span
           aria-hidden="true"
           className="pointer-events-none absolute -left-24 top-10 h-64 w-64 rounded-full bg-[#8b5cf6]/15 blur-3xl"
@@ -337,7 +293,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
               <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#7c3aed]" />
               On-demand capability hub
             </span>
-            <h1 className="mt-7 text-[clamp(2.4rem,7.5vw,4.3rem)] leading-[1.03] font-extrabold tracking-[-0.035em] text-[#0b0b12]">
+            <h1 className="mt-7 text-[clamp(2.1rem,4.8vw,3.4rem)] leading-[1.05] font-extrabold tracking-[-0.03em] text-[#0b0b12]">
               Welcome to the{" "}
               <span
                 className="block bg-clip-text text-transparent"
@@ -346,7 +302,7 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
                 EdVenture Learning Portal
               </span>
             </h1>
-            <p className="mt-6 max-w-[34rem] text-[1.15rem] leading-relaxed text-[#4b5563]">
+            <p className="mt-6 max-w-[34rem] text-[1.05rem] leading-relaxed text-[#4b5563]">
               A dedicated portal for immersive, scenario-led training — built to build job-ready
               skills, not just tick completion boxes.
             </p>
@@ -391,99 +347,6 @@ export default function MotionHome({ courses }: { courses: RepositoryContentItem
             <span className="rounded-full bg-[#f1f5f9] px-4 py-2 text-[0.9rem] font-medium text-[#4338ca]">
               + 20+ More Enterprises
             </span>
-          </div>
-        </div>
-      </section>
-
-      <section id="courses">
-        <div className="mx-auto w-full max-w-[1500px] px-6 py-16 sm:px-10 lg:px-14">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 className="font-serif text-[1.6rem] font-bold sm:text-[2rem]" style={{ color: "#020617" }}>Our Courses</h2>
-            <div className="flex items-center gap-4">
-              <Link href="/courses" className="flex items-center gap-1 text-[0.95rem] font-medium sm:text-[1.02rem]" style={{ color: "#4338ca" }}>
-                View All <IconChevron className="h-5 w-5" />
-              </Link>
-              <div className="flex gap-2 lg:hidden">
-                <button
-                  type="button"
-                  onClick={() => scrollCourses(-1)}
-                  aria-label="Previous courses"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/80 text-[#4338ca] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
-                >
-                  <IconArrowLeft className="h-4 w-4" />
-                </button>
-                <button
-                  type="button"
-                  onClick={() => scrollCourses(1)}
-                  aria-label="Next courses"
-                  className="flex h-9 w-9 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/80 text-[#4338ca] shadow-sm backdrop-blur-sm transition-colors hover:bg-white"
-                >
-                  <IconChevron className="h-4 w-4" />
-                </button>
-              </div>
-            </div>
-          </div>
-          {/* Two identical passes; JS wraps at the halfway point for a seamless loop. */}
-          <div className="mt-8 lg:grid lg:grid-cols-[auto_minmax(0,1fr)_auto] lg:items-center lg:gap-4">
-            <button
-              type="button"
-              onClick={() => scrollCourses(-1)}
-              aria-label="Previous courses"
-              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/90 text-[#4338ca] shadow-[0_10px_24px_-12px_rgba(2,6,23,0.45)] backdrop-blur-sm transition-colors hover:bg-white lg:flex"
-            >
-              <IconArrowLeft className="h-4 w-4" />
-            </button>
-            <div
-              ref={scroller}
-              className="flex snap-x snap-mandatory overflow-x-auto pb-2 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-            >
-              {courses.length === 0 ? (
-                <p className="px-1 py-10 text-[0.95rem] text-[#475569]">
-                  Courses published from the admin panel will appear here.
-                </p>
-              ) : [0, 1].map((pass) => (
-                <div key={pass} inert={pass === 1} className="flex w-full shrink-0 gap-5 pr-5">
-                  {courses.map((course) => (
-                    <Link
-                      key={`${course.type}-${course.id}`}
-                      href={`/courses/${course.id}`}
-                      data-course-card=""
-                      className="group flex w-[85%] shrink-0 snap-start flex-col overflow-hidden rounded-2xl border border-[#e5e7eb] bg-white shadow-[0_14px_30px_-22px_rgba(2,6,23,0.35)] transition-transform hover:-translate-y-1.5 sm:w-[calc(50%-0.625rem)] lg:w-[calc(25%-0.9375rem)]"
-                    >
-                      <div className="relative h-[104px] shrink-0 overflow-hidden bg-[linear-gradient(135deg,#2563eb_0%,#7c3aed_100%)]">
-                        {course.thumbnailUrl ? (
-                          <Image
-                            src={course.thumbnailUrl}
-                            alt=""
-                            fill
-                            sizes="300px"
-                            className="object-cover transition-transform duration-300 group-hover:scale-105"
-                          />
-                        ) : null}
-                      </div>
-                      <div className="flex flex-1 flex-col p-5">
-                        <h3 className="line-clamp-2 font-serif text-[1.12rem] font-bold leading-snug" style={{ color: "#020617" }}>{course.name}</h3>
-                        <p className="mt-2 line-clamp-2 flex-1 text-[0.86rem] leading-relaxed text-[#475569]">
-                          {course.description || course.features || "Open the course to see what it covers."}
-                        </p>
-                        <p className="mt-4 text-[0.82rem] font-medium" style={{ color: "#4338ca" }}>
-                          {COURSE_TYPE_LABEL[course.type]}
-                          {course.duration ? <span className="text-[#6b7280]"> · {course.duration} min</span> : null}
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              onClick={() => scrollCourses(1)}
-              aria-label="Next courses"
-              className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-full border border-[#e5e7eb] bg-white/90 text-[#4338ca] shadow-[0_10px_24px_-12px_rgba(2,6,23,0.45)] backdrop-blur-sm transition-colors hover:bg-white lg:flex"
-            >
-              <IconChevron className="h-4 w-4" />
-            </button>
           </div>
         </div>
       </section>

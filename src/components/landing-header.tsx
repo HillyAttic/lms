@@ -19,7 +19,7 @@ export type LandingSection = "home" | "courses" | "why-us";
 
 const NAV = [
   { key: "home", label: "Home", href: "/" },
-  { key: "courses", label: "Courses", href: "/#courses" },
+  { key: "courses", label: "Courses", href: "/courses" },
   { key: "why-us", label: "Why Us", href: "/#why-us" },
 ] as const satisfies readonly { key: LandingSection; label: string; href: string }[];
 
