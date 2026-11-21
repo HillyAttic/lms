@@ -605,15 +605,8 @@
       signInWithEmailAndPassword,
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-    const auth = getAuth(initializeApp({
-      apiKey: "AIzaSyD3tvSwHvgMY61-_ja5U9MKS2VV5bE_AYQ",
-      authDomain: "lms-edventurehub.firebaseapp.com",
-      projectId: "lms-edventurehub",
-      storageBucket: "lms-edventurehub.firebasestorage.app",
-      messagingSenderId: "341447328304",
-      appId: "1:341447328304:web:6e446e1b38e6687ded23f5",
-      measurementId: "G-WWGD2MCTHK"
-    }));
+    // Config comes from the app's env-backed route, not a literal in this file.
+    const auth = getAuth(initializeApp(await fetch("/api/firebase-config").then((r) => r.json())));
 
     window.portalAuth = {
       signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
