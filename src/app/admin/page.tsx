@@ -24,7 +24,6 @@ interface DashboardData {
   totalUsers: number;
   adminCount: number;
   managerCount: number;
-  instructorCount: number;
   learnerCount: number;
   recentUploads: Array<{
     id: string;
@@ -308,7 +307,7 @@ export default function AdminDashboard() {
       {/* User Role Breakdown */}
       <div className="mt-8 rounded-2xl border-[1.5px] border-ink bg-white p-4 sm:p-6">
         <h2 className="mb-4 text-lg font-semibold text-gray-900">User Roles</h2>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           <div className="text-center p-4 bg-purple-50 rounded-lg">
             <p className="text-2xl font-bold text-purple-600">{stats?.adminCount || 0}</p>
             <p className="text-sm text-gray-600">Admins</p>
@@ -316,10 +315,6 @@ export default function AdminDashboard() {
           <div className="text-center p-4 bg-amber-50 rounded-lg">
             <p className="text-2xl font-bold text-amber-600">{stats?.managerCount || 0}</p>
             <p className="text-sm text-gray-600">Managers</p>
-          </div>
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <p className="text-2xl font-bold text-blue-600">{stats?.instructorCount || 0}</p>
-            <p className="text-sm text-gray-600">Instructors</p>
           </div>
           <div className="text-center p-4 bg-green-50 rounded-lg">
             <p className="text-2xl font-bold text-green-600">{stats?.learnerCount || 0}</p>

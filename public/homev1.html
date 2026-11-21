@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EdVenture Learning Portal | Interactive Corporate Learning Solutions</title>
+  
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <!-- Google Fonts: Plus Jakarta Sans & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
+  
+  <!-- Lucide Icons via CDN -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['"Plus Jakarta Sans"', 'Inter', 'sans-serif'],
+            display: ['"Space Grotesk"', 'sans-serif']
+          },
+          colors: {
+            brand: {
+              50: '#f5f3ff',
+              100: '#ede9fe',
+              200: '#ddd6fe',
+              500: '#7c3aed',
+              600: '#6d28d9',
+              700: '#5b21b6',
+              800: '#4c1d95',
+              900: '#2e1065',
+            }
+          },
+          boxShadow: {
+            'card-elevated': '0 20px 40px -15px rgba(99, 102, 241, 0.08), 0 1px 3px 0 rgba(0, 0, 0, 0.05)',
+            'card-hover': '0 25px 50px -12px rgba(109, 40, 217, 0.18)',
+            'glow': '0 0 45px -5px rgba(124, 58, 237, 0.25)'
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Ambient mesh background without crumpled paper texture */
+    .hero-mesh {
+      background-color: #fafbfc;
+      background-image: 
+        radial-gradient(at 15% 15%, rgba(139, 92, 246, 0.12) 0px, transparent 48%),
+        radial-gradient(at 85% 20%, rgba(99, 102, 241, 0.11) 0px, transparent 45%),
+        radial-gradient(at 50% 80%, rgba(168, 85, 247, 0.07) 0px, transparent 50%),
+        radial-gradient(at 90% 85%, rgba(129, 140, 248, 0.08) 0px, transparent 45%);
+    }
+
+    /* Client logo marquee */
+    @keyframes logo-marquee {
+      from { transform: translateX(0); }
+      to { transform: translateX(-25%); }
+    }
+    .logo-marquee {
+      animation: logo-marquee 16s linear infinite;
+    }
+    .logo-marquee:hover {
+      animation-play-state: paused;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .logo-marquee { animation: none; }
+    }
+
+  </style>
+</head>
+<body class="hero-mesh text-slate-800 antialiased min-h-screen flex flex-col font-sans selection:bg-brand-100 selection:text-brand-900">
+
+  <!-- ================= HEADER NAVIGATION ================= -->
+  <header class="w-full sticky top-0 z-50 backdrop-blur-md bg-white/85 border-b border-slate-200/70 transition-all duration-200">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-[10.4%] h-20 flex items-center justify-between">
+      
+      <!-- Brand Logo -->
+      <a href="#" class="flex items-center group">
+        <img
+          src="/branding_edVenture-5.webp"
+          alt="edVenture — Innovating eLearning Solutions"
+          class="h-12 w-auto group-hover:scale-105 transition-transform duration-200"
+        >
+      </a>
+
+      <!-- Desktop Navigation Links -->
+      <nav class="hidden md:flex items-center gap-9 text-sm font-semibold text-slate-600">
+        <a href="#hero" class="text-brand-600 font-bold border-b-2 border-brand-600 pb-1">Home</a>
+        <a id="nav-courses" href="/courses" class="hidden hover:text-brand-600 transition-colors py-1">Courses</a>
+        <a href="#why-us" class="hover:text-brand-600 transition-colors py-1">Why Us</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="flex-grow">
+    
+    <!-- HERO SECTION -->
+    <section id="hero" class="relative pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden">
+      <div class="w-full mx-auto px-4 sm:px-6 lg:px-[10.4%]">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-14 items-center">
+          
+          <!-- Hero Left Column (Positioning & CTAs) -->
+          <div class="lg:col-span-7 space-y-6 text-left">
+            
+            <!-- Positioning Pill -->
+            <div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-violet-100/90 border border-violet-200 text-brand-700 text-xs font-bold uppercase tracking-wider shadow-sm">
+              <span class="w-2 h-2 rounded-full bg-brand-600 animate-pulse"></span>
+              Move at your own pace
+            </div>
+
+            <!-- Main Heading -->
+            <h1 class="text-4xl sm:text-5xl lg:text-[54px] font-extrabold text-slate-900 tracking-tight leading-[1.12]">
+              Welcome to the <br/>
+              <span class="bg-gradient-to-r from-brand-600 via-indigo-600 to-purple-600 bg-clip-text text-transparent">
+                EdVenture Learning Portal
+              </span>
+            </h1>
+
+            <!-- Subtitle Pitch -->
+            <p class="text-lg sm:text-xl text-slate-600 max-w-2xl font-normal leading-relaxed">
+              A dedicated portal for immersive, scenario-led training—built to build job-ready skills, not just tick completion boxes.
+            </p>
+
+          </div>
+
+          <!-- Hero Right Column (Clean Floating Sign-in Card) -->
+          <div class="lg:col-span-5 flex justify-center lg:justify-end" id="signin-card">
+            <div class="w-full max-w-md bg-white rounded-3xl p-8 sm:p-9 shadow-card-elevated border border-slate-100 relative">
+
+              <!-- Sign-in view -->
+              <div id="signin-view">
+              <!-- Card Header -->
+              <div class="flex items-center justify-between mb-7">
+                <div>
+                  <h3 class="text-2xl font-extrabold text-slate-900 tracking-tight">Sign in</h3>
+                  <p class="text-xs text-slate-600 font-medium mt-0.5">Access your assigned company learning tracks</p>
+                </div>
+                <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100">
+                  <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+              </div>
+
+              <!-- Form -->
+              <form onsubmit="handlePortalSignIn(event)" class="space-y-4">
+                
+                <!-- Email address -->
+                <div>
+                  <label for="signin-email" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
+                    Email address
+                  </label>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <i data-lucide="mail" class="w-4 h-4"></i>
+                    </span>
+                    <input 
+                      type="email" 
+                      id="signin-email" 
+                      required 
+                      placeholder="name@company.com" 
+                      class="w-full pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium"
+                    >
+                  </div>
+                </div>
+
+                <!-- Password -->
+                <div>
+                  <div class="flex items-center justify-between mb-1.5">
+                    <label for="signin-password" class="block text-xs font-bold uppercase tracking-wider text-slate-700">
+                      Password
+                    </label>
+                  </div>
+                  <div class="relative">
+                    <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                      <i data-lucide="lock" class="w-4 h-4"></i>
+                    </span>
+                    <input 
+                      type="password" 
+                      id="signin-password" 
+                      required 
+                      placeholder="••••••••••••" 
+                      class="w-full pl-10 pr-11 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium"
+                    >
+                    <button 
+                      type="button" 
+                      onclick="togglePassword()" 
+                      class="absolute inset-y-0 right-0 pr-3.5 flex items-center text-slate-400 hover:text-slate-600 focus:outline-none"
+                    >
+                      <i id="eye-icon" data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Remember & Forgot -->
+                <div class="flex items-center justify-between text-xs pt-1">
+                  <label class="flex items-center gap-2 cursor-pointer text-slate-600 font-medium select-none">
+                    <input type="checkbox" class="w-4 h-4 rounded border-slate-300 text-brand-600 focus:ring-brand-500">
+                    <span>Remember me</span>
+                  </label>
+                  <a href="javascript:void(0)" onclick="triggerToast('Reset Link Sent', 'Password reset instructions sent to your email.')" class="font-bold text-brand-600 hover:text-brand-700 hover:underline">
+                    Forgot password?
+                  </a>
+                </div>
+
+                <!-- Sign in button -->
+                <button 
+                  type="submit" 
+                  class="w-full py-3.5 px-4 bg-gradient-to-r from-brand-600 via-indigo-600 to-violet-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md shadow-brand-600/20 hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-2 mt-2"
+                >
+                  <span>Sign In</span>
+                  <i data-lucide="log-in" class="w-4 h-4"></i>
+                </button>
+              </form>
+
+              <!-- Create Account Link -->
+              <div class="mt-6 pt-5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+                <span>No company account yet?</span>
+                <button type="button" onclick="toggleAuthView('create')" class="font-bold text-brand-600 hover:text-brand-700 hover:underline">Create account</button>
+              </div>
+              </div>
+
+              <!-- Create-account view -->
+              <div id="create-view" class="hidden">
+                <div class="flex items-center justify-between mb-7">
+                  <div>
+                    <h3 class="text-2xl font-extrabold text-slate-900 tracking-tight">Create account</h3>
+                    <p class="text-xs text-slate-600 font-medium mt-0.5">Set up access to your assigned learning tracks</p>
+                  </div>
+                  <div class="w-10 h-10 rounded-2xl bg-brand-50 text-brand-600 flex items-center justify-center border border-brand-100">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                  </div>
+                </div>
+
+                <form onsubmit="handleCreateAccount(event)" class="space-y-4">
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+                    <div>
+                      <label for="create-name" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Full name</label>
+                      <input id="create-name" type="text" required placeholder="Your full name" class="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium">
+                    </div>
+
+                    <div>
+                      <label for="create-phone" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Contact number</label>
+                      <input id="create-phone" type="tel" required placeholder="+91 00000 00000" class="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium">
+                    </div>
+
+                    <div>
+                      <label for="create-org" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Organization</label>
+                      <input id="create-org" type="text" required placeholder="Company name" class="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium">
+                    </div>
+
+                    <div>
+                      <label for="create-designation" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Designation <span class="text-slate-400 font-medium normal-case">(optional)</span></label>
+                      <input id="create-designation" type="text" placeholder="Your role" class="w-full px-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium">
+                    </div>
+
+                    <div>
+                      <label for="create-email" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Email address</label>
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                          <i data-lucide="mail" class="w-4 h-4"></i>
+                        </span>
+                        <input id="create-email" type="email" required placeholder="name@company.com" class="w-full pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium">
+                      </div>
+                    </div>
+
+                    <div>
+                      <label for="create-password" class="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">Password</label>
+                      <div class="relative">
+                        <span class="absolute inset-y-0 left-0 flex items-center pl-3.5 pointer-events-none text-slate-400">
+                          <i data-lucide="lock" class="w-4 h-4"></i>
+                        </span>
+                        <input id="create-password" type="password" required placeholder="••••••••" class="w-full pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200 rounded-xl text-slate-900 text-sm focus:outline-none focus:ring-2 focus:ring-brand-500/20 focus:border-brand-500 transition-all placeholder:text-slate-400 font-medium">
+                      </div>
+                    </div>
+
+                  </div>
+
+                  <button
+                    type="submit"
+                    class="w-full py-3.5 px-4 bg-gradient-to-r from-brand-600 via-indigo-600 to-violet-600 hover:from-brand-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-md shadow-brand-600/20 hover:shadow-lg transition-all duration-150 flex items-center justify-center gap-2 mt-2"
+                  >
+                    <span>Create account</span>
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                  </button>
+                </form>
+
+                <div class="mt-6 pt-5 border-t border-slate-100 text-center text-xs text-slate-500">
+                  Already have an account?
+                  <button type="button" onclick="toggleAuthView('signin')" class="font-bold text-brand-600 hover:text-brand-700 hover:underline">Sign in</button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= FULL-WIDTH DEDICATED 'TRUSTED BY' STRIP ================= -->
+    <section class="w-full py-10 bg-white border-y border-slate-200/80 overflow-hidden">
+      <h4 class="text-xs font-bold uppercase tracking-widest text-slate-600 text-center mb-8 px-4">
+        TRUSTED BY INDUSTRY LEADERS
+      </h4>
+
+      <!-- Logo marquee: four identical sets so a full set is always wider than the
+           viewport (a two-set loop leaves a gap on screens wider than one set). -->
+      <div class="logo-marquee flex w-max">
+        <div class="flex items-center gap-14 sm:gap-20 pr-14 sm:pr-20">
+          <img src="/clients-logo/jiva.png" alt="JIVA" class="h-6 sm:h-7 w-auto object-contain">
+          <img src="/clients-logo/srm-logo.png" alt="SRM" class="h-9 sm:h-10 w-auto object-contain">
+          <img src="/clients-logo/hdfc.png" alt="HDFC Bank" class="h-8 sm:h-9 w-auto object-contain">
+          <img src="/clients-logo/Tata_Motors_Logo.png" alt="Tata Motors" class="h-5 sm:h-6 w-auto object-contain">
+          <img src="/clients-logo/tata.png" alt="Tata" class="h-10 sm:h-11 w-auto object-contain">
+          <img src="/clients-logo/reliance.png" alt="Reliance" class="h-7 sm:h-8 w-auto object-contain">
+        </div>
+        <div class="flex items-center gap-14 sm:gap-20 pr-14 sm:pr-20" aria-hidden="true">
+          <img src="/clients-logo/jiva.png" alt="" class="h-6 sm:h-7 w-auto object-contain">
+          <img src="/clients-logo/srm-logo.png" alt="" class="h-9 sm:h-10 w-auto object-contain">
+          <img src="/clients-logo/hdfc.png" alt="" class="h-8 sm:h-9 w-auto object-contain">
+          <img src="/clients-logo/Tata_Motors_Logo.png" alt="" class="h-5 sm:h-6 w-auto object-contain">
+          <img src="/clients-logo/tata.png" alt="" class="h-10 sm:h-11 w-auto object-contain">
+          <img src="/clients-logo/reliance.png" alt="" class="h-7 sm:h-8 w-auto object-contain">
+        </div>
+        <div class="flex items-center gap-14 sm:gap-20 pr-14 sm:pr-20" aria-hidden="true">
+          <img src="/clients-logo/jiva.png" alt="" class="h-6 sm:h-7 w-auto object-contain">
+          <img src="/clients-logo/srm-logo.png" alt="" class="h-9 sm:h-10 w-auto object-contain">
+          <img src="/clients-logo/hdfc.png" alt="" class="h-8 sm:h-9 w-auto object-contain">
+          <img src="/clients-logo/Tata_Motors_Logo.png" alt="" class="h-5 sm:h-6 w-auto object-contain">
+          <img src="/clients-logo/tata.png" alt="" class="h-10 sm:h-11 w-auto object-contain">
+          <img src="/clients-logo/reliance.png" alt="" class="h-7 sm:h-8 w-auto object-contain">
+        </div>
+        <div class="flex items-center gap-14 sm:gap-20 pr-14 sm:pr-20" aria-hidden="true">
+          <img src="/clients-logo/jiva.png" alt="" class="h-6 sm:h-7 w-auto object-contain">
+          <img src="/clients-logo/srm-logo.png" alt="" class="h-9 sm:h-10 w-auto object-contain">
+          <img src="/clients-logo/hdfc.png" alt="" class="h-8 sm:h-9 w-auto object-contain">
+          <img src="/clients-logo/Tata_Motors_Logo.png" alt="" class="h-5 sm:h-6 w-auto object-contain">
+          <img src="/clients-logo/tata.png" alt="" class="h-10 sm:h-11 w-auto object-contain">
+          <img src="/clients-logo/reliance.png" alt="" class="h-7 sm:h-8 w-auto object-contain">
+        </div>
+      </div>
+    </section>
+
+    <!-- ================= WHY US & CONTACT SECTION (SHARP CONTRAST) ================= -->
+    <section id="why-us" class="py-16 md:py-24 border-t border-slate-200/80">
+      <div class="w-full mx-auto px-4 sm:px-6 lg:px-[10.4%]">
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-16 items-start">
+          
+          <!-- Column 1: Why Us? -->
+          <div class="lg:col-span-7 space-y-7">
+            <div>
+              <span class="inline-block px-3.5 py-1.5 rounded-lg bg-brand-600 text-white text-xs font-extrabold uppercase tracking-wider mb-4 shadow-sm">
+                Built for learners, not for completion rates
+              </span>
+              <h2 class="text-3xl sm:text-4xl font-extrabold text-slate-900 tracking-tight">
+                Why Us?
+              </h2>
+            </div>
+
+            <p class="text-base text-slate-700 leading-relaxed font-normal">
+              EdVenture Hub started with a simple frustration: most online courses are long on theory and short on the skills people actually need at work. We flipped the script by anchoring every module around real dilemmas.
+            </p>
+
+            <!-- 3 Icon Check Items with High-Contrast Text -->
+            <div class="space-y-6 pt-2">
+              
+              <!-- Check Item 1 -->
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-violet-100/90 text-brand-600 flex items-center justify-center shrink-0 border border-violet-200 shadow-sm mt-0.5">
+                  <i data-lucide="clock-3" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h4 class="text-base font-bold text-slate-900">
+                    Self-paced learning that fits around a full-time schedule
+                  </h4>
+                  <p class="text-sm text-slate-700 mt-1 font-medium leading-relaxed">
+                    Designed for 10–15 minute focus windows so employees can learn during flow state rather than taking full afternoons away from work.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Check Item 2 -->
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-indigo-100/90 text-indigo-600 flex items-center justify-center shrink-0 border border-indigo-200 shadow-sm mt-0.5">
+                  <i data-lucide="git-branch" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h4 class="text-base font-bold text-slate-900">
+                    Curated paths from first lesson to job-ready skills
+                  </h4>
+                  <p class="text-sm text-slate-700 mt-1 font-medium leading-relaxed">
+                    Clear learning milestones that test decisions at each turn rather than testing memory with multiple-choice trivia.
+                  </p>
+                </div>
+              </div>
+
+              <!-- Check Item 3 (Crucial contrast improvement: `#374151` dark slate) -->
+              <div class="flex items-start gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-purple-100/90 text-purple-600 flex items-center justify-center shrink-0 border border-purple-200 shadow-sm mt-0.5">
+                  <i data-lucide="library" class="w-6 h-6"></i>
+                </div>
+                <div>
+                  <h4 class="text-base font-bold text-slate-900">
+                    A growing library across design, tech, and business
+                  </h4>
+                  <p class="text-sm text-slate-700 mt-1 font-medium leading-relaxed">
+                    New tracks continually refreshed to match modern industry shifts, compliance updates, and tech workflows.
+                  </p>
+                </div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Column 2: Find Us / Contact Card -->
+          <div class="lg:col-span-5" id="contact">
+            <div class="bg-white rounded-3xl p-8 sm:p-9 shadow-card-elevated border border-slate-100">
+              
+              <div class="flex items-center justify-between mb-2">
+                <h3 class="text-2xl font-extrabold text-slate-900 tracking-tight">Find us</h3>
+                <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+              </div>
+              
+              <p class="text-xs sm:text-sm text-slate-600 mb-6 leading-relaxed font-medium">
+                Questions about a course, a cohort, or a team plan? Use any channel below and our team will get back to you within one business day.
+              </p>
+
+              <!-- Contact list with sharp readable contrast -->
+              <div class="space-y-4">
+                
+                <!-- Website channel -->
+                <a href="https://www.edventurehub.com" target="_blank" class="flex items-center gap-4 p-3.5 rounded-2xl hover:bg-slate-50 transition-colors border border-slate-100 group">
+                  <div class="w-11 h-11 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <i data-lucide="globe" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-600">Official Portal</div>
+                    <div class="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+                      www.edventurehub.com
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Email channel -->
+                <a href="mailto:admin@edventurehub.com" class="flex items-center gap-4 p-3.5 rounded-2xl hover:bg-slate-50 transition-colors border border-slate-100 group">
+                  <div class="w-11 h-11 rounded-xl bg-violet-50 text-brand-600 flex items-center justify-center shrink-0 group-hover:scale-105 transition-transform">
+                    <i data-lucide="mail" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-600">Email Us</div>
+                    <div class="text-sm font-bold text-slate-900 group-hover:text-brand-600 transition-colors">
+                      admin@edventurehub.com
+                    </div>
+                  </div>
+                </a>
+
+                <!-- Phone numbers (Fixes previously faded numbers) -->
+                <div class="flex items-center gap-4 p-3.5 rounded-2xl bg-slate-50/90 border border-slate-200/80">
+                  <div class="w-11 h-11 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                    <i data-lucide="phone-call" class="w-5 h-5"></i>
+                  </div>
+                  <div>
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-slate-600">Direct Support Hotline</div>
+                    <!-- Crisp legible phone text (#374151) -->
+                    <div class="text-sm font-extrabold text-[#374151] mt-0.5">
+                      +91 95822 32050 <span class="text-slate-400 font-normal mx-1">|</span> +91 99994 57847
+                    </div>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Quick callback button -->
+              <div class="mt-6 pt-5 border-t border-slate-100">
+                <button onclick="triggerToast('Team Demo Requested', 'Our coordinator will call you back today.')" class="w-full py-3 px-4 rounded-xl border border-brand-200 text-brand-700 hover:bg-brand-50 text-xs font-bold uppercase tracking-wider transition-colors flex items-center justify-center gap-2">
+                  <i data-lucide="calendar" class="w-4 h-4"></i>
+                  <span>Schedule Cohort Consultation</span>
+                </button>
+              </div>
+
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ================= FOOTER ================= -->
+  <footer class="w-full bg-white border-t border-slate-200/90 py-8 text-xs text-slate-500">
+    <div class="w-full mx-auto px-4 sm:px-6 lg:px-[10.4%] flex flex-col sm:flex-row items-center justify-between gap-4">
+      <span>© 2026 EdVenture Hub</span>
+
+      <div class="flex items-center gap-6 font-semibold">
+        <a href="javascript:void(0)" onclick="triggerToast('Privacy Policy', 'Data encrypted with enterprise TLS 1.3 standards.')" class="hover:text-brand-600 transition-colors">Privacy Policy</a>
+        <a href="javascript:void(0)" onclick="triggerToast('Terms & Conditions', 'Enterprise portal licenses updated for 2026.')" class="hover:text-brand-600 transition-colors">Terms & Conditions</a>
+        <a href="javascript:void(0)" onclick="triggerToast('Security Specs', 'Compliant with ISO 27001 & SOC 2 standards.')" class="hover:text-brand-600 transition-colors">Security</a>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ================= TOAST NOTIFICATION CONTAINER (Never Alert) ================= -->
+  <div id="toast" class="fixed bottom-6 right-6 z-50 transform translate-y-32 opacity-0 transition-all duration-300 max-w-sm bg-slate-900/95 backdrop-blur-md text-white p-4 rounded-2xl shadow-2xl flex items-start gap-3 border border-slate-800">
+    <div class="w-8 h-8 rounded-full bg-brand-500/20 text-brand-400 flex items-center justify-center shrink-0 mt-0.5">
+      <i data-lucide="check" class="w-4 h-4"></i>
+    </div>
+    <div class="flex-grow">
+      <div class="text-xs font-bold text-white uppercase tracking-wider" id="toast-title">Notification</div>
+      <div class="text-xs text-slate-300 mt-0.5 font-medium" id="toast-body">Action completed successfully.</div>
+    </div>
+    <button onclick="hideToast()" class="text-slate-400 hover:text-white">
+      <i data-lucide="x" class="w-4 h-4"></i>
+    </button>
+  </div>
+
+  <!-- SCRIPT LOGIC -->
+  <script>
+    // Initialize Lucide icons on DOM Load
+    window.addEventListener('DOMContentLoaded', () => {
+      lucide.createIcons();
+      if (location.hash === '#create') toggleAuthView('create');
+    });
+
+    // Toggle password reveal
+    function togglePassword() {
+      const passwordInput = document.getElementById('signin-password');
+      const eyeIcon = document.getElementById('eye-icon');
+      
+      if (passwordInput.type === 'password') {
+        passwordInput.type = 'text';
+        eyeIcon.setAttribute('data-lucide', 'eye-off');
+      } else {
+        passwordInput.type = 'password';
+        eyeIcon.setAttribute('data-lucide', 'eye');
+      }
+      lucide.createIcons();
+    }
+
+    // Switch between the sign-in and create-account views
+    function toggleAuthView(view) {
+      const showCreate = view === 'create';
+      document.getElementById('signin-view').classList.toggle('hidden', showCreate);
+      document.getElementById('create-view').classList.toggle('hidden', !showCreate);
+    }
+
+    // Sign in with the same Firebase project as the app; the Courses link
+    // appears only while a user session exists.
+    async function handlePortalSignIn(e) {
+      e.preventDefault();
+      const email = document.getElementById('signin-email').value;
+      const password = document.getElementById('signin-password').value;
+      if (!window.portalAuth) return;
+      try {
+        await window.portalAuth.signIn(email, password);
+        triggerToast('Signed in', 'Taking you to your dashboard...');
+        window.location.href = '/dashboard';
+      } catch {
+        triggerToast('Sign-in failed', 'Incorrect email or password. Please try again.');
+      }
+    }
+
+    // Handle create-account simulation
+    function handleCreateAccount(e) {
+      e.preventDefault();
+      triggerToast('Account Request Received', 'Our team will verify your details and set up your portal access.');
+    }
+
+    // Toast Manager (replaces alert)
+    let toastTimeout;
+    function triggerToast(title, message) {
+      clearTimeout(toastTimeout);
+      const toast = document.getElementById('toast');
+      document.getElementById('toast-title').textContent = title;
+      document.getElementById('toast-body').textContent = message;
+
+      toast.classList.remove('translate-y-32', 'opacity-0');
+      toast.classList.add('translate-y-0', 'opacity-100');
+
+      toastTimeout = setTimeout(() => {
+        hideToast();
+      }, 4200);
+    }
+
+    function hideToast() {
+      const toast = document.getElementById('toast');
+      toast.classList.remove('translate-y-0', 'opacity-100');
+      toast.classList.add('translate-y-32', 'opacity-0');
+    }
+  </script>
+
+  <!-- Firebase auth: shares the signed-in session with the Next app -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import {
+      getAuth,
+      onAuthStateChanged,
+      signInWithEmailAndPassword,
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+
+    const auth = getAuth(initializeApp({
+      apiKey: "AIzaSyD3tvSwHvgMY61-_ja5U9MKS2VV5bE_AYQ",
+      authDomain: "lms-edventurehub.firebaseapp.com",
+      projectId: "lms-edventurehub",
+      storageBucket: "lms-edventurehub.firebasestorage.app",
+      messagingSenderId: "341447328304",
+      appId: "1:341447328304:web:6e446e1b38e6687ded23f5",
+      measurementId: "G-WWGD2MCTHK"
+    }));
+
+    window.portalAuth = {
+      signIn: (email, password) => signInWithEmailAndPassword(auth, email, password),
+    };
+
+    onAuthStateChanged(auth, (user) => {
+      document.getElementById('nav-courses').classList.toggle('hidden', !user);
+    });
+  </script>
+</body>
+</html>

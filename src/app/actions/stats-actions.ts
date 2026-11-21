@@ -43,7 +43,6 @@ export async function getDashboardStats() {
     const totalUsers = users.length;
     const adminCount = users.filter((u: any) => u.role === "admin").length;
     const managerCount = users.filter((u: any) => u.role === "manager").length;
-    const instructorCount = users.filter((u: any) => u.role === "instructor").length;
     const learnerCount = users.filter((u: any) => u.role === "learner").length;
 
     // Get recent uploads (last 5 courses)
@@ -73,7 +72,6 @@ export async function getDashboardStats() {
         totalUsers,
         adminCount,
         managerCount,
-        instructorCount,
         learnerCount,
         recentUploads,
       }),

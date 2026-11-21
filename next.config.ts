@@ -14,6 +14,11 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "images.unsplash.com" },
     ],
   },
+  /* /homev1 is a self-contained static page (Tailwind CDN), served verbatim
+     from public/ so it doesn't inherit the app's root layout/theme. */
+  async rewrites() {
+    return [{ source: "/homev1", destination: "/homev1.html" }];
+  },
   /* The paper texture is on every new-theme page. It used to be sent with
      max-age=0, so it was revalidated on every visit. */
   async headers() {

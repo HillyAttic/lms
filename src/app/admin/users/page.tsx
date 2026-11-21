@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import {
   getUsersPaginated,
+  getManagers,
   batchUpdateUserRole,
   batchDeleteUsers,
   toggleRepositoryAccess,
@@ -28,14 +29,19 @@ interface UserData {
   email: string;
   displayName: string;
   role: UserRole;
+  createdBy?: string;
   repositoryAccess: boolean;
   createdAt: any;
 }
 
 export default function UsersPage() {
   const { user, role: currentUserRole } = useAuth();
-  const canCreateUsers = currentUserRole === "admin";
+  const isAdmin = currentUserRole === "admin";
+  const isManager = currentUserRole === "manager";
+  const canCreateUsers = isAdmin || isManager;
   const [users, setUsers] = useState<UserData[]>([]);
+  const [managers, setManagers] = useState<{ id: string; displayName: string; email: string }[]>([]);
+  const [filterManager, setFilterManager] = useState("all");
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterRole, setFilterRole] = useState("all");
@@ -62,7 +68,9 @@ export default function UsersPage() {
         page,
         limit,
         searchQuery || undefined,
-        filterRole || undefined
+        filterRole || undefined,
+        user?.uid,
+        filterManager
       );
       if (result.success) {
         setUsers(result.data as UserData[]);
@@ -77,11 +85,19 @@ export default function UsersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, searchQuery, filterRole]);
+  }, [page, limit, searchQuery, filterRole, filterManager, user?.uid]);
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
+
+  // Admins browse learners under a specific manager.
+  useEffect(() => {
+    if (!isAdmin || !user) return;
+    getManagers(user.uid).then((result) => {
+      if (result.success) setManagers(result.data as typeof managers);
+    });
+  }, [isAdmin, user]);
 
   const handleBulkRoleChange = async () => {
     if (!user || selectedIds.length === 0) return;
@@ -179,11 +195,18 @@ export default function UsersPage() {
     });
   };
 
+  // Which manager a learner belongs to.
+  const managerLabel = (createdBy?: string) => {
+    if (!createdBy) return "—";
+    if (createdBy === user?.uid) return "You";
+    const manager = managers.find((m) => m.id === createdBy);
+    return manager ? manager.displayName || manager.email : "—";
+  };
+
   const getRoleBadge = (role: string) => {
     const variants: Record<string, "purple" | "amber" | "blue" | "green"> = {
       admin: "purple",
       manager: "amber",
-      instructor: "blue",
       learner: "green",
     };
     return (
@@ -203,14 +226,16 @@ export default function UsersPage() {
           <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {selectedIds.length > 0 && (
               <>
-                <button
-                  onClick={() => setShowRoleConfirm(true)}
-                  className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-blue-700 sm:px-4"
-                >
-                  <span className="hidden sm:inline">Change Role</span>
-                  <span className="sm:hidden">Role</span>
-                  ({selectedIds.length})
-                </button>
+                {isAdmin && (
+                  <button
+                    onClick={() => setShowRoleConfirm(true)}
+                    className="flex items-center gap-2 rounded-lg bg-blue-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-blue-700 sm:px-4"
+                  >
+                    <span className="hidden sm:inline">Change Role</span>
+                    <span className="sm:hidden">Role</span>
+                    ({selectedIds.length})
+                  </button>
+                )}
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="flex items-center gap-2 rounded-lg bg-red-600 px-3 py-2.5 text-sm text-white transition-colors hover:bg-red-700 sm:px-4"
@@ -249,9 +274,8 @@ export default function UsersPage() {
             value: filterRole,
             options: [
               { label: "All Roles", value: "all" },
-              { label: "Admin", value: "admin" },
+              ...(isAdmin ? [{ label: "Admin", value: "admin" }] : []),
               { label: "Manager", value: "manager" },
-              { label: "Instructor", value: "instructor" },
               { label: "Learner", value: "learner" },
             ],
             onChange: (value) => {
@@ -259,6 +283,25 @@ export default function UsersPage() {
               setPage(1);
             },
           },
+          ...(isAdmin
+            ? [
+                {
+                  label: "Under manager",
+                  value: filterManager,
+                  options: [
+                    { label: "All managers", value: "all" },
+                    ...managers.map((m) => ({
+                      label: m.displayName || m.email,
+                      value: m.id,
+                    })),
+                  ],
+                  onChange: (value: string) => {
+                    setFilterManager(value);
+                    setPage(1);
+                  },
+                },
+              ]
+            : []),
         ]}
       />
 
@@ -334,6 +377,7 @@ export default function UsersPage() {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   {getRoleBadge(userItem.role)}
                   <span className="text-xs text-gray-500">{formatDate(userItem.createdAt)}</span>
+                  <span className="text-xs text-gray-500">· Manager: {managerLabel(userItem.createdBy)}</span>
                   <span className="text-xs text-gray-500">· Repo: {userItem.repositoryAccess ? "On" : "Off"}</span>
                 </div>
               </div>
@@ -371,6 +415,9 @@ export default function UsersPage() {
                       className="cursor-pointer px-6 py-3 text-left text-xs font-medium uppercase text-gray-500 hover:text-gray-700"
                     >
                       Role {sortBy === "role" && (sortOrder === "asc" ? "↑" : "↓")}
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
+                      Under Manager
                     </th>
                     <th
                       onClick={() => handleSort("createdAt")}
@@ -420,6 +467,9 @@ export default function UsersPage() {
                         </div>
                       </td>
                       <td className="px-6 py-4">{getRoleBadge(userItem.role)}</td>
+                      <td className="px-6 py-4 text-sm text-gray-600">
+                        {managerLabel(userItem.createdBy)}
+                      </td>
                       <td className="px-6 py-4 text-sm text-gray-600">
                         {formatDate(userItem.createdAt)}
                       </td>
@@ -481,6 +531,7 @@ export default function UsersPage() {
       {showCreateModal && (
         <CreateUserModal
           createdBy={user?.uid || ""}
+          isManager={isManager}
           onClose={() => setShowCreateModal(false)}
           onSuccess={() => {
             setShowCreateModal(false);
@@ -528,9 +579,8 @@ export default function UsersPage() {
                 className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
               >
                 <option value="learner">Learner</option>
-                <option value="instructor">Instructor</option>
                 <option value="manager">Manager</option>
-                <option value="admin">Admin</option>
+                {isAdmin && <option value="admin">Admin</option>}
               </select>
             </div>
             <div className="flex justify-end gap-3 p-6 border-t">

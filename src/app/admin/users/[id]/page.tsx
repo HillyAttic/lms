@@ -40,7 +40,8 @@ interface CourseData {
 }
 
 export default function UserDetailPage() {
-  const { user } = useAuth();
+  const { user, role: currentUserRole } = useAuth();
+  const isAdmin = currentUserRole === "admin";
   const router = useRouter();
   const params = useParams();
   const userId = params.id as string;
@@ -62,11 +63,12 @@ export default function UserDetailPage() {
   useEffect(() => {
     loadUser();
     loadProgress();
-  }, [userId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [userId, user?.uid]);
 
   const loadUser = async () => {
     try {
-      const result = await getUserById(userId);
+      const result = await getUserById(userId, user?.uid);
       if (result.success && result.data) {
         const data = result.data as UserData;
         setUserData(data);
@@ -196,7 +198,6 @@ export default function UserDetailPage() {
     const variants: Record<string, "purple" | "amber" | "blue" | "green"> = {
       admin: "purple",
       manager: "amber",
-      instructor: "blue",
       learner: "green",
     };
     return (
@@ -335,13 +336,12 @@ export default function UserDetailPage() {
                 <select
                   value={role}
                   onChange={(e) => setRole(e.target.value as UserRole)}
-                  disabled={userData.uid === user?.uid}
+                  disabled={!isAdmin || userData.uid === user?.uid}
                   className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500 disabled:opacity-50"
                 >
                   <option value="learner">Learner</option>
-                  <option value="instructor">Instructor</option>
                   <option value="manager">Manager</option>
-                  <option value="admin">Admin</option>
+                  {isAdmin && <option value="admin">Admin</option>}
                 </select>
                 {userData.uid === user?.uid && (
                   <p className="text-xs text-gray-500 mt-1">Cannot change your own role</p>

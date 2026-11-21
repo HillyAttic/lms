@@ -8,6 +8,7 @@ import {
 } from "@/app/actions/repository-actions";
 import { siteName } from "@/utils/envExport";
 import { LandingFooter, LandingHeader } from "@/components/landing";
+import { ProtectedRoute } from "@/lib/protected-route";
 
 export const metadata: Metadata = {
   title: `All Courses | ${siteName}`,
@@ -120,6 +121,7 @@ export default async function Courses() {
   const courses = result?.success ? (result.data as RepositoryContentItem[]) : [];
 
   return (
+    <ProtectedRoute loginHref="/admin/login">
     <div className="theme-v2 theme-v2-page theme-v2-static min-h-dvh overflow-hidden bg-scroll text-[#334155] lg:bg-fixed">
       <LandingHeader active="courses" accent="#4338ca" />
 
@@ -203,5 +205,6 @@ export default async function Courses() {
 
       <LandingFooter />
     </div>
+    </ProtectedRoute>
   );
 }

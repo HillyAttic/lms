@@ -7,9 +7,8 @@ import { useEffect, ReactNode } from "react";
 
 interface ProtectedRouteProps {
   children: ReactNode;
-  /** Admin panel gate: admin and manager only. Learners and instructors are bounced. */
+  /** Admin panel gate: admin and manager only. Learners are bounced. */
   adminOnly?: boolean;
-  instructorOrAbove?: boolean;
   /** Where unauthenticated visitors go. The new theme points at its own login. */
   loginHref?: string;
 }
@@ -17,7 +16,6 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({
   children,
   adminOnly = false,
-  instructorOrAbove = false,
   loginHref = "/admin/login",
 }: ProtectedRouteProps) {
   const { user, role, loading } = useAuth();
@@ -29,11 +27,9 @@ export function ProtectedRoute({
         router.replace(loginHref);
       } else if (adminOnly && !canAccessAdminPanel(role)) {
         router.replace("/");
-      } else if (instructorOrAbove && !canAccessAdminPanel(role) && role !== "instructor") {
-        router.replace("/");
       }
     }
-  }, [user, role, loading, router, adminOnly, instructorOrAbove, loginHref]);
+  }, [user, role, loading, router, adminOnly, loginHref]);
 
   if (loading) {
     return (
@@ -43,7 +39,7 @@ export function ProtectedRoute({
     );
   }
 
-  if (!user || (adminOnly && !canAccessAdminPanel(role)) || (instructorOrAbove && !canAccessAdminPanel(role) && role !== "instructor")) {
+  if (!user || (adminOnly && !canAccessAdminPanel(role))) {
     return null;
   }
 

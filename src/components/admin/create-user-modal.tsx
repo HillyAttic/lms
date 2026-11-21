@@ -7,13 +7,15 @@ import type { UserRole } from "@/lib/roles";
 import { toast } from "react-toastify";
 
 interface CreateUserModalProps {
-  /** uid of the admin performing the create — the action re-checks the role server-side. */
+  /** uid of the staff member performing the create — the action re-checks the role server-side. */
   createdBy: string;
+  /** Managers may only create learners under themselves. */
+  isManager?: boolean;
   onClose: () => void;
   onSuccess: () => void;
 }
 
-export default function CreateUserModal({ createdBy, onClose, onSuccess }: CreateUserModalProps) {
+export default function CreateUserModal({ createdBy, isManager = false, onClose, onSuccess }: CreateUserModalProps) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -119,16 +121,21 @@ export default function CreateUserModal({ createdBy, onClose, onSuccess }: Creat
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Role *
             </label>
-            <select
-              value={role}
-              onChange={(e) => setRole(e.target.value as UserRole)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
-            >
-              <option value="learner">Learner</option>
-              <option value="instructor">Instructor</option>
-              <option value="manager">Manager</option>
-              <option value="admin">Admin</option>
-            </select>
+            {isManager ? (
+              <p className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm text-gray-600">
+                Learner — added under you
+              </p>
+            ) : (
+              <select
+                value={role}
+                onChange={(e) => setRole(e.target.value as UserRole)}
+                className="w-full rounded-lg border border-gray-300 px-4 py-2.5 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              >
+                <option value="learner">Learner</option>
+                <option value="manager">Manager</option>
+                <option value="admin">Admin</option>
+              </select>
+            )}
           </div>
 
           <div className="flex flex-col-reverse gap-3 pt-4 sm:flex-row sm:justify-end">
