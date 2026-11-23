@@ -185,7 +185,7 @@ export function injectScormApi(
   };
 
   // Wait for iframe to load
-  iframe.onload = () => {
+  const attach = () => {
     try {
       const iframeWindow = iframe.contentWindow;
       if (!iframeWindow) {
@@ -205,4 +205,13 @@ export function injectScormApi(
       console.error("Failed to inject SCORM API:", error);
     }
   };
+
+  iframe.onload = attach;
+  // The player is in the server-rendered HTML, so the frame can finish loading
+  // before hydration attaches `onload` — and a finished frame fires it no more.
+  try {
+    if (iframe.contentDocument?.readyState === "complete") attach();
+  } catch {
+    // Cross-origin frame: `onload` above still covers it.
+  }
 }

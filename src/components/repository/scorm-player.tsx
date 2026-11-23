@@ -1,13 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { getDownloadURL, ref } from "firebase/storage";
-import { storage } from "@/lib/firebase";
 import { useAuth } from "@/lib/auth-context";
 import { injectScormApi } from "@/lib/scorm-api";
-import { saveProgress } from "@/app/actions/progress-actions";
+import { getProgress, saveProgress } from "@/app/actions/progress-actions";
 import { X, Maximize2, Minimize2 } from "@/lib/icons";
-import { toast } from "react-toastify";
 
 interface Course {
   id: string;
@@ -15,15 +12,12 @@ interface Course {
   scormVersion: string;
   scormStructure: {
     entryPoint: string;
-    storagePath: string;
   };
 }
 
 interface ScormPlayerProps {
   course: Course;
   onClose?: () => void;
-  /** Saved CMI values to resume from, and to keep the SCORM API's data model in sync. */
-  initialData?: Record<string, any>;
   /** Fired when the content reports completion, so a page can offer "next". */
   onComplete?: () => void;
   /** Fill the parent box instead of taking over the viewport, and drop the modal chrome. */
@@ -32,12 +26,10 @@ interface ScormPlayerProps {
   minimal?: boolean;
 }
 
-export default function ScormPlayer({ course, onClose, initialData, onComplete, embedded, minimal }: ScormPlayerProps) {
+export default function ScormPlayer({ course, onClose, onComplete, embedded, minimal }: ScormPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
-  const [loading, setLoading] = useState(true);
-  const [iframeUrl, setIframeUrl] = useState<string>("");
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [progress, setProgress] = useState({
     status: "incomplete",
@@ -45,62 +37,36 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
     sessionTime: 0,
   });
 
+  /* Built during render, not in an effect: the iframe is in the first HTML the
+     browser gets, so the package starts downloading while the JS hydrates. */
+  const iframeUrl = `/api/repository/launch/${course.id}/${course.scormStructure.entryPoint}`;
+
+  // Signed-in learners resume their own record.
   useEffect(() => {
-    if (course) {
-      loadScormContent();
-    }
-  }, [course, user]);
+    if (!user) return;
+    let cancelled = false;
 
-  const loadScormContent = async () => {
-    try {
-      setLoading(true);
-
-      // Signing the entry point directly only works for a single file: the SCORM
-      // content loads its own assets *relative to the iframe URL*, and signed
-      // URLs carry query params that break that resolution. The launch proxy
-      // serves every file from one same-origin path instead, so embedded players
-      // use it; the modal keeps the signed URL it has always used.
-      let url = "";
-      if (course.scormStructure.storagePath) {
-        const entryPointPath = `${course.scormStructure.storagePath}/${course.scormStructure.entryPoint}`;
-        url = await getDownloadURL(ref(storage, entryPointPath));
-      } else {
-        url = `/api/repository/launch/${course.id}/${course.scormStructure.entryPoint}`;
-      }
-
-      setIframeUrl(url);
-
-      // Load existing progress. Signed-in learners read their own record; an
-      // anonymous visitor falls back to whatever the hosting page handed down.
-      if (!user) {
-        if (initialData) {
-          setProgress({
-            status: initialData["cmi.core.lesson_status"] || "incomplete",
-            score: initialData["cmi.core.score.raw"] ?? null,
-            sessionTime: Number(initialData["cmi.core.session_time"]) || 0,
-          });
-        }
-        return;
-      }
-
-      const { getProgress } = await import("@/app/actions/progress-actions");
-      const result = await getProgress(user.uid, course.id);
-      if (result.data) {
+    getProgress(user.uid, course.id)
+      .then((result) => {        if (cancelled || !result.data) return;
         setProgress({
           status: result.data.status || "incomplete",
           score: result.data.score || null,
           sessionTime: result.data.sessionTime || 0,
         });
-      }
-    } catch (error) {
-      console.error("Failed to load SCORM content:", error);
-      toast.error("Failed to load course content");
-    } finally {
-      setLoading(false);
-    }
-  };
+      })
+      .catch((error) => console.error("Failed to load progress:", error));
 
-  const handleSaveProgress = async (data: any) => {
+    return () => {
+      cancelled = true;
+    };
+  }, [user, course.id]);
+
+  const handleSaveProgress = async (data: {
+    status?: "incomplete" | "completed" | "passed" | "failed";
+    score?: number | null;
+    sessionTime?: number;
+    suspendData?: string;
+  }) => {
     const status = data.status || "incomplete";
 
     if (status === "completed" || status === "passed") {
@@ -130,9 +96,16 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
     }
   };
 
-  // Inject SCORM API when iframe loads
+  // Inject SCORM API when the iframe is in the document.
+  const formatTimeForScorm2004 = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `PT${hours}H${minutes}M${secs}S`;
+  };
+
   useEffect(() => {
-    if (iframeRef.current && iframeUrl) {
+    if (iframeRef.current) {
       injectScormApi(
         iframeRef.current,
         course.id,
@@ -146,18 +119,13 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
           "cmi.score.raw": progress.score?.toString() || "",
           "cmi.core.session_time": progress.sessionTime.toString(),
           "cmi.session_time": formatTimeForScorm2004(progress.sessionTime),
-          ...initialData,
         }
       );
     }
-  }, [iframeUrl, user]);
-
-  const formatTimeForScorm2004 = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `PT${hours}H${minutes}M${secs}S`;
-  };
+    // Intentionally keyed on the learner only: re-running on each progress save
+    // would swap the API object out from under the running course.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
 
   // The player's own zoom control. In minimal mode the browser is already in
   // fullscreen, so the iframe element itself is what has to grow.
@@ -244,24 +212,13 @@ export default function ScormPlayer({ course, onClose, initialData, onComplete, 
 
       {/* Content */}
       <div className={minimal ? "absolute inset-0" : "flex-1 relative bg-white"}>
-        {loading ? (
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="text-center">
-              <div className="h-12 w-12 animate-spin rounded-full border-4 border-purple-500 border-t-transparent mx-auto mb-4"></div>
-              <p className={minimal ? "text-gray-300" : "text-gray-600"}>
-                Loading SCORM content...
-              </p>
-            </div>
-          </div>
-        ) : (
-          <iframe
-            ref={iframeRef}
-            src={iframeUrl}
-            className="w-full h-full border-0"
-            allowFullScreen
-            sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-          />
-        )}
+        <iframe
+          ref={iframeRef}
+          src={iframeUrl}
+          className="w-full h-full border-0"
+          allowFullScreen
+          sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+        />
       </div>
 
       {/* Footer */}
