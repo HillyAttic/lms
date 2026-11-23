@@ -103,6 +103,13 @@ export default async function CourseLaunchPage({
         />
 
         <div className="mx-auto mt-8 max-w-5xl">
+          <Link
+            href={`/courses/${slug}`}
+            className="mb-4 inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70"
+          >
+            <ButtonArrow />
+            Back to course details
+          </Link>
           {error ? (
             <div className="card-brutal bg-white px-6 py-16 text-center">
               <h2 className="display-3">{error}</h2>
@@ -118,6 +125,7 @@ export default async function CourseLaunchPage({
             </div>
           ) : content?.type === "scorm" ? (
             <>
+              <h2 className="display-3 mb-4">{title || content.name}</h2>
               <ScormLaunch
                 course={{
                   id: content.id,
@@ -128,9 +136,6 @@ export default async function CourseLaunchPage({
                   },
                 }}
               />
-              <h2 className="display-3 mt-8 text-center">
-                {title || content.name}
-              </h2>
             </>
           ) : content?.type === "video" ? (
             <VideoPlayer
@@ -148,16 +153,6 @@ export default async function CourseLaunchPage({
               />
             </div>
           ) : null}
-
-          <div className="mt-8 text-center">
-            <Link
-              href={`/courses/${slug}`}
-              className="inline-flex items-center gap-2 text-sm font-semibold transition-opacity hover:opacity-70"
-            >
-              <ButtonArrow />
-              Back to course details
-            </Link>
-          </div>
         </div>
       </div>
     </main>
