@@ -4,15 +4,14 @@ import { adminDb, serializeTimestamps } from "@/lib/firebase-admin";
 
 export async function getDashboardStats() {
   try {
-    // Get SCORM course counts
-    const coursesSnapshot = await adminDb.collection("courses").get();
-    const courses = coursesSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    // Get SCORM course counts — SCORM items live in `repository`.
+    const coursesSnapshot = await adminDb.collection("repository").get();
+    const courses = coursesSnapshot.docs.map((doc) => doc.data());
 
     const totalCourses = courses.length;
-    const activeCourses = courses.filter((c: any) => c.status === "active").length;
+    const activeCourses = courses.filter(
+      (c: any) => (c.status || "active") === "active"
+    ).length;
     const draftCourses = courses.filter((c: any) => c.status === "draft").length;
 
     // Get video course counts
@@ -47,14 +46,19 @@ export async function getDashboardStats() {
 
     // Get recent uploads (last 5 courses)
     const recentSnapshot = await adminDb
-      .collection("courses")
+      .collection("repository")
       .orderBy("createdAt", "desc")
       .limit(5)
       .get();
-    const recentUploads = recentSnapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const recentUploads = recentSnapshot.docs.map((doc) => {
+      const data = doc.data();
+      return {
+        id: doc.id,
+        ...data,
+        title: data.name || data.title || "Untitled",
+        status: data.status || "active",
+      };
+    });
 
     return {
       success: true,
@@ -78,26 +82,6 @@ export async function getDashboardStats() {
     };
   } catch (error: any) {
     console.error("Get dashboard stats error:", error);
-    return { success: false, error: error.message };
-  }
-}
-
-export async function getRecentActivity(limit: number = 5) {
-  try {
-    const snapshot = await adminDb
-      .collection("courses")
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-
-    const activities = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-
-    return { success: true, data: serializeTimestamps(activities) };
-  } catch (error: any) {
-    console.error("Get recent activity error:", error);
     return { success: false, error: error.message };
   }
 }

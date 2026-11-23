@@ -8,18 +8,6 @@ import { revalidatePath } from "next/cache";
 // Note: DOMParser is not available in Node.js server actions
 // We'll use a simple regex-based XML parser for imsmanifest.xml
 
-interface ScormStructure {
-  entryPoint: string;
-  scos: Array<{
-    identifier: string;
-    title: string;
-    href: string;
-    resources: string[];
-  }>;
-  storagePath: string;
-  sourceZipPath: string;
-}
-
 /**
  * Process SCORM package from Firebase Storage
  * File must already be uploaded directly to storage via signed URL
@@ -49,10 +37,10 @@ export async function processScormPackage(
       return { success: false, error: "Source ZIP path and title are required" };
     }
 
-    // Generate course ID
+    // Generate course ID. Extracted files land under the same prefix the
+    // launch proxy serves (`/api/repository/launch/:id/...`).
     const courseId = `course_${Date.now()}`;
-    const storageBase = `scorm/${courseId}`;
-    const extractedPath = `${storageBase}/extracted`;
+    const extractedPath = `repository/${courseId}/extracted`;
 
     const bucket = adminStorage.bucket();
 
@@ -98,7 +86,6 @@ export async function processScormPackage(
     const imsManifestContent = manifestResults.find((c) => c !== null) || null;
 
     // Parse imsmanifest.xml using regex (DOMParser not available in Node.js)
-    let scormStructure: ScormStructure;
     let scormVersion = "1.2";
     let entryPoint = "index.html";
 
@@ -116,91 +103,43 @@ export async function processScormPackage(
         }
       }
 
-      // Parse resources
-      const resources: Map<string, { href: string; files: string[] }> = new Map();
-      const resourceRegex =
-        /<resource[^>]*identifier="([^"]*)"[^>]*href="([^"]*)"[^>]*>([\s\S]*?)<\/resource>/gi;
-      let resourceMatch;
-
-      while ((resourceMatch = resourceRegex.exec(imsManifestContent)) !== null) {
-        const identifier = resourceMatch[1];
-        const href = resourceMatch[2];
-        const files: string[] = [];
-
-        const fileRegex = /<file[^>]*href="([^"]*)"[^>]*\/?>/gi;
-        let fileMatch;
-        while ((fileMatch = fileRegex.exec(resourceMatch[3])) !== null) {
-          files.push(fileMatch[1]);
-        }
-
-        resources.set(identifier, { href, files });
+      /* Storyline publishes `index_lms.html` (the SCORM driver) next to the
+         web-only `story.html`; launching the latter means no score is ever
+         reported. Attribute order varies by exporter, so map resources by
+         identifier and resolve the first item's identifierref — don't assume
+         an order inside the tag. */
+      const resources = new Map<string, string>();
+      for (const [tag] of imsManifestContent.matchAll(/<resource\b[^>]*>/gi)) {
+        const identifier = tag.match(/\bidentifier="([^"]+)"/i)?.[1];
+        const href = tag.match(/\bhref="([^"]+)"/i)?.[1];
+        if (identifier && href) resources.set(identifier, href);
       }
 
-      // Parse items (SCOs)
-      const scos: Array<{
-        identifier: string;
-        title: string;
-        href: string;
-        resources: string[];
-      }> = [];
-      const itemRegex =
-        /<item[^>]*identifier="([^"]*)"[^>]*title="([^"]*)"[^>]*identifierref="([^"]*)"[^>]*\/?>/gi;
-      let itemMatch;
-
-      while ((itemMatch = itemRegex.exec(imsManifestContent)) !== null) {
-        const identifier = itemMatch[1];
-        const title = itemMatch[2];
-        const identifierref = itemMatch[3];
-        const resource = resources.get(identifierref);
-        const href = resource?.href || "";
-
-        if (identifier && title) {
-          scos.push({
-            identifier,
-            title,
-            href,
-            resources: resource?.files || [],
-          });
-
-          // Set entry point to first SCO
-          if (scos.length === 1 && href) {
-            entryPoint = href;
-          }
-        }
-      }
-
-      scormStructure = {
-        entryPoint,
-        scos,
-        storagePath: extractedPath,
-        sourceZipPath,
-      };
-    } else {
-      // Fallback if no manifest found
-      scormStructure = {
-        entryPoint: "index.html",
-        scos: [
-          {
-            identifier: "SCO_1",
-            title: title,
-            href: "index.html",
-            resources: [],
-          },
-        ],
-        storagePath: extractedPath,
-        sourceZipPath,
-      };
+      const itemRef = imsManifestContent.match(
+        /<item\b[^>]*\bidentifierref="([^"]+)"/i
+      )?.[1];
+      entryPoint =
+        (itemRef && resources.get(itemRef)) ||
+        resources.values().next().value ||
+        entryPoint;
     }
 
-    // Create Firestore document using Admin SDK
-    await adminDb.collection("courses").add({
-      title,
+    // Write to `repository` — the one collection the storefront reads. Admin
+    // rows map this shape back to the title/status fields they display.
+    const repository = adminDb.collection("repository");
+    const serialNumber = (await repository.count().get()).data().count + 1;
+    await repository.doc(courseId).set({
+      serialNumber,
+      name: title,
       description,
       features,
       interactivityLevel,
       duration,
       status: "active",
       scormVersion,
+      entryPoint,
+      storagePath: extractedPath,
+      sourceZipPath,
       thumbnailUrl: thumbnailUrl || null,
       categories: [],
       tags: [],
@@ -210,10 +149,12 @@ export async function processScormPackage(
       createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(),
       createdBy: userId,
-      scormStructure,
     });
 
+    revalidatePath("/courses");
     revalidatePath("/repository");
+    revalidatePath("/admin/repository");
+    revalidatePath("/admin/courses");
     revalidatePath("/admin");
 
     return { success: true, courseId };
@@ -250,13 +191,17 @@ export async function updateCourse(
       return { success: false, error: "Admin access required" };
     }
 
-    await adminDb.doc(`courses/${courseId}`).update({
-      ...data,
+    const { title: newTitle, ...fields } = data;
+    await adminDb.doc(`repository/${courseId}`).update({
+      ...fields,
+      ...(newTitle !== undefined ? { name: newTitle } : {}),
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    revalidatePath("/courses");
     revalidatePath("/repository");
-    revalidatePath("/admin");
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/repository");
 
     return { success: true };
   } catch (error: any) {
@@ -277,11 +222,11 @@ export async function deleteCourse(courseId: string, userId: string) {
     }
 
     // Delete course document
-    await adminDb.doc(`courses/${courseId}`).delete();
+    await adminDb.doc(`repository/${courseId}`).delete();
 
     // Delete Storage files using Admin SDK
     const bucket = adminStorage.bucket();
-    const scormPrefix = `scorm/${courseId}`;
+    const scormPrefix = `repository/${courseId}`;
     const [scormFiles] = await bucket.getFiles({ prefix: scormPrefix });
     const deleteScormPromises = scormFiles.map((file) => file.delete());
 
@@ -292,8 +237,10 @@ export async function deleteCourse(courseId: string, userId: string) {
 
     await Promise.all([...deleteScormPromises, ...deleteThumbPromises]);
 
+    revalidatePath("/courses");
     revalidatePath("/repository");
-    revalidatePath("/admin");
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/repository");
 
     return { success: true };
   } catch (error: any) {
@@ -334,13 +281,15 @@ export async function uploadThumbnail(courseId: string, file: File, userId: stri
     });
 
     // Update course document
-    await adminDb.doc(`courses/${courseId}`).update({
+    await adminDb.doc(`repository/${courseId}`).update({
       thumbnailUrl: url,
       updatedAt: FieldValue.serverTimestamp(),
     });
 
+    revalidatePath("/courses");
     revalidatePath("/repository");
-    revalidatePath("/admin");
+    revalidatePath("/admin/courses");
+    revalidatePath("/admin/repository");
 
     return { success: true, thumbnailUrl: url };
   } catch (error: any) {

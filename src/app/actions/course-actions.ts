@@ -1,34 +1,38 @@
 "use server";
 
 import { adminDb, adminStorage, FieldValue, serializeTimestamps } from "@/lib/firebase-admin";
+import type { DocumentData } from "firebase-admin/firestore";
 import { canAccessAdminPanel } from "@/lib/roles";
 
-export async function getCourses() {
-  const snapshot = await adminDb.collection("courses").get();
-  return serializeTimestamps(snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })));
-}
+/**
+ * The SCORM admin section reads `repository` — the same collection the public
+ * site lists. Repository documents store `name` and usually carry no status;
+ * the admin table renders `title` and a status badge, so map on the way out.
+ */
+const toAdminCourse = (id: string, data: DocumentData) => ({
+  id,
+  ...data,
+  title: data.name || data.title || "Untitled",
+  status: data.status || "active",
+});
 
-export async function getActiveCourses() {
-  const snapshot = await adminDb
-    .collection("courses")
-    .where("status", "==", "active")
-    .get();
-  return serializeTimestamps(snapshot.docs.map((doc) => ({
-    id: doc.id,
-    ...doc.data(),
-  })));
+export async function getCourses() {
+  const snapshot = await adminDb.collection("repository").get();
+  return serializeTimestamps(
+    snapshot.docs.map((doc) => toAdminCourse(doc.id, doc.data()))
+  );
 }
 
 export async function getCourseById(courseId: string) {
   try {
-    const doc = await adminDb.doc(`courses/${courseId}`).get();
+    const doc = await adminDb.doc(`repository/${courseId}`).get();
     if (!doc.exists) {
       return { success: false, error: "Course not found" };
     }
-    return { success: true, data: serializeTimestamps({ id: doc.id, ...doc.data() }) };
+    return {
+      success: true,
+      data: serializeTimestamps(toAdminCourse(doc.id, doc.data()!)),
+    };
   } catch (error: any) {
     console.error("Get course error:", error);
     return { success: false, error: error.message };
@@ -45,11 +49,8 @@ export async function getCoursesPaginated(
 ) {
   try {
     // Get all courses for search (Firestore doesn't support full-text search)
-    const snapshot = await adminDb.collection("courses").get();
-    let courses = snapshot.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
+    const snapshot = await adminDb.collection("repository").get();
+    let courses = snapshot.docs.map((doc) => toAdminCourse(doc.id, doc.data()));
 
     // Apply search filter
     if (search) {
@@ -95,7 +96,7 @@ export async function getCoursesPaginated(
 
 export async function updateCourseThumbnail(courseId: string, thumbnailUrl: string) {
   try {
-    await adminDb.doc(`courses/${courseId}`).update({
+    await adminDb.doc(`repository/${courseId}`).update({
       thumbnailUrl,
       updatedAt: FieldValue.serverTimestamp(),
     });
@@ -118,10 +119,10 @@ export async function batchDeleteCourses(courseIds: string[], userId: string) {
 
     for (const courseId of courseIds) {
       // Delete course document
-      await adminDb.doc(`courses/${courseId}`).delete();
+      await adminDb.doc(`repository/${courseId}`).delete();
 
       // Delete Storage files
-      const scormPrefix = `scorm/${courseId}`;
+      const scormPrefix = `repository/${courseId}`;
       const [scormFiles] = await bucket.getFiles({ prefix: scormPrefix });
       await Promise.all(scormFiles.map((f) => f.delete()));
 

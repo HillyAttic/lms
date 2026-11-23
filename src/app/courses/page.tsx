@@ -41,11 +41,8 @@ const TYPE_META: Record<
   },
 };
 
-/*
- * ponytail: every item's stored thumbnail is the same placeholder upload, so
- * covers cycle a curated web set (matched to the reference grid) by position.
- * Switch `src` back to `course.thumbnailUrl` once each course has its own image.
- */
+/* Fallback covers for items uploaded without a thumbnail — real uploaded
+   thumbnails (see /admin/repository) take precedence. */
 const COVER_IMAGES = [
   "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=500&q=80&auto=format&fit=crop",
   "https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=500&q=80&auto=format&fit=crop",
@@ -141,7 +138,8 @@ export default async function Courses() {
               const meta = TYPE_META[course.type];
               const LevelIcon = LEVEL_ICON[course.type];
               const ModuleIcon = MODULE_ICON[course.type];
-              const cover = COVER_IMAGES[index % COVER_IMAGES.length];
+              const cover =
+                course.thumbnailUrl || COVER_IMAGES[index % COVER_IMAGES.length];
               return (
                 <li key={`${course.type}-${course.id}`} className="h-full">
                   <Link
