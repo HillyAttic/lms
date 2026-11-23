@@ -17,10 +17,12 @@ import {
   Sparkles,
   FileText,
   Trophy,
+  BarChart,
 } from "@/lib/icons";
 
 const navItems = [
   { label: "Dashboard", href: "/admin", icon: LayoutDashboard },
+  { label: "Analytics", href: "/admin/analytics", icon: BarChart },
   { label: "SCORM Courses", href: "/admin/courses", icon: BookOpen },
   { label: "Video Courses", href: "/admin/video-courses", icon: Video },
   { label: "Game Courses", href: "/admin/game-courses", icon: Sparkles },
