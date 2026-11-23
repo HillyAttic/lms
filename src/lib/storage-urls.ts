@@ -11,13 +11,21 @@ import { unsignedStoragePath } from "@/lib/storage-path";
  */
 const SIGNED_URL_EXPIRY = "2037-12-31";
 
+/* A launch asks for ~50 asset URLs per visit. The expiry is fixed, so the
+   signed string for a path never changes: remember it per process. */
+const signedUrls = new Map<string, string>();
+
 /** Sign a storage path for read access. Returns null if signing fails. */
 export async function getSignedReadUrl(storagePath: string): Promise<string | null> {
+  const hit = signedUrls.get(storagePath);
+  if (hit) return hit;
   try {
     const [url] = await adminStorage.bucket().file(storagePath).getSignedUrl({
       action: "read",
       expires: SIGNED_URL_EXPIRY,
     });
+    if (signedUrls.size > 1000) signedUrls.clear();
+    signedUrls.set(storagePath, url);
     return url;
   } catch (error) {
     console.error("Failed to sign storage path:", storagePath, error);

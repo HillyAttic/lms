@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Breadcrumb from "@/components/breadcrumb";
-import ScormPlayer from "@/components/repository/scorm-player";
+import ScormLaunch from "./scorm-launch";
 import VideoPlayer from "@/components/admin/video-player";
 import Button from "@/components/ui/button";
 import ButtonArrow from "@/components/ui/buttonArrow";
@@ -12,6 +12,36 @@ import {
   getLaunchableItemById,
   type RepositoryContentItem,
 } from "@/app/actions/repository-actions";
+
+/*
+ * Firestore costs a round trip per call and this page gates the course frame.
+ * The metadata changes rarely, so a result is remembered briefly; misses for a
+ * shorter while, so a course just created in the admin shows up in seconds.
+ *
+ * The map lives on `globalThis`: `next dev` re-instantiates page modules on
+ * every render, so module scope would be empty each time.
+ */
+const HIT_TTL_MS = 30_000;
+const MISS_TTL_MS = 5_000;
+const store = globalThis as {
+  __launchLookups?: Map<string, { at: number; ttl: number; data: unknown }>;
+};
+const lookups = (store.__launchLookups ??= new Map());
+async function memoLookup<T extends { success: boolean }>(
+  key: string,
+  load: () => Promise<T>
+): Promise<T> {
+  const hit = lookups.get(key);
+  if (hit && Date.now() - hit.at < hit.ttl) return hit.data as T;
+  const result = await load();
+  if (lookups.size > 200) lookups.clear();
+  lookups.set(key, {
+    at: Date.now(),
+    ttl: result.success ? HIT_TTL_MS : MISS_TTL_MS,
+    data: result,
+  });
+  return result;
+}
 
 /*
  * Server-rendered: the two lookups used to run as client-side server-action
@@ -30,8 +60,11 @@ export default async function CourseLaunchPage({
   // Both are looked up together: the upload-id case is the common one, and
   // waiting for the course query first would add a needless round trip.
   const [publicResult, directResult] = await Promise.all([
-    getPublicCourseBySlug(slug),
-    getLaunchableItemById(slug),
+    memoLookup(`course:${slug}`, () => getPublicCourseBySlug(slug)),
+    // No thumbnail on this page: signing one is pure latency here.
+    memoLookup(`item:${slug}`, () =>
+      getLaunchableItemById(slug, { thumbnail: false })
+    ),
   ]);
   const publicCourse = publicResult.success
     ? (publicResult.data as PublicCourse)
@@ -40,7 +73,9 @@ export default async function CourseLaunchPage({
   const contentId = publicCourse?.contentId;
   const itemResult =
     contentId && contentId !== slug
-      ? await getLaunchableItemById(contentId)
+      ? await memoLookup(`item:${contentId}`, () =>
+          getLaunchableItemById(contentId, { thumbnail: false })
+        )
       : directResult;
   const content = itemResult.success
     ? (itemResult.data as RepositoryContentItem)
@@ -55,6 +90,9 @@ export default async function CourseLaunchPage({
 
   return (
     <main className="bg-background py-10 sm:py-14">
+      {/* Every package asset is redirected to Storage; open the connection
+          while the document is still arriving. */}
+      <link rel="preconnect" href="https://storage.googleapis.com" />
       <div className="container">
         <Breadcrumb
           items={[
@@ -80,20 +118,16 @@ export default async function CourseLaunchPage({
             </div>
           ) : content?.type === "scorm" ? (
             <>
-              <div className="aspect-16/9 overflow-hidden rounded-[24px] border-[1.5px] border-ink">
-                <ScormPlayer
-                  embedded
-                  minimal
-                  course={{
-                    id: content.id,
-                    title: content.name,
-                    scormVersion: content.scormVersion || "1.2",
-                    scormStructure: {
-                      entryPoint: content.entryPoint || "story.html",
-                    },
-                  }}
-                />
-              </div>
+              <ScormLaunch
+                course={{
+                  id: content.id,
+                  title: content.name,
+                  scormVersion: content.scormVersion || "1.2",
+                  scormStructure: {
+                    entryPoint: content.entryPoint || "story.html",
+                  },
+                }}
+              />
               <h2 className="display-3 mt-8 text-center">
                 {title || content.name}
               </h2>

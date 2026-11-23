@@ -266,7 +266,11 @@ export async function getRepositoryItemById(itemId: string) {
  * The one repository item a course launches, normalised like `loadRepositoryContent`
  * does, so the public detail page and player can treat all three types alike.
  */
-export async function getLaunchableItemById(itemId: string) {
+export async function getLaunchableItemById(
+  itemId: string,
+  /** Skip the thumbnail signing when the caller doesn't render an image. */
+  { thumbnail = true }: { thumbnail?: boolean } = {}
+) {
   try {
     /* Direct document reads instead of `loadRepositoryContent`: the detail page
        needs one item, not three full collection scans on every request. */
@@ -281,6 +285,9 @@ export async function getLaunchableItemById(itemId: string) {
     const item = items.find((candidate) => candidate !== null);
     if (!item) {
       return { success: false as const, error: "Repository item not found" };
+    }
+    if (!thumbnail) {
+      return { success: true as const, data: serializeTimestamps(item) };
     }
     const [resolved] = await resolveThumbnails([item]);
     return { success: true as const, data: serializeTimestamps(resolved) };

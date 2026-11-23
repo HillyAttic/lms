@@ -220,6 +220,15 @@ export async function POST(request: NextRequest) {
           scormVersion = "2004";
         }
       }
+
+      // The manifest's SCO href is the LMS entry document. Storyline publishes
+      // `index_lms.html` (which loads the SCORM driver) next to the web-only
+      // `story.html`, and launching the latter means the course never reports
+      // a score or status at all.
+      const resourceHref = manifestContent.match(
+        /<resource\b[^>]*\bhref="([^"]+)"/i
+      )?.[1];
+      if (resourceHref) entryPoint = resourceHref;
     }
 
     // Get next serial number

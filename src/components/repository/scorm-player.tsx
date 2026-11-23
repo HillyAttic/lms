@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/lib/auth-context";
-import { injectScormApi } from "@/lib/scorm-api";
 import { getProgress, saveProgress } from "@/app/actions/progress-actions";
 import { X, Maximize2, Minimize2 } from "@/lib/icons";
 
@@ -15,63 +14,143 @@ interface Course {
   };
 }
 
+export interface ScormProgress {
+  status: "incomplete" | "completed" | "passed" | "failed";
+  score: number | null;
+  sessionTime: number;
+}
+
 interface ScormPlayerProps {
   course: Course;
   onClose?: () => void;
   /** Fired when the content reports completion, so a page can offer "next". */
   onComplete?: () => void;
+  /** Mirrors the current status/score out of the frame, for chrome outside it. */
+  onProgress?: (progress: ScormProgress) => void;
   /** Fill the parent box instead of taking over the viewport, and drop the modal chrome. */
   embedded?: boolean;
   /** Bare frame for the public detail page: no header/footer, just a floating zoom button. */
   minimal?: boolean;
 }
 
-export default function ScormPlayer({ course, onClose, onComplete, embedded, minimal }: ScormPlayerProps) {
+/** The SCORM bridge reports values as strings; normalise to a number. */
+function toScore(value: unknown): number | null {
+  if (value === null || value === undefined || value === "") return null;
+  const score = Number(value);
+  return Number.isFinite(score) ? score : null;
+}
+
+/** Every launch re-reports a blank status before the course starts. */
+const BLANK: ScormProgress = { status: "incomplete", score: null, sessionTime: 0 };
+
+/**
+ * A report only replaces a stored result when it carries one. Without this the
+ * course's "incomplete" on launch would wipe the score it just earned, and the
+ * card would be empty again on every visit. A retake clears through
+ * `scorm-reset`, not through a blank report.
+ */
+function mergeProgress(current: ScormProgress, next: ScormProgress): ScormProgress {
+  const blank = next.score === null && next.status === "incomplete";
+  return {
+    status: blank ? current.status : next.status,
+    score: next.score ?? current.score,
+    sessionTime: next.sessionTime || current.sessionTime,
+  };
+}
+
+/** Kept in the browser too, so the result shows before (or without) a fetch. */
+function readStored(key: string): ScormProgress | null {
+  try {
+    const raw = window.localStorage.getItem(key);
+    if (!raw) return null;
+    const value = JSON.parse(raw) as Partial<ScormProgress>;
+    return {
+      status: value.status ?? "incomplete",
+      score: toScore(value.score),
+      sessionTime: Number(value.sessionTime) || 0,
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default function ScormPlayer({ course, onClose, onComplete, onProgress, embedded, minimal }: ScormPlayerProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const { user } = useAuth();
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [progress, setProgress] = useState({
-    status: "incomplete",
-    score: null as number | null,
-    sessionTime: 0,
-  });
+  const [progress, setProgress] = useState<ScormProgress>(BLANK);
+  const latest = useRef<ScormProgress>(BLANK);
+  /* A local record is the truth for this browser: it was written last, so the
+     server copy may still be the one a retake just cleared. */
+  const localSeen = useRef(false);
+  const storageKey = `scorm-result:${course.id}:${user?.uid ?? "anon"}`;
 
   /* Built during render, not in an effect: the iframe is in the first HTML the
      browser gets, so the package starts downloading while the JS hydrates. */
   const iframeUrl = `/api/repository/launch/${course.id}/${course.scormStructure.entryPoint}`;
 
-  // Signed-in learners resume their own record.
+  const applyProgress = (next: ScormProgress) => {
+    latest.current = next;
+    setProgress(next);
+    try {
+      window.localStorage.setItem(storageKey, JSON.stringify(next));
+    } catch {
+      // Private mode / storage disabled: the server record still applies.
+    }
+  };
+
+  // The stored result comes back immediately — no fetch, no flicker.
   useEffect(() => {
-    if (!user) return;
+    const stored = readStored(storageKey);
+    localSeen.current = stored !== null;
+    if (stored) applyProgress(mergeProgress(latest.current, stored));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [storageKey]);
+
+  // Signed-in learners also have their record on the server — but only when
+  // this browser has nothing stored.
+  useEffect(() => {
+    if (!user || localSeen.current) return;
     let cancelled = false;
 
     getProgress(user.uid, course.id)
-      .then((result) => {        if (cancelled || !result.data) return;
-        setProgress({
+      .then((result) => {
+        if (cancelled || !result.data) return;
+        const server: ScormProgress = {
           status: result.data.status || "incomplete",
-          score: result.data.score || null,
+          score: toScore(result.data.score),
           sessionTime: result.data.sessionTime || 0,
-        });
+        };
+        if (server.score !== null) {
+          applyProgress(mergeProgress(latest.current, server));
+        }
       })
       .catch((error) => console.error("Failed to load progress:", error));
 
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, course.id]);
 
   const handleSaveProgress = async (data: {
     status?: "incomplete" | "completed" | "passed" | "failed";
-    score?: number | null;
+    score?: number | string | null;
     sessionTime?: number;
     suspendData?: string;
   }) => {
-    const status = data.status || "incomplete";
+    const merged = mergeProgress(latest.current, {
+      status: data.status || "incomplete",
+      score: toScore(data.score),
+      sessionTime: data.sessionTime || 0,
+    });
 
-    if (status === "completed" || status === "passed") {
+    if (merged.status === "completed" || merged.status === "passed") {
       onComplete?.();
     }
+
+    applyProgress(merged);
 
     try {
       // Anonymous visitors still get the in-page status, just nothing persisted.
@@ -79,53 +158,70 @@ export default function ScormPlayer({ course, onClose, onComplete, embedded, min
         await saveProgress({
           courseId: course.id,
           userId: user.uid,
-          status,
-          score: data.score || null,
-          sessionTime: data.sessionTime || 0,
+          ...merged,
           suspendData: data.suspendData || "",
         });
       }
-
-      setProgress({
-        status,
-        score: data.score || null,
-        sessionTime: data.sessionTime || 0,
-      });
     } catch (error) {
       console.error("Failed to save progress:", error);
     }
   };
 
-  // Inject SCORM API when the iframe is in the document.
-  const formatTimeForScorm2004 = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `PT${hours}H${minutes}M${secs}S`;
-  };
-
+  // The course restarted: a retake clears the old result everywhere.
   useEffect(() => {
-    if (iframeRef.current) {
-      injectScormApi(
-        iframeRef.current,
-        course.id,
-        user?.uid || "guest",
-        course.scormVersion as "1.2" | "2004",
-        handleSaveProgress,
-        {
-          "cmi.core.lesson_status": progress.status,
-          "cmi.completion_status": progress.status,
-          "cmi.core.score.raw": progress.score?.toString() || "",
-          "cmi.score.raw": progress.score?.toString() || "",
-          "cmi.core.session_time": progress.sessionTime.toString(),
-          "cmi.session_time": formatTimeForScorm2004(progress.sessionTime),
-        }
-      );
-    }
-    // Intentionally keyed on the learner only: re-running on each progress save
-    // would swap the API object out from under the running course.
+    const onReset = () => {
+      // The blank lands in local storage on purpose: it outranks the server
+      // record the reload would otherwise read back while the clear is still
+      // in flight.
+      applyProgress(BLANK);
+      if (user) {
+        void saveProgress({
+          courseId: course.id,
+          userId: user.uid,
+          ...BLANK,
+          suspendData: "",
+        }).catch((error) => console.error("Failed to clear progress:", error));
+      }
+    };
+
+    window.addEventListener("scorm-reset", onReset);
+    return () => window.removeEventListener("scorm-reset", onReset);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [storageKey, user, course.id]);
+
+  // Mirror the result out so the page can show it below the frame.
+  useEffect(() => {
+    onProgress?.(progress);
+  }, [progress, onProgress]);
+
+  // Results come from the bridge script the page puts in front of the frame
+  // (see scorm-bridge.ts) — the package reports straight to this window.
+  useEffect(() => {
+    const onReported = (event: Event) => {
+      const detail = (event as CustomEvent<ScormProgress & { suspendData?: string }>)
+        .detail;
+      if (!detail) return;
+      void handleSaveProgress({
+        status: detail.status,
+        score: detail.score,
+        sessionTime: detail.sessionTime,
+        suspendData: detail.suspendData,
+      });
+    };
+
+    window.addEventListener("scorm-progress", onReported);
+
+    // The course can report before hydration; the bridge keeps the last result.
+    const reported = (window as { __scormProgress?: ScormProgress & { suspendData?: string } })
+      .__scormProgress;
+    if (reported) {
+      onReported(new CustomEvent("scorm-progress", { detail: reported }));
+    }
+
+    return () => window.removeEventListener("scorm-progress", onReported);
+    // Keyed on the learner so persistence picks up the signed-in user.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user, course.id]);
 
   // The player's own zoom control. In minimal mode the browser is already in
   // fullscreen, so the iframe element itself is what has to grow.

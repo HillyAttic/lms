@@ -4,6 +4,36 @@ import { adminStorage } from "@/lib/firebase-admin";
 import { contentTypeForPath } from "@/lib/content-types";
 import { getSignedReadUrl } from "@/lib/storage-urls";
 
+/* The entry HTML gates the whole launch and is immutable per item, so its
+   bytes live in process memory for a while: a repeat launch needs no Storage
+   call at all. Bounded so a long-lived server can't grow without limit. */
+const htmlCache = new Map<string, { at: number; body: Buffer; etag: string }>();
+const HTML_TTL_MS = 10 * 60_000;
+const MAX_HTML_ENTRIES = 200;
+
+/**
+ * Fetch one object. Signing is local and cheap, and the signed URL downloads
+ * in a single Storage round trip — `file.download()` pays two (a metadata call
+ * that exists only to prove the file is there, then the bytes).
+ */
+async function readStorageObject(storagePath: string): Promise<Buffer | null> {
+  const signed = await getSignedReadUrl(storagePath);
+  if (signed) {
+    const response = await fetch(signed, { cache: "no-store" }).catch(
+      () => null
+    );
+    if (response?.status === 404) return null;
+    if (response?.ok) return Buffer.from(await response.arrayBuffer());
+  }
+
+  const [content] = await adminStorage
+    .bucket()
+    .file(storagePath)
+    .download()
+    .catch(() => [null]);
+  return content ?? null;
+}
+
 /**
  * Serve one file out of Storage for a package launch proxy.
  *
@@ -33,23 +63,35 @@ export async function serveStorageFile(
       : new NextResponse("File not found", { status: 404 });
   }
 
-  const file = adminStorage.bucket().file(storagePath);
-  // One download both proves the file exists and gives the bytes; a missing
-  // file rejects. The HTML is the only file that takes this path, and it is
-  // the gate the whole package waits on, so it must not pay two round trips.
-  const [content] = await file.download().catch(() => [null]);
-  if (!content) return new NextResponse("File not found", { status: 404 });
+  let entry = htmlCache.get(storagePath);
+  if (!entry || Date.now() - entry.at > HTML_TTL_MS) {
+    const content = await readStorageObject(storagePath);
+    if (!content) return new NextResponse("File not found", { status: 404 });
 
-  const etag = `"${createHash("md5").update(content).digest("base64")}"`;
-  if (request.headers.get("if-none-match") === etag) {
-    return new NextResponse(null, { status: 304, headers: { ETag: etag } });
+    entry = {
+      at: Date.now(),
+      body: content,
+      etag: `"${createHash("md5").update(content).digest("base64")}"`,
+    };
+    if (htmlCache.size >= MAX_HTML_ENTRIES) htmlCache.clear();
+    htmlCache.set(storagePath, entry);
   }
 
-  return new NextResponse(new Uint8Array(content), {
+  if (request.headers.get("if-none-match") === entry.etag) {
+    return new NextResponse(null, {
+      status: 304,
+      headers: {
+        ETag: entry.etag,
+        "Cache-Control": "public, max-age=3600",
+      },
+    });
+  }
+
+  return new NextResponse(new Uint8Array(entry.body), {
     headers: {
       "Content-Type": contentTypeForPath(storagePath),
-      "Content-Length": String(content.length),
-      ETag: etag,
+      "Content-Length": String(entry.body.length),
+      ETag: entry.etag,
       // Packages are immutable per item, so an hour of browser cache costs
       // nothing — and this file gates the package's whole boot. The ETag still
       // answers a revalidation after that with a 304.
