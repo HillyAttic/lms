@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
      verbatim from public/ so it doesn't inherit the app's root layout/theme.
      beforeFiles is required to override the app/page.tsx that used to be here;
      that page now lives at /homev1. */
+  async redirects() {
+    return [
+      {
+        source: "/:path*",
+        destination: "https://lms.matevix.com/:path*",
+        permanent: false,
+      },
+    ];
+  },
   async rewrites() {
     return {
       beforeFiles: [{ source: "/", destination: "/homev1.html" }],
